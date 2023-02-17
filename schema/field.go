@@ -50,6 +50,7 @@ type field struct {
 	tag                reflect.StructTag
 	index              int
 	isSlice            bool
+	init               bool
 
 	visitedMap map[string]bool
 }
@@ -124,9 +125,24 @@ func (field *field) Get() any {
 func (field *field) Set(value any) {
 	field.fieldValue.Set(reflect.ValueOf(value))
 
-	if field.Schema().FromField() != nil {
-		field.Schema().FromField().Value().Set(field.Schema().ModelValue())
+	field.Init()
+}
+
+func (field *field) Init() {
+	if field.init {
+		return
 	}
+
+	if field.Schema().FromField() == nil {
+		return
+	}
+
+	if field.Schema().FromField().Value().Kind() == reflect.Ptr {
+		field.Schema().FromField().Value().Set(field.Schema().ModelValue().Addr())
+		return
+	}
+
+	field.Schema().FromField().Value().Set(field.Schema().ModelValue())
 }
 
 func (field *field) Tags() map[string]string {
@@ -217,16 +233,8 @@ func (field *field) IsVisited() bool {
 	defer field.Unlock()
 
 	visitedMap := field.VisitedMap()
-	state := visitedMap[field.Key()]
 
-	/*if state {
-		log.Print(field.RecursiveFullName())
-		log.Print("field already visited: ", field.Key())
-		log.Println(field.FromSchemaTypeList())
-		log.Println()
-	}*/
-
-	return state
+	return visitedMap[field.Key()]
 }
 
 func (field *field) Visited() {
@@ -235,10 +243,6 @@ func (field *field) Visited() {
 
 	visitedMap := field.VisitedMap()
 
-	/*	log.Print("--->", field.RecursiveFullName())
-		log.Print("visited: ", field.Key())
-		log.Print(field.FromSchemaTypeList())
-		log.Println()*/
 	visitedMap[field.Key()] = true
 }
 
@@ -359,10 +363,6 @@ func (field *field) RevealEmbeddedSchema() Field {
 		SetFromField(field).
 		SetIndex(field.schema.Counter()).
 		Parse()
-
-	/*if !field.IsSlice() {
-		field.fieldValue.Set(embeddedSchema.ModelValue())
-	}*/
 
 	return field.SetEmbeddedSchema(embeddedSchema)
 }

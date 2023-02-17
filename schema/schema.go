@@ -25,6 +25,7 @@ type Schema interface {
 	ModelOrigin() reflect.Value
 
 	GetPrimaryKeyField() Field
+	Get() Model
 }
 
 type schema struct {
@@ -58,9 +59,8 @@ func New(model Model) Schema {
 	schema.modelValue = reflect.ValueOf(model)
 	schema.modelOrigin = schema.modelValue
 
-	if !schema.modelValue.CanAddr() {
-		schema.modelValue = reflect.New(schema.modelType)
-		schema.modelValue = schema.modelValue.Elem()
+	if schema.modelType.Kind() == reflect.Struct {
+		schema.modelValue = reflect.New(schema.modelType).Elem().Addr()
 		schema.modelType = schema.modelValue.Type()
 	}
 
@@ -72,6 +72,10 @@ func New(model Model) Schema {
 	schema.fieldByName = make(map[string]Field)
 
 	return schema
+}
+
+func (schema *schema) Get() Model {
+	return schema.modelValue.Interface().(Model)
 }
 
 func (schema *schema) SetIndex(index int) Schema {

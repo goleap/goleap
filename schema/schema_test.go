@@ -14,7 +14,7 @@ func (test *SchemaTestSuite) SetupTest() {
 
 }
 
-func (test *SchemaTestSuite) TestValidateStructure() {
+func (test *SchemaTestSuite) TestValidateStruct() {
 	model := &schema2.BaseModel{}
 	schema := New(model).Parse()
 
@@ -598,12 +598,20 @@ func (test *SchemaTestSuite) TestValidateStructure() {
 	for _, field := range expectedFields {
 		test.Equal(field, schema.FieldByName()[field].RecursiveFullName())
 	}
+}
 
-	/*	for _, field := range expectedFields {
-		fmt.Printf(`"%s":%d,`, field, schema.GetFieldByName(field).Schema().Index())
-		fmt.Println()
-		test.Equal(index, schema.GetFieldByName(field).Schema().Index())
-	}*/
+func (test *SchemaTestSuite) TestSet() {
+	model := &schema2.BaseModel{}
+	schema := New(model).Parse()
+
+	schema.GetFieldByName("Id").Set(uint(1))
+	test.Equal(uint(1), model.Id)
+
+	schema.GetFieldByName("Recursive.Extra.Id").Set(uint(3))
+	test.Equal(uint(3), model.Recursive.Extra.Id)
+
+	schema.GetFieldByName("Recursive.Id").Set(uint(2))
+	test.Equal(uint(2), model.Recursive.Id)
 }
 
 func TestSchemaTestSuite(t *testing.T) {
