@@ -12,6 +12,8 @@ type payload[T schema.Model] struct {
 	focusedDriverFields      []driver.Field
 	requiredJoins            []driver.Join
 	focusedSchemaValueFields []any
+
+	result []T
 }
 
 func (p *payload[T]) Database() string {
@@ -39,11 +41,12 @@ func (p *payload[T]) ResultType() []any {
 }
 
 func (p *payload[T]) OnScan(result []any) (err error) {
+	sch := p.schema.Copy()
 	for i, field := range p.orm.focusedSchemaFields {
-		field.Set(result[i])
+		sch.GetFieldByName(field.RecursiveFullName()).Set(result[i])
 	}
-
-	return nil
+	p.result = append(p.result, sch.Get().(T))
+	return
 }
 
 func (p *payload[T]) Table() string {

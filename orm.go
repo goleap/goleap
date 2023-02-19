@@ -128,12 +128,13 @@ func (o *orm[T]) Get(primaryKeyValue any) (result T, err error) {
 		return
 	}
 
-	err = o.Connector.Select(o.Context, o.Payload())
+	pp := o.Payload()
+	err = o.Connector.Select(o.Context, pp)
 	if err != nil {
 		return
 	}
 
-	result = o.schema.ModelValue().Interface().(T)
+	result = pp.(*payload[T]).result[0]
 
 	return
 }

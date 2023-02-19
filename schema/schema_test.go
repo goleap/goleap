@@ -3,6 +3,7 @@ package schema
 import (
 	schema2 "github.com/goleap/goleap/helper"
 	"github.com/stretchr/testify/suite"
+	"log"
 	"testing"
 )
 
@@ -607,11 +608,23 @@ func (test *SchemaTestSuite) TestSet() {
 	schema.GetFieldByName("Id").Set(uint(1))
 	test.Equal(uint(1), model.Id)
 
-	schema.GetFieldByName("Recursive.Extra.Id").Set(uint(3))
-	test.Equal(uint(3), model.Recursive.Extra.Id)
+	schema.GetFieldByName("Recursive.Extra.Id").Set(uint(2))
+	test.Equal(uint(2), model.Recursive.Extra.Id)
 
-	schema.GetFieldByName("Recursive.Id").Set(uint(2))
-	test.Equal(uint(2), model.Recursive.Id)
+	schema.GetFieldByName("Recursive.Id").Set(uint(3))
+	test.Equal(uint(3), model.Recursive.Id)
+
+	schema.GetFieldByName("Recursive.Slice.Id").Set(uint(4))
+	test.Equal(uint(4), model.Recursive.Slice[0].Id)
+
+	log.Print("------------------------")
+
+	schema2 := New(model).Parse()
+
+	schema2.GetFieldByName("Recursive.Extra.Id").Set(uint(5))
+	test.Equal(uint(5), model.Recursive.Extra.Id)
+
+	test.Equal(schema.GetFieldByName("Id"), schema.GetPrimaryKeyField())
 }
 
 func TestSchemaTestSuite(t *testing.T) {

@@ -26,6 +26,7 @@ type Schema interface {
 
 	GetPrimaryKeyField() Field
 	Get() Model
+	Copy() Schema
 }
 
 type schema struct {
@@ -49,6 +50,13 @@ func (schema *schema) ModelOrigin() reflect.Value {
 
 func (schema *schema) ModelValue() reflect.Value {
 	return schema.modelValue
+}
+
+func (schema *schema) Copy() Schema {
+	tmp := reflect.New(reflect.TypeOf(schema)).Elem()
+	tmp.Set(reflect.ValueOf(schema))
+
+	return tmp.Interface().(Schema)
 }
 
 func New(model Model) Schema {

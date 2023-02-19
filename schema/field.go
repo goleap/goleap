@@ -9,10 +9,14 @@ import (
 )
 
 type Field interface {
+	// Init allows you to initialise the field with its default value recursively (to avoid `nil`)
+	Init()
+	// Name returns the name of the field
 	Name() string
+	// Schema returns the schema of the field
 	Schema() Schema
+	// Tags returns the tags of the field
 	Tags() map[string]string
-	fromSliceSchema(value string) string
 	FromSchemaTypeList() []string
 	VisitedMap() map[string]bool
 	RecursiveFullName() string
@@ -42,6 +46,8 @@ type field struct {
 	schema         Schema
 	embeddedSchema Schema
 	tags           map[string]string
+
+	recursiveFullName string
 
 	fieldType          reflect.Type
 	fieldValue         reflect.Value
@@ -86,26 +92,6 @@ func (field *field) IsSlice() bool {
 	return field.isSlice
 }
 
-func (field *field) fromSliceSchema(value string) (new string) {
-	if field.IsSlice() {
-		value = field.RecursiveFullName()
-	}
-
-	if field.Schema().FromField() != nil {
-		tmp := field.Schema().FromField().fromSliceSchema(value)
-		if tmp != "" {
-			return tmp
-		}
-		return value
-	}
-
-	return value
-}
-
-func (field *field) FromSliceSchema() (new string) {
-	return field.fromSliceSchema("")
-}
-
 func (field *field) FromSchemaTypeList() (new []string) {
 	if field.Schema().FromField() != nil {
 		new = append(new, field.Schema().FromField().FromSchemaTypeList()...)
@@ -137,8 +123,15 @@ func (field *field) Init() {
 		return
 	}
 
+	field.Schema().FromField().Init()
+
 	if field.Schema().FromField().Value().Kind() == reflect.Ptr {
 		field.Schema().FromField().Value().Set(field.Schema().ModelValue().Addr())
+		return
+	}
+
+	if field.Schema().FromField().Value().Kind() == reflect.Slice {
+		field.Schema().FromField().Value().Set(reflect.Append(field.Schema().FromField().Value(), field.Schema().ModelValue()))
 		return
 	}
 
@@ -308,11 +301,24 @@ func (field *field) RecursiveNameTest() string {
 	return field.schema.FromField().Name()
 }
 
-func (field *field) RecursiveName() string {
-	if field.schema.FromField() == nil {
-		return field.Name()
+func (field *field) RecursiveName() (name string) {
+	defer func() {
+		if field.recursiveFullName != "" {
+			return
+		}
+		field.recursiveFullName = name
+	}()
+
+	if field.recursiveFullName != "" {
+		return field.recursiveFullName
 	}
-	return field.schema.FromField().RecursiveFullName()
+
+	if field.schema.FromField() == nil {
+		name = field.Name()
+	}
+
+	name = field.schema.FromField().RecursiveFullName()
+	return
 }
 
 func (field *field) RecursiveFullName() string {
@@ -333,6 +339,8 @@ func (field *field) RevealEmbeddedSchema() Field {
 	if field.fieldEmbeddedValue.Kind() == reflect.Ptr {
 		if field.fieldEmbeddedValue.IsNil() {
 			field.fieldEmbeddedValue = reflect.New(field.fieldValue.Type().Elem())
+			field.fieldEmbeddedValue = field.fieldEmbeddedValue.Elem()
+		} else {
 			field.fieldEmbeddedValue = field.fieldEmbeddedValue.Elem()
 		}
 	}
