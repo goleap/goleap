@@ -3,6 +3,7 @@ package goleap
 import (
 	"context"
 	"github.com/goleap/goleap/connector/driver"
+	"github.com/goleap/goleap/helper/model"
 	"github.com/stretchr/testify/mock"
 	"testing"
 
@@ -21,7 +22,7 @@ func (test *OrmTestSuite) SetupTest() {
 
 func (test *OrmTestSuite) TestGet() {
 	ctx := context.Background()
-	ormInstance := Use[helper.BaseModel](context.Background(), test.fakeConnector)
+	ormInstance := Use[model.BaseModel](context.Background(), test.fakeConnector)
 	if !test.NotEmpty(ormInstance) {
 		return
 	}

@@ -2,6 +2,7 @@ package schema
 
 import (
 	"reflect"
+	"sync"
 )
 
 type Schema interface {
@@ -31,9 +32,11 @@ type Schema interface {
 
 type schema struct {
 	Model
+	sync.Mutex
 
 	index       int
 	counter     int
+	parsed      bool
 	modelOrigin reflect.Value
 	modelType   reflect.Type
 	modelValue  reflect.Value
@@ -129,6 +132,9 @@ func (schema *schema) FieldByName() map[string]Field {
 }
 
 func (schema *schema) AddField(field Field) {
+	defer schema.Unlock()
+	schema.Lock()
+
 	if field.HasEmbeddedSchema() {
 		schema.fields = append(schema.fields, field.EmbeddedSchema().Fields()...)
 
@@ -156,6 +162,11 @@ func (schema *schema) GetFieldByName(name string) Field {
 }
 
 func (schema *schema) Parse() Schema {
+	// no need to parse again normally...
+	if schema.parsed {
+		return schema
+	}
+
 	for i := 0; i < schema.modelType.NumField(); i++ {
 		fieldStruct := schema.modelType.Field(i)
 		if !fieldStruct.IsExported() {
@@ -169,6 +180,9 @@ func (schema *schema) Parse() Schema {
 
 		schema.AddField(field)
 	}
+
+	// TODO use a setter to set this value
+	schema.parsed = true
 
 	return schema
 }

@@ -1,4 +1,4 @@
-package helper
+package model
 
 type ExtraJumpModel struct {
 	Id         uint        `goleap:"column:id"`

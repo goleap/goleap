@@ -55,7 +55,7 @@ func (m *Mysql) Select(ctx context.Context, payload Payload) (err error) {
 		return
 	}
 
-	return wrapScan(rows, payload.ResultType(), payload.OnScan)
+	return wrapScan(rows, payload.Mapping(), payload.OnScan)
 }
 
 func (m *Mysql) Update() {

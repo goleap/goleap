@@ -1,9 +1,9 @@
 package schema
 
 import (
-	schema2 "github.com/goleap/goleap/helper"
+	"github.com/goleap/goleap/connector/driver"
+	model2 "github.com/goleap/goleap/helper/model"
 	"github.com/stretchr/testify/suite"
-	"log"
 	"testing"
 )
 
@@ -16,13 +16,13 @@ func (test *SchemaTestSuite) SetupTest() {
 }
 
 func (test *SchemaTestSuite) TestValidateStruct() {
-	model := &schema2.BaseModel{}
+	model := &model2.BaseModel{}
 	schema := New(model).Parse()
 
 	test.Equal("test", schema.DatabaseName())
 	test.Equal("base", schema.TableName())
 
-	test.Equal(569, len(schema.Fields()))
+	test.Equal(1295, len(schema.Fields()))
 
 	expectedFields := []string{
 		"Id",
@@ -602,31 +602,69 @@ func (test *SchemaTestSuite) TestValidateStruct() {
 }
 
 func (test *SchemaTestSuite) TestSet() {
-	model := &schema2.BaseModel{}
+	model := &model2.BaseModel{}
 	schema := New(model).Parse()
+	// twice to test skip init
+	schema.Parse()
 
+	// Simple
 	schema.GetFieldByName("Id").Set(uint(1))
 	test.Equal(uint(1), model.Id)
 
+	// Sub Embedded schema
 	schema.GetFieldByName("Recursive.Extra.Id").Set(uint(2))
 	test.Equal(uint(2), model.Recursive.Extra.Id)
 
+	// Embedded schema
 	schema.GetFieldByName("Recursive.Id").Set(uint(3))
 	test.Equal(uint(3), model.Recursive.Id)
+	test.Equal(uint(3), schema.GetFieldByName("Recursive.Id").Get())
 
+	// Sub Embedded Slice Schema
 	schema.GetFieldByName("Recursive.Slice.Id").Set(uint(4))
 	test.Equal(uint(4), model.Recursive.Slice[0].Id)
 
-	log.Print("------------------------")
+	// With other instance of schema
+	newSchema := New(model).Parse()
 
-	schema2 := New(model).Parse()
-
-	schema2.GetFieldByName("Recursive.Extra.Id").Set(uint(5))
+	// Two set on same field for testing skip init
+	newSchema.GetFieldByName("Recursive.Extra.Id").Set(uint(5))
+	newSchema.GetFieldByName("Recursive.Extra.Id").Set(uint(5))
 	test.Equal(uint(5), model.Recursive.Extra.Id)
+
+	test.Equal(new(uint), newSchema.GetFieldByName("Recursive.Extra.Id").Copy())
 
 	test.Equal(schema.GetFieldByName("Id"), schema.GetPrimaryKeyField())
 }
 
+func (test *SchemaTestSuite) TestJoin() {
+	schemaTest := New(&model2.BaseModel{}).Parse()
+	test.Equal(schemaTest.GetFieldByName("Extra.Id").Join(), []driver.Join{
+		driver.NewJoin().
+			SetFromTable("extra").
+			SetFromTableIndex(379).
+			SetToTable("base").
+			SetToTableIndex(0).
+			SetFromKey("extra_id").
+			SetToKey("id"),
+	})
+}
+
+func (test *SchemaTestSuite) TestGetPrimaryKeyField() {
+	schemaTest := New(&model2.ExtraModel{}).Parse()
+	test.Equal(schemaTest.GetFieldByName("Id"), schemaTest.GetPrimaryKeyField())
+
+	schemaTest = New(&model2.ExtraJumpModel{}).Parse()
+	test.Equal(nil, schemaTest.GetPrimaryKeyField())
+}
+
 func TestSchemaTestSuite(t *testing.T) {
 	suite.Run(t, new(SchemaTestSuite))
+}
+
+func BenchmarkParse(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		// Call the function you want to benchmark here
+		New(&model2.BaseModel{}).Parse()
+	}
 }

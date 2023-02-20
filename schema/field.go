@@ -105,7 +105,7 @@ func (field *field) Schema() Schema {
 }
 
 func (field *field) Get() any {
-	return field.fieldValue.Addr().Interface()
+	return field.fieldValue.Interface()
 }
 
 func (field *field) Set(value any) {
@@ -136,6 +136,7 @@ func (field *field) Init() {
 	}
 
 	field.Schema().FromField().Value().Set(field.Schema().ModelValue())
+	field.init = true
 }
 
 func (field *field) Tags() map[string]string {
@@ -147,10 +148,6 @@ func (field *field) EmbeddedSchema() Schema {
 }
 
 func (field *field) SetEmbeddedSchema(embeddedSchema Schema) Field {
-	if embeddedSchema == nil {
-		return field
-	}
-
 	field.embeddedSchema = embeddedSchema
 	return field
 }
@@ -294,38 +291,25 @@ func (field *field) Field() driver.Field {
 	return driver.NewField().SetName(field.Column()).SetIndex(field.Index())
 }
 
-func (field *field) RecursiveNameTest() string {
-	if field.schema.FromField() == nil {
-		return "nil"
-	}
-	return field.schema.FromField().Name()
-}
-
-func (field *field) RecursiveName() (name string) {
-	defer func() {
+func (field *field) RecursiveFullName() string {
+	/*	defer func() {
 		if field.recursiveFullName != "" {
 			return
 		}
 		field.recursiveFullName = name
-	}()
+	}()*/
 
 	if field.recursiveFullName != "" {
 		return field.recursiveFullName
 	}
 
 	if field.schema.FromField() == nil {
-		name = field.Name()
+		field.recursiveFullName = field.Name()
+		return field.recursiveFullName
 	}
 
-	name = field.schema.FromField().RecursiveFullName()
-	return
-}
-
-func (field *field) RecursiveFullName() string {
-	if field.schema.FromField() == nil {
-		return field.Name()
-	}
-	return fmt.Sprintf("%s.%s", field.schema.FromField().RecursiveFullName(), field.Name())
+	field.recursiveFullName = fmt.Sprintf("%s.%s", field.schema.FromField().RecursiveFullName(), field.Name())
+	return field.recursiveFullName
 }
 
 func (field *field) IsSameSchemaFromField() bool {

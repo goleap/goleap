@@ -1,10 +1,9 @@
-package helper
+package model
 
 type ExtraModel struct {
-	Id        uint       `goleap:"column:id"`
-	BaseModel *BaseModel `goleap:"column:recursive_id, foreignKey:id"`
-	//Slice     []BaseModel    `goleap:"column:slice_id, foreignKey:id"`
+	BaseModel *BaseModel     `goleap:"column:recursive_id, foreignKey:id"`
 	ExtraJump ExtraJumpModel `goleap:"column:extra_jump_id, foreignKey:id"`
+	Id        uint           `goleap:"column:id, primaryKey"`
 }
 
 func (s ExtraModel) DatabaseName() string {

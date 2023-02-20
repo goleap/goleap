@@ -23,7 +23,7 @@ type Payload interface {
 	Fields() []Field
 	Join() []Join
 	Where() []Where
-	ResultType() []any
+	Mapping() []any
 	OnScan([]any) error
 }
 
