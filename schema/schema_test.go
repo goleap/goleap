@@ -1,8 +1,9 @@
 package schema
 
 import (
-	"github.com/goleap/goleap/connector/driver"
-	model2 "github.com/goleap/goleap/helper/model"
+	"github.com/lab210-dev/dbkit/connector/drivers"
+	"github.com/lab210-dev/dbkit/specs"
+	"github.com/lab210-dev/dbkit/testmodels"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )
@@ -16,7 +17,7 @@ func (test *SchemaTestSuite) SetupTest() {
 }
 
 func (test *SchemaTestSuite) TestValidateStruct() {
-	model := &model2.BaseModel{}
+	model := &testmodels.BaseModel{}
 	schema := New(model).Parse()
 
 	test.Equal("test", schema.DatabaseName())
@@ -602,7 +603,7 @@ func (test *SchemaTestSuite) TestValidateStruct() {
 }
 
 func (test *SchemaTestSuite) TestSet() {
-	model := &model2.BaseModel{}
+	model := &testmodels.BaseModel{}
 	schema := New(model).Parse()
 	// twice to test skip init
 	schema.Parse()
@@ -638,9 +639,9 @@ func (test *SchemaTestSuite) TestSet() {
 }
 
 func (test *SchemaTestSuite) TestJoin() {
-	schemaTest := New(&model2.BaseModel{}).Parse()
-	test.Equal(schemaTest.GetFieldByName("Extra.Id").Join(), []driver.Join{
-		driver.NewJoin().
+	schemaTest := New(&testmodels.BaseModel{}).Parse()
+	test.Equal(schemaTest.GetFieldByName("Extra.Id").Join(), []specs.DriverJoin{
+		drivers.NewJoin().
 			SetFromTable("extra").
 			SetFromTableIndex(379).
 			SetToTable("base").
@@ -651,10 +652,10 @@ func (test *SchemaTestSuite) TestJoin() {
 }
 
 func (test *SchemaTestSuite) TestGetPrimaryKeyField() {
-	schemaTest := New(&model2.ExtraModel{}).Parse()
+	schemaTest := New(&testmodels.ExtraModel{}).Parse()
 	test.Equal(schemaTest.GetFieldByName("Id"), schemaTest.GetPrimaryKeyField())
 
-	schemaTest = New(&model2.ExtraJumpModel{}).Parse()
+	schemaTest = New(&testmodels.ExtraJumpModel{}).Parse()
 	test.Equal(nil, schemaTest.GetPrimaryKeyField())
 }
 
@@ -665,6 +666,6 @@ func TestSchemaTestSuite(t *testing.T) {
 func BenchmarkParse(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// Call the function you want to benchmark here
-		New(&model2.BaseModel{}).Parse()
+		New(&testmodels.BaseModel{}).Parse()
 	}
 }

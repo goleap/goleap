@@ -1,16 +1,15 @@
 package goleap
 
 import (
-	"github.com/goleap/goleap/connector/driver"
-	"github.com/goleap/goleap/schema"
+	"github.com/lab210-dev/dbkit/specs"
 )
 
-type payload[T schema.Model] struct {
+type payload[T specs.Model] struct {
 	*orm[T]
 
-	focusedSchemaFields      []schema.Field
-	focusedDriverFields      []driver.Field
-	requiredJoins            []driver.Join
+	focusedSchemaFields      []specs.SchemaField
+	focusedDriverFields      []specs.DriverField
+	requiredJoins            []specs.DriverJoin
 	focusedSchemaValueFields []any
 
 	result []T
@@ -24,19 +23,19 @@ func (p *payload[T]) Index() int {
 	return p.orm.schema.Index()
 }
 
-func (p *payload[T]) Fields() []driver.Field {
+func (p *payload[T]) Fields() []specs.DriverField {
 	return p.orm.getFocusedDriverFields()
 }
 
-func (p *payload[T]) Join() []driver.Join {
+func (p *payload[T]) Join() []specs.DriverJoin {
 	return p.orm.getRequiredJoins()
 }
 
-func (p *payload[T]) Where() []driver.Where {
-	return []driver.Where{}
+func (p *payload[T]) Where() []specs.DriverWhere {
+	return []specs.DriverWhere{}
 }
 
-func (p *payload[T]) ResultType() []any {
+func (p *payload[T]) Mapping() []any {
 	return p.orm.getFieldsTypeSchemaToDriver()
 }
 
@@ -53,7 +52,7 @@ func (p *payload[T]) Table() string {
 	return p.orm.schema.TableName()
 }
 
-func newPayload[T schema.Model](orm *orm[T]) driver.Payload {
+func newPayload[T specs.Model](orm *orm[T]) specs.Payload {
 	p := new(payload[T])
 	p.orm = orm
 	return p

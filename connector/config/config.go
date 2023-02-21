@@ -1,32 +1,9 @@
 package config
 
-import "net/url"
-
-type Config interface {
-	Name() string
-	SetName(name string)
-
-	Driver() string
-	SetDriver(driver string) Config
-
-	User() string
-	SetUser(user string)
-
-	Password() string
-	SetPassword(password string)
-
-	Host() string
-	SetHost(host string)
-
-	Port() int
-	SetPort(port int)
-
-	Database() string
-	SetDatabase(database string)
-
-	Locale() string
-	SetLocale(locale string)
-}
+import (
+	"github.com/lab210-dev/dbkit/specs"
+	"net/url"
+)
 
 type config struct {
 	name     string
@@ -51,7 +28,7 @@ func (c *config) Driver() string {
 	return c.driver
 }
 
-func (c *config) SetDriver(driver string) Config {
+func (c *config) SetDriver(driver string) specs.Config {
 	c.driver = driver
 	return c
 }
@@ -107,6 +84,6 @@ func (c *config) SetLocale(locale string) {
 	c.locale = locale
 }
 
-func New() Config {
+func New() specs.Config {
 	return new(config)
 }

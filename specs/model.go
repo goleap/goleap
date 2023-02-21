@@ -1,4 +1,4 @@
-package schema
+package specs
 
 type Model interface {
 	DatabaseName() string

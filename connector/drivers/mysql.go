@@ -1,17 +1,17 @@
-package driver
+package drivers
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/goleap/goleap/connector/config"
+	"github.com/lab210-dev/dbkit/specs"
 )
 
 type Mysql struct {
 	db *sql.DB
 }
 
-func (m *Mysql) New(config config.Config) (err error) {
+func (m *Mysql) New(config specs.Config) (err error) {
 	dataSource := fmt.Sprintf(
 		"%s:%s@tcp(%s:%d)/%s?parseTime=true&loc=%s",
 		config.User(),
@@ -35,7 +35,7 @@ func (m *Mysql) Create() {
 	panic("implement me")
 }
 
-func (m *Mysql) buildField(fields []Field) (result string) {
+func (m *Mysql) buildField(fields []specs.DriverField) (result string) {
 	for i, field := range fields {
 		if i > 0 {
 			result += ", "
@@ -47,7 +47,7 @@ func (m *Mysql) buildField(fields []Field) (result string) {
 	return result
 }
 
-func (m *Mysql) Select(ctx context.Context, payload Payload) (err error) {
+func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 	query := fmt.Sprintf("SELECT %s FROM `%s` AS `t%d`", m.buildField(payload.Fields()), payload.Table(), payload.Index())
 
 	rows, err := m.db.QueryContext(ctx, query)

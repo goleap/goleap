@@ -2,9 +2,10 @@ package connector
 
 import (
 	"database/sql"
-	"github.com/goleap/goleap/connector/config"
-	"github.com/goleap/goleap/connector/driver"
-	"github.com/goleap/goleap/helper/fakesql"
+	"github.com/lab210-dev/dbkit/connector/config"
+	"github.com/lab210-dev/dbkit/connector/drivers"
+	"github.com/lab210-dev/dbkit/mocks/fakesql"
+	"github.com/lab210-dev/dbkit/specs"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )
@@ -19,9 +20,9 @@ func (test *ConnectorTestSuite) SetupTest() {
 }
 
 func (test *ConnectorTestSuite) SetupSuite() {
-	driver.RegisteredDriver = map[string]func() driver.Driver{
-		"test": func() driver.Driver {
-			return new(driver.Mysql)
+	drivers.RegisteredDriver = map[string]func() specs.Driver{
+		"test": func() specs.Driver {
+			return new(drivers.Mysql)
 		},
 	}
 	sql.Register("test", test.fakeDriver)

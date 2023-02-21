@@ -2,49 +2,18 @@ package schema
 
 import (
 	"fmt"
-	"github.com/goleap/goleap/connector/driver"
+	"github.com/lab210-dev/dbkit/connector/drivers"
+	"github.com/lab210-dev/dbkit/specs"
 	"reflect"
 	"strings"
 	"sync"
 )
 
-type Field interface {
-	// Init allows you to initialise the field with its default value recursively (to avoid `nil`)
-	Init()
-	// Name returns the name of the field
-	Name() string
-	// Schema returns the schema of the field
-	Schema() Schema
-	// Tags returns the tags of the field
-	Tags() map[string]string
-	FromSchemaTypeList() []string
-	VisitedMap() map[string]bool
-	RecursiveFullName() string
-	Column() string
-	Index() int
-	Key() string
-
-	Join() []driver.Join
-	Field() driver.Field
-
-	Value() reflect.Value
-
-	Copy() any
-
-	Set(value any)
-	Get() any
-
-	HasEmbeddedSchema() bool
-	EmbeddedSchema() Schema
-
-	IsPrimaryKey() bool
-}
-
 type field struct {
 	sync.Mutex
 	name           string
-	schema         Schema
-	embeddedSchema Schema
+	schema         specs.Schema
+	embeddedSchema specs.Schema
 	tags           map[string]string
 
 	recursiveFullName string
@@ -61,10 +30,10 @@ type field struct {
 	visitedMap map[string]bool
 }
 
-func (field *field) Join() (joins []driver.Join) {
+func (field *field) Join() (joins []specs.DriverJoin) {
 	if field.Schema().FromField() != nil {
 		if !field.IsSlice() {
-			join := driver.NewJoin().
+			join := drivers.NewJoin().
 				SetFromTable(field.Schema().TableName()).
 				SetFromTableIndex(field.Schema().Index()).
 				SetToTable(field.Schema().FromField().Schema().TableName()).
@@ -100,7 +69,7 @@ func (field *field) FromSchemaTypeList() (new []string) {
 	return
 }
 
-func (field *field) Schema() Schema {
+func (field *field) Schema() specs.Schema {
 	return field.schema
 }
 
@@ -143,11 +112,11 @@ func (field *field) Tags() map[string]string {
 	return field.tags
 }
 
-func (field *field) EmbeddedSchema() Schema {
+func (field *field) EmbeddedSchema() specs.Schema {
 	return field.embeddedSchema
 }
 
-func (field *field) SetEmbeddedSchema(embeddedSchema Schema) Field {
+func (field *field) SetEmbeddedSchema(embeddedSchema specs.Schema) specs.SchemaField {
 	field.embeddedSchema = embeddedSchema
 	return field
 }
@@ -168,7 +137,7 @@ func (field *field) SetIsSlice(isSlice bool) {
 	field.isSlice = isSlice
 }
 
-func (schema *schema) parseField(index int) Field {
+func (schema *schema) parseField(index int) specs.SchemaField {
 	fieldStruct := schema.modelType.Field(index)
 
 	field := new(field)
@@ -287,18 +256,12 @@ func (field *field) IsPrimaryKey() bool {
 	return field.tags["primaryKey"] == "true"
 }
 
-func (field *field) Field() driver.Field {
-	return driver.NewField().SetName(field.Column()).SetIndex(field.Index())
+func (field *field) Field() specs.DriverField {
+	return drivers.NewField().SetName(field.Column()).SetIndex(field.Index())
 }
 
 func (field *field) RecursiveFullName() string {
-	/*	defer func() {
-		if field.recursiveFullName != "" {
-			return
-		}
-		field.recursiveFullName = name
-	}()*/
-
+	// TODO maybe try to simplify this
 	if field.recursiveFullName != "" {
 		return field.recursiveFullName
 	}
@@ -317,7 +280,7 @@ func (field *field) IsSameSchemaFromField() bool {
 		fmt.Sprintf("%s/%s", field.schema.FromField().Schema().ModelValue().Type(), field.schema.FromField().Name()) == fmt.Sprintf("%s/%s", field.fieldEmbeddedValue.Type(), field.Name())
 }
 
-func (field *field) RevealEmbeddedSchema() Field {
+func (field *field) RevealEmbeddedSchema() specs.SchemaField {
 	field.fieldEmbeddedValue = field.fieldValue
 
 	if field.fieldEmbeddedValue.Kind() == reflect.Ptr {
@@ -339,9 +302,9 @@ func (field *field) RevealEmbeddedSchema() Field {
 		return nil
 	}
 
-	var model Model
+	var model specs.Model
 	var ok bool
-	if model, ok = field.fieldEmbeddedValue.Interface().(Model); !ok {
+	if model, ok = field.fieldEmbeddedValue.Interface().(specs.Model); !ok {
 		return nil
 	}
 

@@ -1,37 +1,13 @@
 package schema
 
 import (
+	"github.com/lab210-dev/dbkit/specs"
 	"reflect"
 	"sync"
 )
 
-type Schema interface {
-	Model
-
-	Fields() []Field
-	FieldByName() map[string]Field
-
-	GetFieldByName(name string) Field
-
-	SetFromField(fromField Field) Schema
-	FromField() Field
-
-	SetIndex(index int) Schema
-	Index() int
-	Counter() int
-
-	Parse() Schema
-
-	ModelValue() reflect.Value
-	ModelOrigin() reflect.Value
-
-	GetPrimaryKeyField() Field
-	Get() Model
-	Copy() Schema
-}
-
 type schema struct {
-	Model
+	specs.Model
 	sync.Mutex
 
 	index       int
@@ -41,10 +17,10 @@ type schema struct {
 	modelType   reflect.Type
 	modelValue  reflect.Value
 
-	fields      []Field
-	fieldByName map[string]Field
+	fields      []specs.SchemaField
+	fieldByName map[string]specs.SchemaField
 
-	fromField Field
+	fromField specs.SchemaField
 }
 
 func (schema *schema) ModelOrigin() reflect.Value {
@@ -55,14 +31,14 @@ func (schema *schema) ModelValue() reflect.Value {
 	return schema.modelValue
 }
 
-func (schema *schema) Copy() Schema {
+func (schema *schema) Copy() specs.Schema {
 	tmp := reflect.New(reflect.TypeOf(schema)).Elem()
 	tmp.Set(reflect.ValueOf(schema))
 
-	return tmp.Interface().(Schema)
+	return tmp.Interface().(specs.Schema)
 }
 
-func New(model Model) Schema {
+func New(model specs.Model) specs.Schema {
 	schema := new(schema)
 	schema.Model = model
 
@@ -80,22 +56,22 @@ func New(model Model) Schema {
 		schema.modelValue = schema.modelValue.Elem()
 	}
 
-	schema.fieldByName = make(map[string]Field)
+	schema.fieldByName = make(map[string]specs.SchemaField)
 
 	return schema
 }
 
-func (schema *schema) Get() Model {
-	return schema.modelValue.Interface().(Model)
+func (schema *schema) Get() specs.Model {
+	return schema.modelValue.Interface().(specs.Model)
 }
 
-func (schema *schema) SetIndex(index int) Schema {
+func (schema *schema) SetIndex(index int) specs.Schema {
 	schema.index = index
 	schema.counter = index
 	return schema
 }
 
-func (schema *schema) GetPrimaryKeyField() Field {
+func (schema *schema) GetPrimaryKeyField() specs.SchemaField {
 	for _, field := range schema.fields {
 
 		if field.Schema() != schema {
@@ -123,15 +99,15 @@ func (schema *schema) Counter() int {
 	return schema.counter
 }
 
-func (schema *schema) Fields() []Field {
+func (schema *schema) Fields() []specs.SchemaField {
 	return schema.fields
 }
 
-func (schema *schema) FieldByName() map[string]Field {
+func (schema *schema) FieldByName() map[string]specs.SchemaField {
 	return schema.fieldByName
 }
 
-func (schema *schema) AddField(field Field) {
+func (schema *schema) AddField(field specs.SchemaField) {
 	defer schema.Unlock()
 	schema.Lock()
 
@@ -148,20 +124,20 @@ func (schema *schema) AddField(field Field) {
 	schema.fieldByName[field.RecursiveFullName()] = field
 }
 
-func (schema *schema) FromField() Field {
+func (schema *schema) FromField() specs.SchemaField {
 	return schema.fromField
 }
 
-func (schema *schema) SetFromField(fromField Field) Schema {
+func (schema *schema) SetFromField(fromField specs.SchemaField) specs.Schema {
 	schema.fromField = fromField
 	return schema
 }
 
-func (schema *schema) GetFieldByName(name string) Field {
+func (schema *schema) GetFieldByName(name string) specs.SchemaField {
 	return schema.fieldByName[name]
 }
 
-func (schema *schema) Parse() Schema {
+func (schema *schema) Parse() specs.Schema {
 	// no need to parse again normally...
 	if schema.parsed {
 		return schema

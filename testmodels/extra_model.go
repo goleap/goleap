@@ -1,4 +1,4 @@
-package model
+package testmodels
 
 type ExtraModel struct {
 	BaseModel *BaseModel     `goleap:"column:recursive_id, foreignKey:id"`

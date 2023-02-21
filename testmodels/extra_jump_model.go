@@ -1,4 +1,4 @@
-package model
+package testmodels
 
 type ExtraJumpModel struct {
 	Id         uint        `goleap:"column:id"`

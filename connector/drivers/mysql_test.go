@@ -1,12 +1,13 @@
-package driver
+package drivers
 
 import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/goleap/goleap/connector/config"
-	"github.com/goleap/goleap/helper"
-	"github.com/goleap/goleap/helper/fakesql"
+	"github.com/lab210-dev/dbkit/connector/config"
+	"github.com/lab210-dev/dbkit/mocks"
+	"github.com/lab210-dev/dbkit/mocks/fakesql"
+	"github.com/lab210-dev/dbkit/specs"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )
@@ -17,14 +18,14 @@ type MysqlTestSuite struct {
 	fakeConn    *fakesql.FakeConn
 	fakeStmt    *fakesql.FakeStmt
 	fakeRows    *fakesql.FakeRows
-	fakePayload *helper.FakePayload
+	fakePayload *mocks.FakePayload
 }
 
 func (test *MysqlTestSuite) SetupSuite() {
 	test.fakeDriver = fakesql.NewDriver(test.T())
 
-	RegisteredDriver = map[string]func() Driver{
-		"test": func() Driver {
+	RegisteredDriver = map[string]func() specs.Driver{
+		"test": func() specs.Driver {
 			return new(Mysql)
 		},
 	}
@@ -36,7 +37,7 @@ func (test *MysqlTestSuite) SetupTest() {
 	test.fakeConn = fakesql.NewFakeConn(test.T())
 	test.fakeStmt = fakesql.NewFakeStmt(test.T())
 	test.fakeRows = fakesql.NewFakeRows(test.T())
-	test.fakePayload = helper.NewFakePayload(test.T())
+	test.fakePayload = mocks.NewFakePayload(test.T())
 
 	test.fakeDriver.ExpectedCalls = nil
 	test.fakeDriver.On("Open", ":@tcp(:0)/?parseTime=true&loc=Local").Return(test.fakeConn, nil)
@@ -52,6 +53,10 @@ func (test *MysqlTestSuite) TestSelectErr() {
 	if !test.Empty(err) {
 		return
 	}
+
+	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0)})
+	test.fakePayload.On("Table").Return("test")
+	test.fakePayload.On("Index").Return(0)
 
 	test.fakeConn.On("Prepare", "SELECT `t0`.`id` FROM `test` AS `t0`").Return(nil, errors.New("test")).Once()
 
@@ -93,9 +98,9 @@ func (test *MysqlTestSuite) TestSelectErr() {
 		Table:      "test",
 		Database:   "test",
 		Index:      0,
-		Fields:     []Field{NewField().SetName("id").SetIndex(0)},
-		Where:      []Where{},
-		Join:       []Join{},
+		Fields:     []DriverField{NewField().SetName("id").SetIndex(0)},
+		DriverWhere:      []DriverWhere{},
+		DriverJoin:       []DriverJoin{},
 		ResultType: []any{&n},
 		OnScan: func(result []any) error {
 			n = *result[0].(*int)

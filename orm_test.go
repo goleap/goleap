@@ -2,27 +2,28 @@ package goleap
 
 import (
 	"context"
-	"github.com/goleap/goleap/connector/driver"
-	"github.com/goleap/goleap/helper/model"
+	"github.com/lab210-dev/dbkit/connector/drivers"
+	"github.com/lab210-dev/dbkit/mocks"
+	"github.com/lab210-dev/dbkit/specs"
+	"github.com/lab210-dev/dbkit/testmodels"
 	"github.com/stretchr/testify/mock"
 	"testing"
 
-	"github.com/goleap/goleap/helper"
 	"github.com/stretchr/testify/suite"
 )
 
 type OrmTestSuite struct {
 	suite.Suite
-	fakeConnector *helper.FakeConnector
+	fakeConnector *mocks.FakeConnector
 }
 
 func (test *OrmTestSuite) SetupTest() {
-	test.fakeConnector = helper.NewFakeConnector(test.T())
+	test.fakeConnector = mocks.NewFakeConnector(test.T())
 }
 
 func (test *OrmTestSuite) TestGet() {
 	ctx := context.Background()
-	ormInstance := Use[model.BaseModel](context.Background(), test.fakeConnector)
+	ormInstance := Use[testmodels.BaseModel](context.Background(), test.fakeConnector)
 	if !test.NotEmpty(ormInstance) {
 		return
 	}
@@ -43,9 +44,9 @@ func (test *OrmTestSuite) TestGet() {
 	test.Equal("test", ormInstance.Payload().Database())
 	test.Equal("base", ormInstance.Payload().Table())
 
-	test.Equal([]driver.Field{
-		driver.NewField().SetName("id").SetIndex(0),
-		driver.NewField().SetName("id").SetIndex(351),
+	test.Equal([]specs.DriverField{
+		drivers.NewField().SetName("id").SetIndex(0),
+		drivers.NewField().SetName("id").SetIndex(351),
 	}, ormInstance.Payload().Fields())
 
 	test.Equal(uint(1), baseModel.Id)

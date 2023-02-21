@@ -3,12 +3,11 @@ package goleap
 import (
 	"context"
 	"fmt"
-	"github.com/goleap/goleap/connector"
-	"github.com/goleap/goleap/connector/driver"
-	"github.com/goleap/goleap/schema"
+	"github.com/lab210-dev/dbkit/schema"
+	"github.com/lab210-dev/dbkit/specs"
 )
 
-type Orm[T schema.Model] interface {
+type Orm[T specs.Model] interface {
 	Get(primaryKey any) (T, error)
 	Delete(primaryKey any) error
 
@@ -26,23 +25,23 @@ type Orm[T schema.Model] interface {
 
 	Count() (total int64, err error)
 
-	Payload() driver.Payload
+	Payload() specs.Payload
 }
 
-type orm[T schema.Model] struct {
+type orm[T specs.Model] struct {
 	context.Context
-	connector.Connector
+	specs.Connector
 
 	model  T
-	schema schema.Schema
+	schema specs.Schema
 	fields []string
 
-	focusedSchemaFields      []schema.Field
-	focusedDriverFields      []driver.Field
-	requiredJoins            []driver.Join
+	focusedSchemaFields      []specs.SchemaField
+	focusedDriverFields      []specs.DriverField
+	requiredJoins            []specs.DriverJoin
 	focusedSchemaValueFields []any
 
-	payload driver.Payload
+	payload specs.Payload
 }
 
 func (o *orm[T]) buildFieldsFromSchema() (err error) {
@@ -74,7 +73,7 @@ func (o *orm[T]) getFieldsTypeSchemaToDriver() (fields []any) {
 	return o.focusedSchemaValueFields
 }
 
-func (o *orm[T]) getFocusedDriverFields() []driver.Field {
+func (o *orm[T]) getFocusedDriverFields() []specs.DriverField {
 
 	if len(o.focusedDriverFields) > 0 {
 		return o.focusedDriverFields
@@ -87,7 +86,7 @@ func (o *orm[T]) getFocusedDriverFields() []driver.Field {
 	return o.focusedDriverFields
 }
 
-func (o *orm[T]) getRequiredJoins() []driver.Join {
+func (o *orm[T]) getRequiredJoins() []specs.DriverJoin {
 
 	if len(o.requiredJoins) > 0 {
 		return o.requiredJoins
@@ -100,7 +99,7 @@ func (o *orm[T]) getRequiredJoins() []driver.Join {
 	return o.requiredJoins
 }
 
-func (o *orm[T]) Payload() driver.Payload {
+func (o *orm[T]) Payload() specs.Payload {
 	if o.payload != nil {
 		return o.payload
 	}
@@ -121,7 +120,7 @@ func (o *orm[T]) Get(primaryKeyValue any) (result T, err error) {
 			return
 		}*/
 
-	// var where []driver.Where
+	// var where []driver.DriverWhere
 	//	where = append(where, driver.NewWhere().SetFrom(primaryKeyField.Field()).SetOperator(driver.EqualOperator).SetTo(primaryKeyValue))
 	err = o.buildFieldsFromSchema()
 	if err != nil {
@@ -194,7 +193,7 @@ func (o *orm[T]) Count() (total int64, err error) {
 	panic("implement me")
 }
 
-func Use[T schema.Model](ctx context.Context, connector connector.Connector) Orm[T] {
+func Use[T specs.Model](ctx context.Context, connector specs.Connector) Orm[T] {
 	var model T
 
 	return &orm[T]{

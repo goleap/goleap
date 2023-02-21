@@ -1,42 +1,26 @@
-package driver
+package drivers
 
 import (
-	"context"
 	"database/sql"
 	"database/sql/driver"
 	"errors"
-	"github.com/goleap/goleap/connector/config"
+	"github.com/lab210-dev/dbkit/specs"
 )
 
 type Value driver.Value
 
-var RegisteredDriver = map[string]func() Driver{
-	"Mysql": func() Driver {
+// RegisteredDriver is a map of registered driver, in test mode, this map will be replaced.
+var RegisteredDriver = map[string]func() specs.Driver{
+	"Mysql": func() specs.Driver {
 		return new(Mysql)
 	},
 }
 
-type Payload interface {
-	Table() string
-	Database() string
-	Index() int
-	Fields() []Field
-	Join() []Join
-	Where() []Where
-	Mapping() []any
-	OnScan([]any) error
-}
-
-type Driver interface {
-	New(config config.Config) error
-	Get() *sql.DB
-
-	Select(ctx context.Context, payload Payload) error
-}
-
+// ErrDriverNotFound is an error when the driver is not found.
 var ErrDriverNotFound = errors.New("driver not found")
 
-func Get(driver string) (Driver, error) {
+// Get is a helper function to get the driver.
+func Get(driver string) (specs.Driver, error) {
 	drv, ok := RegisteredDriver[driver]
 	if !ok {
 		return nil, ErrDriverNotFound
@@ -45,6 +29,7 @@ func Get(driver string) (Driver, error) {
 	return drv(), nil
 }
 
+// wrapScan is a helper function to wrap the sql.Rows.Scan() function.
 func wrapScan(rows *sql.Rows, resultType []any, onScan func([]any) error) (err error) {
 	defer rows.Close()
 

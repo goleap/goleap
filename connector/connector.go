@@ -2,29 +2,18 @@ package connector
 
 import (
 	"context"
-	"github.com/goleap/goleap/connector/config"
-	"github.com/goleap/goleap/connector/driver"
+	"github.com/lab210-dev/dbkit/connector/drivers"
+	"github.com/lab210-dev/dbkit/specs"
 )
 
 type connector struct {
-	driver.Driver
+	specs.Driver
 
 	name   string
-	config config.Config
+	config specs.Config
 }
 
-type Connector interface {
-	driver.Driver
-
-	GetCnx(ctx context.Context)
-
-	Config() config.Config
-
-	Name() string
-	SetName(name string) Connector
-}
-
-func New(name string, config config.Config) (Connector, error) {
+func New(name string, config specs.Config) (specs.Connector, error) {
 	connector := new(connector)
 	connector.name = name
 	connector.config = config
@@ -39,7 +28,7 @@ func New(name string, config config.Config) (Connector, error) {
 
 func (c *connector) create() (err error) {
 
-	c.Driver, err = driver.Get(c.Config().Driver())
+	c.Driver, err = drivers.Get(c.Config().Driver())
 	if err != nil {
 		return err
 	}
@@ -47,7 +36,7 @@ func (c *connector) create() (err error) {
 	return c.New(c.Config())
 }
 
-func (c *connector) Config() config.Config {
+func (c *connector) Config() specs.Config {
 	return c.config
 }
 
@@ -55,7 +44,7 @@ func (c *connector) Name() string {
 	return c.name
 }
 
-func (c *connector) SetName(name string) Connector {
+func (c *connector) SetName(name string) specs.Connector {
 	c.name = name
 	return c
 }
