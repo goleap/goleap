@@ -61,6 +61,9 @@ func (test *MysqlTestSuite) TestSelectErr() {
 	test.fakeConn.On("Prepare", "SELECT `t0`.`id` FROM `test` AS `t0`").Return(nil, errors.New("test")).Once()
 
 	err = driver.Select(context.Background(), test.fakePayload)
+	if !test.Empty(err) {
+		return
+	}
 }
 
 /*func (test *MysqlTestSuite) TestSelect() {

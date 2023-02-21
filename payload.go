@@ -7,10 +7,12 @@ import (
 type payload[T specs.Model] struct {
 	*orm[T]
 
-	focusedSchemaFields      []specs.SchemaField
-	focusedDriverFields      []specs.DriverField
-	requiredJoins            []specs.DriverJoin
-	focusedSchemaValueFields []any
+	/*
+		focusedSchemaFields      []specs.SchemaField
+		focusedDriverFields      []specs.DriverField
+		requiredJoins            []specs.DriverJoin
+		focusedSchemaValueFields []any
+	*/
 
 	result []T
 }

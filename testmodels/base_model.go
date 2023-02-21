@@ -13,7 +13,7 @@ type BaseModel struct {
 
 	BadTag string `goleap:"column:bad_tag:bad_tag"`
 
-	private bool
+	// private bool
 }
 
 func (s BaseModel) DatabaseName() string {

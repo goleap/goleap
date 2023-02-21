@@ -97,7 +97,7 @@ func (_m *FakeWhere) To() interface{} {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(interface{})
+			r0 = ret.Get(0)
 		}
 	}
 
