@@ -17,6 +17,9 @@ type BaseModel struct {
 }
 
 func (s *BaseModel) DatabaseName() string {
+	// Only for staticcheck
+	s.private = true
+
 	return "test"
 }
 
