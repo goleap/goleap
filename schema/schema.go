@@ -56,6 +56,7 @@ func New(model specs.Model) specs.Schema {
 
 		if schema.modelValue.IsNil() {
 			schema.modelValue = reflect.New(schema.modelType)
+			schema.Model = schema.modelValue.Interface().(specs.Model)
 		}
 
 		schema.modelValue = schema.modelValue.Elem()

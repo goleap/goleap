@@ -2,6 +2,7 @@ package goleap
 
 import (
 	"github.com/lab210-dev/dbkit/specs"
+	"log"
 )
 
 type payload[T specs.Model] struct {
@@ -18,6 +19,7 @@ type payload[T specs.Model] struct {
 }
 
 func (p *payload[T]) Database() string {
+	log.Print(p.orm.schema)
 	return p.orm.schema.DatabaseName()
 }
 
