@@ -12,11 +12,9 @@ type SchemaField interface {
 	// Tags returns the tags of the field
 	Tags() map[string]string
 	FromSchemaTypeList() []string
-	VisitedMap() map[string]bool
 	RecursiveFullName() string
 	Column() string
 	Index() int
-	Key() string
 
 	Join() []DriverJoin
 	Field() DriverField

@@ -53,6 +53,11 @@ func New(model specs.Model) specs.Schema {
 
 	if schema.modelType.Kind() == reflect.Ptr {
 		schema.modelType = schema.modelType.Elem()
+
+		if schema.modelValue.IsNil() {
+			schema.modelValue = reflect.New(schema.modelType)
+		}
+
 		schema.modelValue = schema.modelValue.Elem()
 	}
 
@@ -62,7 +67,7 @@ func New(model specs.Model) specs.Schema {
 }
 
 func (schema *schema) Get() specs.Model {
-	return schema.modelValue.Interface().(specs.Model)
+	return schema.modelValue.Addr().Interface().(specs.Model)
 }
 
 func (schema *schema) SetIndex(index int) specs.Schema {

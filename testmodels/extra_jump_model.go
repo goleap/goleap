@@ -6,10 +6,10 @@ type ExtraJumpModel struct {
 	Slice      []BaseModel `goleap:"column:slice_id, foreignKey:id"`
 }
 
-func (s ExtraJumpModel) DatabaseName() string {
+func (s *ExtraJumpModel) DatabaseName() string {
 	return "test"
 }
 
-func (s ExtraJumpModel) TableName() string {
+func (s *ExtraJumpModel) TableName() string {
 	return "extra_jump"
 }

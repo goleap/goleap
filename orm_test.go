@@ -23,7 +23,7 @@ func (test *OrmTestSuite) SetupTest() {
 
 func (test *OrmTestSuite) TestGet() {
 	ctx := context.Background()
-	ormInstance := Use[testmodels.BaseModel](context.Background(), test.fakeConnector)
+	ormInstance := Use[*testmodels.BaseModel](context.Background(), test.fakeConnector)
 	if !test.NotEmpty(ormInstance) {
 		return
 	}
@@ -46,7 +46,7 @@ func (test *OrmTestSuite) TestGet() {
 
 	test.Equal([]specs.DriverField{
 		drivers.NewField().SetName("id").SetIndex(0),
-		drivers.NewField().SetName("id").SetIndex(351),
+		drivers.NewField().SetName("id").SetIndex(72),
 	}, ormInstance.Payload().Fields())
 
 	test.Equal(uint(1), baseModel.Id)

@@ -125,14 +125,6 @@ func (field *field) HasEmbeddedSchema() bool {
 	return field.embeddedSchema != nil
 }
 
-func (field *field) VisitedMap() map[string]bool {
-	if field.schema.FromField() == nil {
-		return field.visitedMap
-	}
-
-	return field.schema.FromField().VisitedMap()
-}
-
 func (field *field) SetIsSlice(isSlice bool) {
 	field.isSlice = isSlice
 }
@@ -191,53 +183,13 @@ func (field *field) IsVisited() bool {
 	field.Lock()
 	defer field.Unlock()
 
-	visitedMap := field.VisitedMap()
-
-	return visitedMap[field.Key()]
-}
-
-func (field *field) Visited() {
-	field.Lock()
-	defer field.Unlock()
-
-	visitedMap := field.VisitedMap()
-
-	visitedMap[field.Key()] = true
-}
-
-func (field *field) Key() string {
 	split := field.FromSchemaTypeList()
-	for i := 0; i < len(split); i += 2 {
-		end := i + 2
-		if end > len(split) {
-			end = len(split)
-		}
-		split[i] = strings.Join(split[i:end], ".")
+	countMap := make(map[string]int)
+	for _, v := range split {
+		countMap[v] = countMap[v] + 1
 	}
 
-	unique := make(map[string]bool)
-	for _, word := range split {
-		unique[word] = true
-	}
-
-	schemaListLength := len(unique)
-	key := fmt.Sprintf("%s@%s::%s.%s-%d", field.schema.DatabaseName(), field.schema.TableName(), field.Name(), field.tags["column"], schemaListLength)
-
-	if field.schema.FromField() != nil {
-		key = fmt.Sprintf("%s@%s::%s.%s/%s@%s::%s.%s-%d",
-			field.schema.FromField().Schema().DatabaseName(),
-			field.schema.FromField().Schema().TableName(),
-			field.schema.FromField().Name(),
-			field.schema.FromField().Tags()["column"],
-			field.schema.DatabaseName(),
-			field.schema.TableName(),
-			field.Name(),
-			field.Column(),
-			schemaListLength,
-		)
-	}
-
-	return strings.ToLower(key)
+	return countMap[fmt.Sprintf("%v:%v", field.Schema().ModelOrigin().Type(), field.IsSlice())] > 2
 }
 
 func (field *field) Name() string {
@@ -304,11 +256,11 @@ func (field *field) RevealEmbeddedSchema() specs.SchemaField {
 
 	var model specs.Model
 	var ok bool
-	if model, ok = field.fieldEmbeddedValue.Interface().(specs.Model); !ok {
+	if model, ok = field.fieldEmbeddedValue.Addr().Interface().(specs.Model); !ok {
 		return nil
 	}
 
-	field.Visited()
+	//field.Visited()
 
 	if field.IsSameSchemaFromField() {
 		return nil

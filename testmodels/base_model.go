@@ -16,10 +16,10 @@ type BaseModel struct {
 	// private bool
 }
 
-func (s BaseModel) DatabaseName() string {
+func (s *BaseModel) DatabaseName() string {
 	return "test"
 }
 
-func (s BaseModel) TableName() string {
+func (s *BaseModel) TableName() string {
 	return "base"
 }

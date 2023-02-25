@@ -32,7 +32,7 @@ type orm[T specs.Model] struct {
 	context.Context
 	specs.Connector
 
-	model  T
+	model  *T
 	schema specs.Schema
 	fields []string
 
@@ -200,7 +200,7 @@ func Use[T specs.Model](ctx context.Context, connector specs.Connector) Orm[T] {
 		Context:   ctx,
 		Connector: connector,
 
-		model:  model,
+		model:  &model,
 		schema: schema.New(model).Parse(),
 	}
 }
