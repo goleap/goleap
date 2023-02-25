@@ -238,10 +238,8 @@ func (field *field) RevealEmbeddedSchema() specs.SchemaField {
 	if field.fieldEmbeddedValue.Kind() == reflect.Ptr {
 		if field.fieldEmbeddedValue.IsNil() {
 			field.fieldEmbeddedValue = reflect.New(field.fieldValue.Type().Elem())
-			field.fieldEmbeddedValue = field.fieldEmbeddedValue.Elem()
-		} else {
-			field.fieldEmbeddedValue = field.fieldEmbeddedValue.Elem()
 		}
+		field.fieldEmbeddedValue = field.fieldEmbeddedValue.Elem()
 	}
 
 	if field.fieldEmbeddedValue.Kind() == reflect.Slice {
@@ -259,8 +257,6 @@ func (field *field) RevealEmbeddedSchema() specs.SchemaField {
 	if model, ok = field.fieldEmbeddedValue.Addr().Interface().(specs.Model); !ok {
 		return nil
 	}
-
-	//field.Visited()
 
 	if field.IsSameSchemaFromField() {
 		return nil

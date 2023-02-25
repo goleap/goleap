@@ -44,6 +44,36 @@ func (test *SchemaTestSuite) TestFieldInfo() {
 	test.Equal(id.Field(), drivers.NewField().SetIndex(0).SetName("id"))
 }
 
+func (test *SchemaTestSuite) TestGet() {
+	model := &testmodels.BaseModel{}
+	schema := New(model).Parse()
+
+	schema.Get()
+
+	test.Equal(schema.Get(), model)
+}
+
+func (test *SchemaTestSuite) TestCopy() {
+	model := &testmodels.BaseModel{}
+	schema := New(model).Parse()
+	schema.GetFieldByName("Id").Set(uint(1))
+
+	copyOfSchema := schema.Copy()
+	log.Print(copyOfSchema.GetFieldByName("Id").Get())
+}
+
+func (test *SchemaTestSuite) TestStruct() {
+	schema := New(testmodels.ExtraModel{}).Parse()
+	test.Equal("extra", schema.TableName())
+	test.Equal("test", schema.DatabaseName())
+	test.Equal(268, len(schema.Fields()))
+}
+
+func (test *SchemaTestSuite) TestParseNilPtr() {
+	var T *testmodels.BaseModel
+	New(T).Parse()
+}
+
 func (test *SchemaTestSuite) TestSet() {
 	model := &testmodels.BaseModel{}
 	schema := New(model).Parse()

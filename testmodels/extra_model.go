@@ -6,10 +6,10 @@ type ExtraModel struct {
 	Id        uint           `goleap:"column:id, primaryKey"`
 }
 
-func (s *ExtraModel) DatabaseName() string {
+func (s ExtraModel) DatabaseName() string {
 	return "test"
 }
 
-func (s *ExtraModel) TableName() string {
+func (s ExtraModel) TableName() string {
 	return "extra"
 }
