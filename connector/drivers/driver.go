@@ -11,7 +11,7 @@ type Value driver.Value
 
 // RegisteredDriver is a map of registered driver, in test mode, this map will be replaced.
 var RegisteredDriver = map[string]func() specs.Driver{
-	"Mysql": func() specs.Driver {
+	"mysql": func() specs.Driver {
 		return new(Mysql)
 	},
 }

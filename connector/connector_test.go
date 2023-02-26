@@ -1,6 +1,7 @@
 package connector
 
 import (
+	"context"
 	"database/sql"
 	"github.com/lab210-dev/dbkit/connector/config"
 	"github.com/lab210-dev/dbkit/connector/drivers"
@@ -12,11 +13,13 @@ import (
 
 type ConnectorTestSuite struct {
 	suite.Suite
+	context.Context
 	fakeDriver *fakesql.FakeDriver
 }
 
 func (test *ConnectorTestSuite) SetupTest() {
 	test.fakeDriver = fakesql.NewDriver(test.T())
+	test.Context = context.Background()
 }
 
 func (test *ConnectorTestSuite) SetupSuite() {

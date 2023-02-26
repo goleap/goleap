@@ -3,12 +3,16 @@ package drivers
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"github.com/lab210-dev/dbkit/connector/config"
 	"github.com/lab210-dev/dbkit/mocks"
 	"github.com/lab210-dev/dbkit/mocks/fakesql"
 	"github.com/lab210-dev/dbkit/specs"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"io"
+	"log"
 	"testing"
 )
 
@@ -43,6 +47,30 @@ func (test *MysqlTestSuite) SetupTest() {
 	test.fakeDriver.On("Open", ":@tcp(:0)/?parseTime=true&loc=Local").Return(test.fakeConn, nil)
 }
 
+func (test *MysqlTestSuite) TestNew() {
+	driver, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = driver.New(config.New().SetDriver(""))
+	test.NotEmpty(err)
+}
+
+func (test *MysqlTestSuite) TestCreate() {
+	driver, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = driver.New(config.New().SetDriver("test"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.NotEmpty(driver.Get())
+}
+
 func (test *MysqlTestSuite) TestSelectErr() {
 	driver, err := Get("test")
 	if !test.Empty(err) {
@@ -54,37 +82,48 @@ func (test *MysqlTestSuite) TestSelectErr() {
 		return
 	}
 
-	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0)})
+	test.fakePayload.On("Fields").Return([]specs.DriverField{
+		NewField().SetName("id").SetIndex(0),
+		NewField().SetName("label").SetIndex(0),
+	})
 	test.fakePayload.On("Table").Return("test")
 	test.fakePayload.On("Index").Return(0)
 
-	test.fakeConn.On("Prepare", "SELECT `t0`.`id` FROM `test` AS `t0`").Return(nil, errors.New("test")).Once()
+	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `test` AS `t0`").Return(nil, errors.New("test")).Once()
 
 	err = driver.Select(context.Background(), test.fakePayload)
 	test.Error(err)
 }
 
-/*func (test *MysqlTestSuite) TestSelect() {
-	driver, err := Get("test")
+func (test *MysqlTestSuite) TestSelect() {
+	drv, err := Get("test")
 	if !test.Empty(err) {
 		return
 	}
 
-	err = driver.New(config.New().SetDriver("test"))
+	err = drv.New(config.New().SetDriver("test"))
 	if !test.Empty(err) {
 		return
 	}
+
+	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0)})
+	test.fakePayload.On("Table").Return("test")
+	test.fakePayload.On("Index").Return(0)
 
 	test.fakeConn.On("Prepare", "SELECT `t0`.`id` FROM `test` AS `t0`").Return(test.fakeStmt, nil).Once()
 	test.fakeStmt.On("NumInput").Return(0)
 	test.fakeStmt.On("Close").Return(nil)
-	test.fakeStmt.On("Query", []driverSql.Value{}).Return(test.fakeRows, nil)
 	test.fakeRows.On("Columns").Return([]string{"id"})
 	test.fakeRows.On("Close").Return(nil)
 
+	mapping := []any{new(uint64)}
+	test.fakePayload.On("Mapping").Return(mapping)
+
+	test.fakePayload.On("OnScan", mapping).Return(nil)
+
 	var line = 0
-	test.fakeRows.On("Next", mock.Anything).Return(func(dest []driverSql.Value) error {
-		dest[0] = 100
+	test.fakeRows.On("Next", mock.Anything).Return(func(dest []driver.Value) error {
+		dest[0] = 1
 
 		if line < 1 {
 			line++
@@ -94,27 +133,11 @@ func (test *MysqlTestSuite) TestSelectErr() {
 		return io.EOF
 	})
 
-	n := 0
-	err = driver.Select(context.Background(), Payload{
-		Table:      "test",
-		Database:   "test",
-		Index:      0,
-		Fields:     []DriverField{NewField().SetName("id").SetIndex(0)},
-		DriverWhere:      []DriverWhere{},
-		DriverJoin:       []DriverJoin{},
-		ResultType: []any{&n},
-		OnScan: func(result []any) error {
-			n = *result[0].(*int)
-			return nil
-		},
-	})
+	test.fakeStmt.On("Query", []driver.Value{}).Return(test.fakeRows, nil)
 
-	if !test.Empty(err) {
-		return
-	}
-
-	test.Equal(0, n)
-}*/
+	err = drv.Select(context.Background(), test.fakePayload)
+	log.Print(err)
+}
 
 func TestMysqlTestSuite(t *testing.T) {
 	suite.Run(t, new(MysqlTestSuite))

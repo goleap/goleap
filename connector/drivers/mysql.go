@@ -30,11 +30,6 @@ func (m *Mysql) New(config specs.Config) (err error) {
 	return
 }
 
-func (m *Mysql) Create() {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (m *Mysql) buildField(fields []specs.DriverField) (result string) {
 	for i, field := range fields {
 		if i > 0 {
@@ -56,21 +51,6 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 	}
 
 	return wrapScan(rows, payload.Mapping(), payload.OnScan)
-}
-
-func (m *Mysql) Update() {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (m *Mysql) Delete() {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (m *Mysql) Count() {
-	//TODO implement me
-	panic("implement me")
 }
 
 func (m *Mysql) Get() *sql.DB {

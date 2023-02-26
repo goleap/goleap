@@ -1,13 +1,9 @@
 package specs
 
-import (
-	"context"
-)
-
 type Connector interface {
 	Driver
 
-	GetCnx(ctx context.Context)
+	//GetCnx(ctx context.Context)
 
 	Config() Config
 

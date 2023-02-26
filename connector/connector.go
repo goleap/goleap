@@ -1,7 +1,6 @@
 package connector
 
 import (
-	"context"
 	"github.com/lab210-dev/dbkit/connector/drivers"
 	"github.com/lab210-dev/dbkit/specs"
 )
@@ -47,8 +46,4 @@ func (c *connector) Name() string {
 func (c *connector) SetName(name string) specs.Connector {
 	c.name = name
 	return c
-}
-
-func (c *connector) GetCnx(ctx context.Context) {
-
 }
