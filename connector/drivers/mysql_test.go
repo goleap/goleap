@@ -95,6 +95,142 @@ func (test *MysqlTestSuite) TestSelectErr() {
 	test.Error(err)
 }
 
+func (test *MysqlTestSuite) TestSimpleWhere() {
+	driver, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = driver.New(config.New().SetDriver("test"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.fakePayload.On("Fields").Return([]specs.DriverField{
+		NewField().SetName("id").SetIndex(0),
+		NewField().SetName("label").SetIndex(0),
+	})
+	test.fakePayload.On("Where").Return([]specs.DriverWhere{
+		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(EqualOperator).SetTo(1),
+	})
+	test.fakePayload.On("Table").Return("test")
+	test.fakePayload.On("Index").Return(0)
+
+	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `test` AS `t0` WHERE `t0`.`id` = ?").Return(nil, errors.New("test")).Once()
+
+	err = driver.Select(context.Background(), test.fakePayload)
+	test.Error(err)
+}
+
+func (test *MysqlTestSuite) TestSimpleWhereWithBadOperator() {
+	driver, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = driver.New(config.New().SetDriver("test"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.fakePayload.On("Fields").Return([]specs.DriverField{
+		NewField().SetName("id").SetIndex(0),
+		NewField().SetName("label").SetIndex(0),
+	})
+	test.fakePayload.On("Where").Return([]specs.DriverWhere{
+		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator("").SetTo(1),
+	})
+	test.fakePayload.On("Table").Return("test")
+	test.fakePayload.On("Index").Return(0)
+
+	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `test` AS `t0`").Return(nil, errors.New("test")).Once()
+
+	err = driver.Select(context.Background(), test.fakePayload)
+	test.Error(err)
+}
+
+func (test *MysqlTestSuite) TestSimpleWhereIsNullOperator() {
+	driver, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = driver.New(config.New().SetDriver("test"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.fakePayload.On("Fields").Return([]specs.DriverField{
+		NewField().SetName("id").SetIndex(0),
+		NewField().SetName("label").SetIndex(0),
+	})
+	test.fakePayload.On("Where").Return([]specs.DriverWhere{
+		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(IsNullOperator),
+	})
+	test.fakePayload.On("Table").Return("test")
+	test.fakePayload.On("Index").Return(0)
+
+	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `test` AS `t0` WHERE `t0`.`id` IS NULL").Return(nil, errors.New("test")).Once()
+
+	err = driver.Select(context.Background(), test.fakePayload)
+	test.Error(err)
+}
+
+func (test *MysqlTestSuite) TestSimpleWhereInOperator() {
+	driver, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = driver.New(config.New().SetDriver("test"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.fakePayload.On("Fields").Return([]specs.DriverField{
+		NewField().SetName("id").SetIndex(0),
+		NewField().SetName("label").SetIndex(0),
+	})
+	test.fakePayload.On("Where").Return([]specs.DriverWhere{
+		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(InOperator).SetTo([]int{1, 2}),
+	})
+	test.fakePayload.On("Table").Return("test")
+	test.fakePayload.On("Index").Return(0)
+
+	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `test` AS `t0` WHERE `t0`.`id` IN (?)").Return(nil, errors.New("test")).Once()
+
+	err = driver.Select(context.Background(), test.fakePayload)
+	test.Error(err)
+}
+
+func (test *MysqlTestSuite) TestMultiSimpleWhere() {
+	driver, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = driver.New(config.New().SetDriver("test"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.fakePayload.On("Fields").Return([]specs.DriverField{
+		NewField().SetName("id").SetIndex(0),
+		NewField().SetName("label").SetIndex(0),
+	})
+	test.fakePayload.On("Where").Return([]specs.DriverWhere{
+		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(EqualOperator).SetTo(1),
+		NewWhere().SetFrom(NewField().SetName("label").SetIndex(0)).SetOperator(EqualOperator).SetTo("test"),
+	})
+	test.fakePayload.On("Table").Return("test")
+	test.fakePayload.On("Index").Return(0)
+
+	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `test` AS `t0` WHERE `t0`.`id` = ? AND `t0`.`label` = ?").Return(nil, errors.New("test")).Once()
+
+	err = driver.Select(context.Background(), test.fakePayload)
+	test.Error(err)
+}
+
 func (test *MysqlTestSuite) TestSelect() {
 	drv, err := Get("test")
 	if !test.Empty(err) {

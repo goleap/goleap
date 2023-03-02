@@ -44,11 +44,18 @@ func (m *Mysql) buildField(fields []specs.DriverField) (result string) {
 
 func (m *Mysql) buildWhere(fields []specs.DriverWhere) (result string, args []any) {
 	for i, field := range fields {
-		if i > 0 {
-			result += " AND"
+
+		operator := m.buildOperator(field)
+		// This case is very strange because it does not generate an error.
+		if operator == "" {
+			continue
 		}
 
-		result += fmt.Sprintf("`t%d`.`%s` %s", field.From().Index(), field.From().Name(), m.buildOperator(field))
+		if i > 0 {
+			result += " AND "
+		}
+
+		result += fmt.Sprintf("`t%d`.`%s` %s", field.From().Index(), field.From().Name(), operator)
 
 		if field.To() != nil {
 			args = append(args, field.To())
@@ -56,7 +63,7 @@ func (m *Mysql) buildWhere(fields []specs.DriverWhere) (result string, args []an
 	}
 
 	if result != "" {
-		result = fmt.Sprintf("WHERE %s", result)
+		result = fmt.Sprintf(" WHERE %s", result)
 	}
 
 	return
@@ -67,7 +74,7 @@ func (m *Mysql) buildOperator(field specs.DriverWhere) string {
 	case EqualOperator, NotEqualOperator:
 		return fmt.Sprintf("%s ?", field.Operator())
 	case InOperator, NotInOperator:
-		return fmt.Sprintf("%s(?)", field.Operator())
+		return fmt.Sprintf("%s (?)", field.Operator())
 	case IsNullOperator, IsNotNullOperation:
 		return field.Operator()
 	}
@@ -76,7 +83,7 @@ func (m *Mysql) buildOperator(field specs.DriverWhere) string {
 
 func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 	buildWhere, _ := m.buildWhere(payload.Where())
-	query := fmt.Sprintf("SELECT %s FROM `%s` AS `t%d%s`", m.buildField(payload.Fields()), payload.Table(), payload.Index(), buildWhere)
+	query := fmt.Sprintf("SELECT %s FROM `%s` AS `t%d`%s", m.buildField(payload.Fields()), payload.Table(), payload.Index(), buildWhere)
 
 	rows, err := m.db.QueryContext(ctx, query)
 	if err != nil {
