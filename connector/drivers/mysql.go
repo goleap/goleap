@@ -69,7 +69,7 @@ func (m *Mysql) buildOperator(field specs.DriverWhere) string {
 	case InOperator, NotInOperator:
 		return fmt.Sprintf("%s(?)", field.Operator())
 	case IsNullOperator, IsNotNullOperation:
-		return fmt.Sprintf("%s", field.Operator())
+		return field.Operator()
 	}
 	return ""
 }
