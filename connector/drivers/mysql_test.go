@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"io"
-	"log"
 	"testing"
 )
 
@@ -86,6 +85,7 @@ func (test *MysqlTestSuite) TestSelectErr() {
 		NewField().SetName("id").SetIndex(0),
 		NewField().SetName("label").SetIndex(0),
 	})
+	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Table").Return("test")
 	test.fakePayload.On("Index").Return(0)
 
@@ -107,6 +107,7 @@ func (test *MysqlTestSuite) TestSelect() {
 	}
 
 	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0)})
+	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Table").Return("test")
 	test.fakePayload.On("Index").Return(0)
 
@@ -136,7 +137,141 @@ func (test *MysqlTestSuite) TestSelect() {
 	test.fakeStmt.On("Query", []driver.Value{}).Return(test.fakeRows, nil)
 
 	err = drv.Select(context.Background(), test.fakePayload)
-	log.Print(err)
+	test.Empty(err)
+}
+
+func (test *MysqlTestSuite) TestSelectWithNativeScanErr() {
+	drv, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = drv.New(config.New().SetDriver("test"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0)})
+	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
+	test.fakePayload.On("Table").Return("test")
+	test.fakePayload.On("Index").Return(0)
+
+	test.fakeConn.On("Prepare", "SELECT `t0`.`id` FROM `test` AS `t0`").Return(test.fakeStmt, nil).Once()
+	test.fakeStmt.On("NumInput").Return(0)
+	test.fakeStmt.On("Close").Return(nil)
+	test.fakeRows.On("Columns").Return([]string{"id"})
+	test.fakeRows.On("Close").Return(nil)
+
+	mapping := []any{new(uint64)}
+	test.fakePayload.On("Mapping").Return(mapping)
+
+	//test.fakePayload.On("OnScan", mapping).Return(errors.New("test"))
+	var line = 0
+	test.fakeRows.On("Next", mock.Anything).Return(func(dest []driver.Value) error {
+		dest[0] = "test"
+
+		if line < 1 {
+			line++
+			return nil
+		}
+
+		return io.EOF
+	})
+
+	test.fakeStmt.On("Query", []driver.Value{}).Return(test.fakeRows, nil)
+
+	err = drv.Select(context.Background(), test.fakePayload)
+	test.Error(err)
+}
+
+func (test *MysqlTestSuite) TestSelectWithNativeWrapScanErr() {
+	drv, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = drv.New(config.New().SetDriver("test"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0)})
+	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
+	test.fakePayload.On("Table").Return("test")
+	test.fakePayload.On("Index").Return(0)
+
+	test.fakeConn.On("Prepare", "SELECT `t0`.`id` FROM `test` AS `t0`").Return(test.fakeStmt, nil).Once()
+	test.fakeStmt.On("NumInput").Return(0)
+	test.fakeStmt.On("Close").Return(nil)
+	test.fakeRows.On("Columns").Return([]string{"id"})
+	test.fakeRows.On("Close").Return(nil)
+
+	mapping := []any{new(uint64)}
+	test.fakePayload.On("Mapping").Return(mapping)
+
+	test.fakeStmt.On("Query", []driver.Value{}).Return(test.fakeRows, nil)
+
+	var line = 0
+	test.fakeRows.On("Next", mock.Anything).Return(func(dest []driver.Value) error {
+		dest[0] = 1
+
+		if line < 1 {
+			line++
+			return nil
+		}
+
+		return io.EOF
+	})
+
+	test.fakePayload.On("OnScan", mapping).Return(errors.New("test"))
+
+	err = drv.Select(context.Background(), test.fakePayload)
+	test.Error(err)
+}
+
+func (test *MysqlTestSuite) TestSelectWithWhere() {
+	drv, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = drv.New(config.New().SetDriver("test"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0)})
+	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
+	test.fakePayload.On("Table").Return("test")
+	test.fakePayload.On("Index").Return(0)
+
+	test.fakeConn.On("Prepare", "SELECT `t0`.`id` FROM `test` AS `t0`").Return(test.fakeStmt, nil).Once()
+	test.fakeStmt.On("NumInput").Return(0)
+	test.fakeStmt.On("Close").Return(nil)
+	test.fakeRows.On("Columns").Return([]string{"id"})
+	test.fakeRows.On("Close").Return(nil)
+
+	mapping := []any{new(uint64)}
+	test.fakePayload.On("Mapping").Return(mapping)
+
+	test.fakePayload.On("OnScan", mapping).Return(nil)
+
+	var line = 0
+	test.fakeRows.On("Next", mock.Anything).Return(func(dest []driver.Value) error {
+		dest[0] = 1
+
+		if line < 1 {
+			line++
+			return nil
+		}
+
+		return io.EOF
+	})
+
+	test.fakeStmt.On("Query", []driver.Value{}).Return(test.fakeRows, nil)
+
+	err = drv.Select(context.Background(), test.fakePayload)
+	test.Empty(err)
 }
 
 func TestMysqlTestSuite(t *testing.T) {

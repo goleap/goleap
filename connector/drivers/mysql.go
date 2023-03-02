@@ -42,8 +42,41 @@ func (m *Mysql) buildField(fields []specs.DriverField) (result string) {
 	return result
 }
 
+func (m *Mysql) buildWhere(fields []specs.DriverWhere) (result string, args []any) {
+	for i, field := range fields {
+		if i > 0 {
+			result += " AND"
+		}
+
+		result += fmt.Sprintf("`t%d`.`%s` %s", field.From().Index(), field.From().Name(), m.buildOperator(field))
+
+		if field.To() != nil {
+			args = append(args, field.To())
+		}
+	}
+
+	if result != "" {
+		result = fmt.Sprintf("WHERE %s", result)
+	}
+
+	return
+}
+
+func (m *Mysql) buildOperator(field specs.DriverWhere) string {
+	switch field.Operator() {
+	case EqualOperator, NotEqualOperator:
+		return fmt.Sprintf("%s ?", field.Operator())
+	case InOperator, NotInOperator:
+		return fmt.Sprintf("%s(?)", field.Operator())
+	case IsNullOperator, IsNotNullOperation:
+		return fmt.Sprintf("%s", field.Operator())
+	}
+	return ""
+}
+
 func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
-	query := fmt.Sprintf("SELECT %s FROM `%s` AS `t%d`", m.buildField(payload.Fields()), payload.Table(), payload.Index())
+	buildWhere, _ := m.buildWhere(payload.Where())
+	query := fmt.Sprintf("SELECT %s FROM `%s` AS `t%d%s`", m.buildField(payload.Fields()), payload.Table(), payload.Index(), buildWhere)
 
 	rows, err := m.db.QueryContext(ctx, query)
 	if err != nil {
