@@ -1,4 +1,4 @@
-package goleap
+package dbkit
 
 import (
 	"context"

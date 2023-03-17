@@ -47,36 +47,36 @@ func (test *MysqlTestSuite) SetupTest() {
 }
 
 func (test *MysqlTestSuite) TestNew() {
-	driver, err := Get("test")
+	drv, err := Get("test")
 	if !test.Empty(err) {
 		return
 	}
 
-	err = driver.New(config.New().SetDriver(""))
+	err = drv.New(config.New().SetDriver(""))
 	test.NotEmpty(err)
 }
 
 func (test *MysqlTestSuite) TestCreate() {
-	driver, err := Get("test")
+	drv, err := Get("test")
 	if !test.Empty(err) {
 		return
 	}
 
-	err = driver.New(config.New().SetDriver("test"))
+	err = drv.New(config.New().SetDriver("test"))
 	if !test.Empty(err) {
 		return
 	}
 
-	test.NotEmpty(driver.Get())
+	test.NotEmpty(drv.Get())
 }
 
 func (test *MysqlTestSuite) TestSelectErr() {
-	driver, err := Get("test")
+	drv, err := Get("test")
 	if !test.Empty(err) {
 		return
 	}
 
-	err = driver.New(config.New().SetDriver("test"))
+	err = drv.New(config.New().SetDriver("test"))
 	if !test.Empty(err) {
 		return
 	}
@@ -91,17 +91,17 @@ func (test *MysqlTestSuite) TestSelectErr() {
 
 	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `test` AS `t0`").Return(nil, errors.New("test")).Once()
 
-	err = driver.Select(context.Background(), test.fakePayload)
+	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)
 }
 
 func (test *MysqlTestSuite) TestSimpleWhere() {
-	driver, err := Get("test")
+	drv, err := Get("test")
 	if !test.Empty(err) {
 		return
 	}
 
-	err = driver.New(config.New().SetDriver("test"))
+	err = drv.New(config.New().SetDriver("test"))
 	if !test.Empty(err) {
 		return
 	}
@@ -118,17 +118,17 @@ func (test *MysqlTestSuite) TestSimpleWhere() {
 
 	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `test` AS `t0` WHERE `t0`.`id` = ?").Return(nil, errors.New("test")).Once()
 
-	err = driver.Select(context.Background(), test.fakePayload)
+	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)
 }
 
 func (test *MysqlTestSuite) TestSimpleWhereWithBadOperator() {
-	driver, err := Get("test")
+	drv, err := Get("test")
 	if !test.Empty(err) {
 		return
 	}
 
-	err = driver.New(config.New().SetDriver("test"))
+	err = drv.New(config.New().SetDriver("test"))
 	if !test.Empty(err) {
 		return
 	}
@@ -145,17 +145,17 @@ func (test *MysqlTestSuite) TestSimpleWhereWithBadOperator() {
 
 	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `test` AS `t0`").Return(nil, errors.New("test")).Once()
 
-	err = driver.Select(context.Background(), test.fakePayload)
+	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)
 }
 
 func (test *MysqlTestSuite) TestSimpleWhereIsNullOperator() {
-	driver, err := Get("test")
+	drv, err := Get("test")
 	if !test.Empty(err) {
 		return
 	}
 
-	err = driver.New(config.New().SetDriver("test"))
+	err = drv.New(config.New().SetDriver("test"))
 	if !test.Empty(err) {
 		return
 	}
@@ -172,17 +172,17 @@ func (test *MysqlTestSuite) TestSimpleWhereIsNullOperator() {
 
 	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `test` AS `t0` WHERE `t0`.`id` IS NULL").Return(nil, errors.New("test")).Once()
 
-	err = driver.Select(context.Background(), test.fakePayload)
+	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)
 }
 
 func (test *MysqlTestSuite) TestSimpleWhereInOperator() {
-	driver, err := Get("test")
+	drv, err := Get("test")
 	if !test.Empty(err) {
 		return
 	}
 
-	err = driver.New(config.New().SetDriver("test"))
+	err = drv.New(config.New().SetDriver("test"))
 	if !test.Empty(err) {
 		return
 	}
@@ -199,17 +199,17 @@ func (test *MysqlTestSuite) TestSimpleWhereInOperator() {
 
 	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `test` AS `t0` WHERE `t0`.`id` IN (?)").Return(nil, errors.New("test")).Once()
 
-	err = driver.Select(context.Background(), test.fakePayload)
+	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)
 }
 
 func (test *MysqlTestSuite) TestMultiSimpleWhere() {
-	driver, err := Get("test")
+	drv, err := Get("test")
 	if !test.Empty(err) {
 		return
 	}
 
-	err = driver.New(config.New().SetDriver("test"))
+	err = drv.New(config.New().SetDriver("test"))
 	if !test.Empty(err) {
 		return
 	}
@@ -227,7 +227,7 @@ func (test *MysqlTestSuite) TestMultiSimpleWhere() {
 
 	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `test` AS `t0` WHERE `t0`.`id` = ? AND `t0`.`label` = ?").Return(nil, errors.New("test")).Once()
 
-	err = driver.Select(context.Background(), test.fakePayload)
+	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)
 }
 
@@ -301,7 +301,6 @@ func (test *MysqlTestSuite) TestSelectWithNativeScanErr() {
 	mapping := []any{new(uint64)}
 	test.fakePayload.On("Mapping").Return(mapping)
 
-	//test.fakePayload.On("OnScan", mapping).Return(errors.New("test"))
 	var line = 0
 	test.fakeRows.On("Next", mock.Anything).Return(func(dest []driver.Value) error {
 		dest[0] = "test"

@@ -1,4 +1,4 @@
-package goleap
+package dbkit
 
 type FieldNotFoundError struct {
 	message string

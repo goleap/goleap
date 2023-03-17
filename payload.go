@@ -1,25 +1,15 @@
-package goleap
+package dbkit
 
 import (
 	"github.com/lab210-dev/dbkit/specs"
-	"log"
 )
 
 type payload[T specs.Model] struct {
 	*orm[T]
-
-	/*
-		focusedSchemaFields      []specs.SchemaField
-		focusedDriverFields      []specs.DriverField
-		requiredJoins            []specs.DriverJoin
-		focusedSchemaValueFields []any
-	*/
-
 	result []T
 }
 
 func (p *payload[T]) Database() string {
-	log.Print(p.orm.schema)
 	return p.orm.schema.DatabaseName()
 }
 
