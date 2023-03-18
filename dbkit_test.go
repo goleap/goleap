@@ -28,8 +28,10 @@ func (test *OrmTestSuite) TestGet() {
 		return
 	}
 
+	Id := uint(1)
+	ExtraId := uint(2)
 	test.fakeConnector.On("Select", ctx, ormInstance.Payload()).Run(func(args mock.Arguments) {
-		err := ormInstance.Payload().OnScan([]any{uint(1), uint(2)})
+		err := ormInstance.Payload().OnScan([]any{&Id, &ExtraId})
 		if !test.Empty(err) {
 			return
 		}

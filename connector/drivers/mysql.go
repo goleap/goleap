@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/lab210-dev/dbkit/connector/drivers/operators"
 	"github.com/lab210-dev/dbkit/specs"
+	log "github.com/sirupsen/logrus"
 )
 
 type Mysql struct {
@@ -72,21 +74,27 @@ func (m *Mysql) buildWhere(fields []specs.DriverWhere) (result string, args []an
 
 func (m *Mysql) buildOperator(field specs.DriverWhere) string {
 	switch field.Operator() {
-	case EqualOperator, NotEqualOperator:
+	case operators.Equal, operators.NotEqual:
 		return fmt.Sprintf("%s ?", field.Operator())
-	case InOperator, NotInOperator:
+	case operators.In, operators.NotIn:
 		return fmt.Sprintf("%s (?)", field.Operator())
-	case IsNullOperator, IsNotNullOperation:
+	case operators.IsNull, operators.IsNotNull:
 		return field.Operator()
 	}
 	return ""
 }
 
 func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
-	buildWhere, _ := m.buildWhere(payload.Where())
+	buildWhere, args := m.buildWhere(payload.Where())
 	query := fmt.Sprintf("SELECT %s FROM `%s` AS `t%d`%s", m.buildField(payload.Fields()), payload.Table(), payload.Index(), buildWhere)
 
-	rows, err := m.db.QueryContext(ctx, query)
+	log.WithFields(log.Fields{
+		"type":  "select",
+		"query": query,
+		"args":  args,
+	}).Debug("Execute: Select()")
+
+	rows, err := m.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return
 	}

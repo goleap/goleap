@@ -78,7 +78,7 @@ func (field *field) Get() any {
 }
 
 func (field *field) Set(value any) {
-	field.fieldValue.Set(reflect.ValueOf(value))
+	field.fieldValue.Set(reflect.ValueOf(value).Elem())
 
 	field.Init()
 }
@@ -160,7 +160,7 @@ func (schema *schema) parseField(index int) specs.SchemaField {
 
 func (field *field) ParseTags() {
 	field.tags = make(map[string]string)
-	// TODO: add support to client choice of tag name
+	// TODO (Lab210-dev) : add support to client choice of tag name
 	tags := field.tag.Get("goleap")
 
 	for _, tag := range strings.Split(tags, ",") {
@@ -209,11 +209,11 @@ func (field *field) IsPrimaryKey() bool {
 }
 
 func (field *field) Field() specs.DriverField {
-	return drivers.NewField().SetName(field.Column()).SetIndex(field.Index())
+	return drivers.NewField().SetName(field.Column()).SetIndex(field.Index()).SetNameInSchema(field.RecursiveFullName())
 }
 
 func (field *field) RecursiveFullName() string {
-	// TODO maybe try to simplify this
+	// TODO (Lab210-dev) : maybe try to simplify this
 	if field.recursiveFullName != "" {
 		return field.recursiveFullName
 	}

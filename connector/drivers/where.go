@@ -2,15 +2,6 @@ package drivers
 
 import "github.com/lab210-dev/dbkit/specs"
 
-var (
-	EqualOperator      = "="
-	NotEqualOperator   = "!="
-	InOperator         = "IN"
-	NotInOperator      = "NOT IN"
-	IsNullOperator     = "IS NULL"
-	IsNotNullOperation = "IS NOT NULL"
-)
-
 type where struct {
 	from     specs.DriverField
 	operator string

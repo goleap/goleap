@@ -3,8 +3,18 @@ package drivers
 import "github.com/lab210-dev/dbkit/specs"
 
 type field struct {
-	index int
-	name  string
+	index        int
+	name         string
+	nameInSchema string
+}
+
+func (f *field) NameInSchema() string {
+	return f.nameInSchema
+}
+
+func (f *field) SetNameInSchema(nameInSchema string) specs.DriverField {
+	f.nameInSchema = nameInSchema
+	return f
 }
 
 func (f *field) Index() int {

@@ -10,3 +10,8 @@ type Payload interface {
 	Mapping() []any
 	OnScan([]any) error
 }
+
+type PayloadAugmented[T Model] interface {
+	Payload
+	Result() []T
+}

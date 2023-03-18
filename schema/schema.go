@@ -163,7 +163,7 @@ func (schema *schema) Parse() specs.Schema {
 		schema.AddField(field)
 	}
 
-	// TODO use a setter to set this value
+	// TODO (Lab210-dev) : use a setter to set this value
 	schema.parsed = true
 
 	return schema
