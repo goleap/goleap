@@ -1,7 +1,7 @@
-package model
+package models
 
 type UserModel struct {
-	Id uint `goleap:"column:id, primaryKey"`
+	Id uint `dbKit:"column:id, primaryKey"`
 }
 
 func (s *UserModel) DatabaseName() string {

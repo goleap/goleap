@@ -161,7 +161,7 @@ func (schema *schema) parseField(index int) specs.SchemaField {
 func (field *field) ParseTags() {
 	field.tags = make(map[string]string)
 	// TODO (Lab210-dev) : add support to client choice of tag name
-	tags := field.tag.Get("goleap")
+	tags := field.tag.Get("dbKit")
 
 	for _, tag := range strings.Split(tags, ",") {
 		tag = strings.TrimSpace(tag)

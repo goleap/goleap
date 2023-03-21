@@ -3,7 +3,7 @@ package schema
 import (
 	"github.com/lab210-dev/dbkit/connector/drivers"
 	"github.com/lab210-dev/dbkit/specs"
-	"github.com/lab210-dev/dbkit/testmodels"
+	"github.com/lab210-dev/dbkit/tests/models"
 	"github.com/stretchr/testify/suite"
 	"log"
 	"testing"
@@ -18,7 +18,7 @@ func (test *SchemaTestSuite) SetupTest() {
 }
 
 func (test *SchemaTestSuite) TestValidateStruct() {
-	model := &testmodels.BaseModel{}
+	model := &models.BaseModel{}
 	schema := New(model).Parse()
 
 	test.Equal("test", schema.DatabaseName())
@@ -34,18 +34,18 @@ func (test *SchemaTestSuite) TestValidateStruct() {
 }
 
 func (test *SchemaTestSuite) TestFieldInfo() {
-	model := &testmodels.BaseModel{}
+	model := &models.BaseModel{}
 	schema := New(model).Parse()
 
 	id := schema.GetFieldByName("Id")
 	test.Equal(id.Column(), "id")
 	test.Equal(id.Index(), 0)
 
-	test.Equal(id.Field(), drivers.NewField().SetIndex(0).SetName("id"))
+	test.Equal(id.Field(), drivers.NewField().SetIndex(0).SetName("id").SetNameInSchema("Id"))
 }
 
 func (test *SchemaTestSuite) TestGet() {
-	model := &testmodels.BaseModel{}
+	model := &models.BaseModel{}
 	schema := New(model).Parse()
 
 	schema.Get()
@@ -54,34 +54,37 @@ func (test *SchemaTestSuite) TestGet() {
 }
 
 func (test *SchemaTestSuite) TestCopy() {
-	model := &testmodels.BaseModel{}
+	model := &models.BaseModel{}
 	schema := New(model).Parse()
-	schema.GetFieldByName("Id").Set(uint(1))
+
+	id := uint(1)
+	schema.GetFieldByName("Id").Set(&id)
 
 	copyOfSchema := schema.Copy()
 	log.Print(copyOfSchema.GetFieldByName("Id").Get())
 }
 
 func (test *SchemaTestSuite) TestStruct() {
-	schema := New(testmodels.ExtraModel{}).Parse()
+	schema := New(models.ExtraModel{}).Parse()
 	test.Equal("extra", schema.TableName())
 	test.Equal("test", schema.DatabaseName())
 	test.Equal(268, len(schema.Fields()))
 }
 
 func (test *SchemaTestSuite) TestParseNilPtr() {
-	var T *testmodels.BaseModel
+	var T *models.BaseModel
 	New(T).Parse()
 }
 
 func (test *SchemaTestSuite) TestSet() {
-	model := &testmodels.BaseModel{}
+	model := &models.BaseModel{}
 	schema := New(model).Parse()
 	// twice to test skip init
 	schema.Parse()
 
 	// Simple
-	schema.GetFieldByName("Id").Set(uint(1))
+	id1 := uint(1)
+	schema.GetFieldByName("Id").Set(&id1)
 	test.Equal(uint(1), model.Id)
 
 	// Sub Embedded schema
@@ -111,7 +114,7 @@ func (test *SchemaTestSuite) TestSet() {
 }
 
 func (test *SchemaTestSuite) TestJoin() {
-	schemaTest := New(&testmodels.BaseModel{}).Parse()
+	schemaTest := New(&models.BaseModel{}).Parse()
 	test.Equal(schemaTest.GetFieldByName("Extra.Id").Join(), []specs.DriverJoin{
 		drivers.NewJoin().
 			SetFromTable("extra").
@@ -124,10 +127,10 @@ func (test *SchemaTestSuite) TestJoin() {
 }
 
 func (test *SchemaTestSuite) TestGetPrimaryKeyField() {
-	schemaTest := New(&testmodels.ExtraModel{}).Parse()
+	schemaTest := New(&models.ExtraModel{}).Parse()
 	test.Equal(schemaTest.GetFieldByName("Id"), schemaTest.GetPrimaryKeyField())
 
-	schemaTest = New(&testmodels.ExtraJumpModel{}).Parse()
+	schemaTest = New(&models.ExtraJumpModel{}).Parse()
 	test.Equal(nil, schemaTest.GetPrimaryKeyField())
 }
 
@@ -138,6 +141,6 @@ func TestSchemaTestSuite(t *testing.T) {
 func BenchmarkParse(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// Call the function you want to benchmark here
-		New(&testmodels.BaseModel{}).Parse()
+		New(&models.BaseModel{}).Parse()
 	}
 }

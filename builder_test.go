@@ -3,9 +3,9 @@ package dbkit
 import (
 	"context"
 	"github.com/lab210-dev/dbkit/connector/drivers"
-	"github.com/lab210-dev/dbkit/mocks"
 	"github.com/lab210-dev/dbkit/specs"
-	"github.com/lab210-dev/dbkit/testmodels"
+	"github.com/lab210-dev/dbkit/tests/mocks"
+	"github.com/lab210-dev/dbkit/tests/models"
 	"github.com/stretchr/testify/mock"
 	"testing"
 
@@ -23,7 +23,7 @@ func (test *OrmTestSuite) SetupTest() {
 
 func (test *OrmTestSuite) TestGet() {
 	ctx := context.Background()
-	ormInstance := Use[*testmodels.BaseModel](context.Background(), test.fakeConnector)
+	ormInstance := Use[*models.BaseModel](context.Background(), test.fakeConnector)
 	if !test.NotEmpty(ormInstance) {
 		return
 	}

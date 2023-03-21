@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"github.com/lab210-dev/dbkit/connector/config"
 	"github.com/lab210-dev/dbkit/connector/drivers"
-	"github.com/lab210-dev/dbkit/mocks/fakesql"
 	"github.com/lab210-dev/dbkit/specs"
+	"github.com/lab210-dev/dbkit/tests/mocks/fakesql"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )

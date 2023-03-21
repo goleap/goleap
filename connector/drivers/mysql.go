@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	"github.com/lab210-dev/dbkit/connector/drivers/operators"
 	"github.com/lab210-dev/dbkit/specs"
 	log "github.com/sirupsen/logrus"
@@ -33,7 +34,7 @@ func (m *Mysql) New(config specs.Config) (err error) {
 	return
 }
 
-func (m *Mysql) buildField(fields []specs.DriverField) (result string) {
+func (m *Mysql) buildFields(fields []specs.DriverField) (result string) {
 	for i, field := range fields {
 		if i > 0 {
 			result += ", "
@@ -45,13 +46,13 @@ func (m *Mysql) buildField(fields []specs.DriverField) (result string) {
 	return result
 }
 
-func (m *Mysql) buildWhere(fields []specs.DriverWhere) (result string, args []any) {
+func (m *Mysql) buildWhere(fields []specs.DriverWhere) (result string, args []any, err error) {
 	for i, field := range fields {
 
 		operator := m.buildOperator(field)
 		// This case is very strange because it does not generate an error.
 		if operator == "" {
-			continue
+			return "", nil, fmt.Errorf("unknown operator: %s", field.Operator())
 		}
 
 		if i > 0 {
@@ -85,16 +86,24 @@ func (m *Mysql) buildOperator(field specs.DriverWhere) string {
 }
 
 func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
-	buildWhere, args := m.buildWhere(payload.Where())
-	query := fmt.Sprintf("SELECT %s FROM `%s` AS `t%d`%s", m.buildField(payload.Fields()), payload.Table(), payload.Index(), buildWhere)
+	builtWhere, args, err := m.buildWhere(payload.Where())
+	if err != nil {
+		return
+	}
+
+	builtFields := m.buildFields(payload.Fields())
+
+	query := fmt.Sprintf("SELECT %s FROM `%s` AS `t%d`%s", builtFields, payload.Table(), payload.Index(), builtWhere)
+
+	queryWithArgs, args, err := sqlx.In(query, args...)
 
 	log.WithFields(log.Fields{
 		"type":  "select",
-		"query": query,
+		"query": queryWithArgs,
 		"args":  args,
 	}).Debug("Execute: Select()")
 
-	rows, err := m.db.QueryContext(ctx, query, args...)
+	rows, err := m.db.QueryContext(ctx, queryWithArgs, args...)
 	if err != nil {
 		return
 	}

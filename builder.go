@@ -9,7 +9,7 @@ import (
 	"github.com/lab210-dev/dbkit/specs"
 )
 
-type DbKit[T specs.Model] interface {
+type Builder[T specs.Model] interface {
 	Get(primaryKey any) (T, error)
 	Delete(primaryKey any) error
 
@@ -19,18 +19,18 @@ type DbKit[T specs.Model] interface {
 	Find() error
 	FindAll() error
 
-	Fields(field ...string) DbKit[T]
-	Where(condition specs.Condition) DbKit[T]
-	Limit(limit int) DbKit[T]
-	Offset(offset int) DbKit[T]
-	OrderBy(fields ...string) DbKit[T]
+	Fields(field ...string) Builder[T]
+	Where(condition specs.WhereCondition) Builder[T]
+	Limit(limit int) Builder[T]
+	Offset(offset int) Builder[T]
+	OrderBy(fields ...string) Builder[T]
 
 	Count() (total int64, err error)
 
 	Payload() specs.PayloadAugmented[T]
 }
 
-type dbKit[T specs.Model] struct {
+type builder[T specs.Model] struct {
 	context.Context
 	specs.Connector
 
@@ -47,11 +47,11 @@ type dbKit[T specs.Model] struct {
 	focusedSchemaFieldsCopy []any
 }
 
-func (o *dbKit[T]) countFocusedSchemaFields() int {
+func (o *builder[T]) countFocusedSchemaFields() int {
 	return len(o.focusedSchemaFields)
 }
 
-func (o *dbKit[T]) buildFieldsFromSchema() (err error) {
+func (o *builder[T]) buildFieldsFromSchema() (err error) {
 	for _, fieldName := range o.fields {
 		field := o.schema.GetFieldByName(fieldName)
 
@@ -67,7 +67,7 @@ func (o *dbKit[T]) buildFieldsFromSchema() (err error) {
 	return
 }
 
-func (o *dbKit[T]) getDriverFields() []specs.DriverField {
+func (o *builder[T]) getDriverFields() []specs.DriverField {
 
 	if len(o.driverFields) > 0 {
 		return o.driverFields
@@ -80,7 +80,7 @@ func (o *dbKit[T]) getDriverFields() []specs.DriverField {
 	return o.driverFields
 }
 
-func (o *dbKit[T]) getDriverJoins() []specs.DriverJoin {
+func (o *builder[T]) getDriverJoins() []specs.DriverJoin {
 
 	if len(o.driverJoins) > 0 {
 		return o.driverJoins
@@ -93,15 +93,20 @@ func (o *dbKit[T]) getDriverJoins() []specs.DriverJoin {
 	return o.driverJoins
 }
 
-func (o *dbKit[T]) getDriverWheres() []specs.DriverWhere {
+func (o *builder[T]) getDriverWheres() []specs.DriverWhere {
 	return o.driverWheres
 }
 
-func (o *dbKit[T]) Payload() specs.PayloadAugmented[T] {
-	return NewPayload[T](o.schema, o.getDriverFields(), o.getDriverJoins(), o.getDriverWheres())
+func (o *builder[T]) Payload() specs.PayloadAugmented[T] {
+	payload := NewPayload[T]()
+	payload.SetFields(o.getDriverFields())
+	payload.SetJoins(o.getDriverJoins())
+	payload.SetWheres(o.getDriverWheres())
+
+	return payload
 }
 
-func (o *dbKit[T]) Get(primaryKeyValue any) (result T, err error) {
+func (o *builder[T]) Get(primaryKeyValue any) (result T, err error) {
 
 	o.driverWheres = append(o.driverWheres, drivers.NewWhere().SetFrom(o.schema.GetPrimaryKeyField().Field()).SetOperator(operators.Equal).SetTo(primaryKeyValue))
 
@@ -139,69 +144,71 @@ func (o *dbKit[T]) Get(primaryKeyValue any) (result T, err error) {
 	return
 }
 
-func (o *dbKit[T]) Delete(primaryKeyValue any) error {
+func (o *builder[T]) Delete(primaryKeyValue any) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (o *dbKit[T]) Create() (err error) {
+func (o *builder[T]) Create() (err error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (o *dbKit[T]) Update() error {
+func (o *builder[T]) Update() error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (o *dbKit[T]) Find() error {
+func (o *builder[T]) Find() error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (o *dbKit[T]) FindAll() error {
+func (o *builder[T]) FindAll() error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (o *dbKit[T]) Fields(field ...string) DbKit[T] {
+func (o *builder[T]) Fields(field ...string) Builder[T] {
 	o.fields = field
 	return o
 }
 
-func (o *dbKit[T]) Where(condition specs.Condition) DbKit[T] {
+func (o *builder[T]) Where(condition specs.WhereCondition) Builder[T] {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (o *dbKit[T]) Limit(limit int) DbKit[T] {
+func (o *builder[T]) Limit(limit int) Builder[T] {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (o *dbKit[T]) Offset(offset int) DbKit[T] {
+func (o *builder[T]) Offset(offset int) Builder[T] {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (o *dbKit[T]) OrderBy(fields ...string) DbKit[T] {
+func (o *builder[T]) OrderBy(fields ...string) Builder[T] {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (o *dbKit[T]) Count() (total int64, err error) {
+func (o *builder[T]) Count() (total int64, err error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func Use[T specs.Model](ctx context.Context, connector specs.Connector) DbKit[T] {
+func Use[T specs.Model](ctx context.Context, connector specs.Connector) Builder[T] {
 	var model T
 
-	return &dbKit[T]{
+	var builder Builder[T] = &builder[T]{
 		Context:   ctx,
 		Connector: connector,
 
 		model:  &model,
 		schema: schema.New(model).Parse(),
 	}
+
+	return builder
 }

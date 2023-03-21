@@ -6,9 +6,9 @@ import (
 	"database/sql/driver"
 	"errors"
 	"github.com/lab210-dev/dbkit/connector/config"
-	"github.com/lab210-dev/dbkit/mocks"
-	"github.com/lab210-dev/dbkit/mocks/fakesql"
 	"github.com/lab210-dev/dbkit/specs"
+	"github.com/lab210-dev/dbkit/tests/mocks"
+	fakesql2 "github.com/lab210-dev/dbkit/tests/mocks/fakesql"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"io"
@@ -17,15 +17,15 @@ import (
 
 type MysqlTestSuite struct {
 	suite.Suite
-	fakeDriver  *fakesql.FakeDriver
-	fakeConn    *fakesql.FakeConn
-	fakeStmt    *fakesql.FakeStmt
-	fakeRows    *fakesql.FakeRows
+	fakeDriver  *fakesql2.FakeDriver
+	fakeConn    *fakesql2.FakeConn
+	fakeStmt    *fakesql2.FakeStmt
+	fakeRows    *fakesql2.FakeRows
 	fakePayload *mocks.FakePayload
 }
 
 func (test *MysqlTestSuite) SetupSuite() {
-	test.fakeDriver = fakesql.NewDriver(test.T())
+	test.fakeDriver = fakesql2.NewDriver(test.T())
 
 	RegisteredDriver = map[string]func() specs.Driver{
 		"test": func() specs.Driver {
@@ -37,9 +37,9 @@ func (test *MysqlTestSuite) SetupSuite() {
 }
 
 func (test *MysqlTestSuite) SetupTest() {
-	test.fakeConn = fakesql.NewFakeConn(test.T())
-	test.fakeStmt = fakesql.NewFakeStmt(test.T())
-	test.fakeRows = fakesql.NewFakeRows(test.T())
+	test.fakeConn = fakesql2.NewFakeConn(test.T())
+	test.fakeStmt = fakesql2.NewFakeStmt(test.T())
+	test.fakeRows = fakesql2.NewFakeRows(test.T())
 	test.fakePayload = mocks.NewFakePayload(test.T())
 
 	test.fakeDriver.ExpectedCalls = nil
