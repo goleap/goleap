@@ -128,6 +128,7 @@ func (o *builder[T]) Get(primaryKeyValue any) (result T, err error) {
 	}
 
 	getPayload := o.Payload()
+
 	err = o.Connector.Select(o.Context, getPayload)
 	if err != nil {
 		return

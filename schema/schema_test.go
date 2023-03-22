@@ -88,24 +88,28 @@ func (test *SchemaTestSuite) TestSet() {
 	test.Equal(uint(1), model.Id)
 
 	// Sub Embedded schema
-	schema.GetFieldByName("Recursive.Extra.Id").Set(uint(2))
+	id2 := uint(2)
+	schema.GetFieldByName("Recursive.Extra.Id").Set(&id2)
 	test.Equal(uint(2), model.Recursive.Extra.Id)
 
 	// Embedded schema
-	schema.GetFieldByName("Recursive.Id").Set(uint(3))
+	id3 := uint(3)
+	schema.GetFieldByName("Recursive.Id").Set(&id3)
 	test.Equal(uint(3), model.Recursive.Id)
 	test.Equal(uint(3), schema.GetFieldByName("Recursive.Id").Get())
 
 	// Sub Embedded Slice Schema
-	schema.GetFieldByName("Recursive.Slice.Id").Set(uint(4))
+	id4 := uint(4)
+	schema.GetFieldByName("Recursive.Slice.Id").Set(&id4)
 	test.Equal(uint(4), model.Recursive.Slice[0].Id)
 
 	// With other instance of schema
 	newSchema := New(model).Parse()
 
 	// Two set on same field for testing skip init
-	newSchema.GetFieldByName("Recursive.Extra.Id").Set(uint(5))
-	newSchema.GetFieldByName("Recursive.Extra.Id").Set(uint(5))
+	id5 := uint(5)
+	newSchema.GetFieldByName("Recursive.Extra.Id").Set(&id5)
+	newSchema.GetFieldByName("Recursive.Extra.Id").Set(&id5)
 	test.Equal(uint(5), model.Recursive.Extra.Id)
 
 	test.Equal(new(uint), newSchema.GetFieldByName("Recursive.Extra.Id").Copy())

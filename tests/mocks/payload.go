@@ -100,6 +100,54 @@ func (_m *FakePayload) OnScan(_a0 []interface{}) error {
 	return r0
 }
 
+// SetFields provides a mock function with given fields: _a0
+func (_m *FakePayload) SetFields(_a0 []specs.DriverField) specs.Payload {
+	ret := _m.Called(_a0)
+
+	var r0 specs.Payload
+	if rf, ok := ret.Get(0).(func([]specs.DriverField) specs.Payload); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(specs.Payload)
+		}
+	}
+
+	return r0
+}
+
+// SetJoins provides a mock function with given fields: _a0
+func (_m *FakePayload) SetJoins(_a0 []specs.DriverJoin) specs.Payload {
+	ret := _m.Called(_a0)
+
+	var r0 specs.Payload
+	if rf, ok := ret.Get(0).(func([]specs.DriverJoin) specs.Payload); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(specs.Payload)
+		}
+	}
+
+	return r0
+}
+
+// SetWheres provides a mock function with given fields: _a0
+func (_m *FakePayload) SetWheres(_a0 []specs.DriverWhere) specs.Payload {
+	ret := _m.Called(_a0)
+
+	var r0 specs.Payload
+	if rf, ok := ret.Get(0).(func([]specs.DriverWhere) specs.Payload); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(specs.Payload)
+		}
+	}
+
+	return r0
+}
+
 // Table provides a mock function with given fields:
 func (_m *FakePayload) Table() string {
 	ret := _m.Called()
@@ -137,10 +185,10 @@ type mockConstructorTestingTNewPayload interface {
 
 // NewFakePayload creates a new instance of FakePayload. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 func NewFakePayload(t mockConstructorTestingTNewPayload) *FakePayload {
-	fakePayload := &FakePayload{}
-	fakePayload.Mock.Test(t)
+	mock := &FakePayload{}
+	mock.Mock.Test(t)
 
-	t.Cleanup(func() { fakePayload.AssertExpectations(t) })
+	t.Cleanup(func() { mock.AssertExpectations(t) })
 
-	return fakePayload
+	return mock
 }

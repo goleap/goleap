@@ -6,9 +6,10 @@ import (
 	"database/sql/driver"
 	"errors"
 	"github.com/lab210-dev/dbkit/connector/config"
+	"github.com/lab210-dev/dbkit/connector/drivers/operators"
 	"github.com/lab210-dev/dbkit/specs"
 	"github.com/lab210-dev/dbkit/tests/mocks"
-	fakesql2 "github.com/lab210-dev/dbkit/tests/mocks/fakesql"
+	"github.com/lab210-dev/dbkit/tests/mocks/fakesql"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"io"
@@ -17,15 +18,15 @@ import (
 
 type MysqlTestSuite struct {
 	suite.Suite
-	fakeDriver  *fakesql2.FakeDriver
-	fakeConn    *fakesql2.FakeConn
-	fakeStmt    *fakesql2.FakeStmt
-	fakeRows    *fakesql2.FakeRows
+	fakeDriver  *fakesql.FakeDriver
+	fakeConn    *fakesql.FakeConn
+	fakeStmt    *fakesql.FakeStmt
+	fakeRows    *fakesql.FakeRows
 	fakePayload *mocks.FakePayload
 }
 
 func (test *MysqlTestSuite) SetupSuite() {
-	test.fakeDriver = fakesql2.NewDriver(test.T())
+	test.fakeDriver = fakesql.NewDriver(test.T())
 
 	RegisteredDriver = map[string]func() specs.Driver{
 		"test": func() specs.Driver {
@@ -37,13 +38,13 @@ func (test *MysqlTestSuite) SetupSuite() {
 }
 
 func (test *MysqlTestSuite) SetupTest() {
-	test.fakeConn = fakesql2.NewFakeConn(test.T())
-	test.fakeStmt = fakesql2.NewFakeStmt(test.T())
-	test.fakeRows = fakesql2.NewFakeRows(test.T())
+	test.fakeConn = fakesql.NewFakeConn(test.T())
+	test.fakeStmt = fakesql.NewFakeStmt(test.T())
+	test.fakeRows = fakesql.NewFakeRows(test.T())
 	test.fakePayload = mocks.NewFakePayload(test.T())
 
 	test.fakeDriver.ExpectedCalls = nil
-	test.fakeDriver.On("Open", ":@tcp(:0)/?parseTime=true&loc=Local").Return(test.fakeConn, nil)
+	test.fakeDriver.On("Open", ":@tcp(:3306)/?parseTime=true&loc=Local").Return(test.fakeConn, nil)
 }
 
 func (test *MysqlTestSuite) TestNew() {
@@ -111,7 +112,7 @@ func (test *MysqlTestSuite) TestSimpleWhere() {
 		NewField().SetName("label").SetIndex(0),
 	})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(EqualOperator).SetTo(1),
+		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(operators.Equal).SetTo(1),
 	})
 	test.fakePayload.On("Table").Return("test")
 	test.fakePayload.On("Index").Return(0)
@@ -133,17 +134,9 @@ func (test *MysqlTestSuite) TestSimpleWhereWithBadOperator() {
 		return
 	}
 
-	test.fakePayload.On("Fields").Return([]specs.DriverField{
-		NewField().SetName("id").SetIndex(0),
-		NewField().SetName("label").SetIndex(0),
-	})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
 		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator("").SetTo(1),
 	})
-	test.fakePayload.On("Table").Return("test")
-	test.fakePayload.On("Index").Return(0)
-
-	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `test` AS `t0`").Return(nil, errors.New("test")).Once()
 
 	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)
@@ -165,7 +158,7 @@ func (test *MysqlTestSuite) TestSimpleWhereIsNullOperator() {
 		NewField().SetName("label").SetIndex(0),
 	})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(IsNullOperator),
+		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(operators.IsNull),
 	})
 	test.fakePayload.On("Table").Return("test")
 	test.fakePayload.On("Index").Return(0)
@@ -192,12 +185,12 @@ func (test *MysqlTestSuite) TestSimpleWhereInOperator() {
 		NewField().SetName("label").SetIndex(0),
 	})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(InOperator).SetTo([]int{1, 2}),
+		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(operators.In).SetTo([]int{1, 2}),
 	})
 	test.fakePayload.On("Table").Return("test")
 	test.fakePayload.On("Index").Return(0)
 
-	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `test` AS `t0` WHERE `t0`.`id` IN (?)").Return(nil, errors.New("test")).Once()
+	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `test` AS `t0` WHERE `t0`.`id` IN (?, ?)").Return(nil, errors.New("test")).Once()
 
 	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)
@@ -219,8 +212,8 @@ func (test *MysqlTestSuite) TestMultiSimpleWhere() {
 		NewField().SetName("label").SetIndex(0),
 	})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(EqualOperator).SetTo(1),
-		NewWhere().SetFrom(NewField().SetName("label").SetIndex(0)).SetOperator(EqualOperator).SetTo("test"),
+		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(operators.Equal).SetTo(1),
+		NewWhere().SetFrom(NewField().SetName("label").SetIndex(0)).SetOperator(operators.Equal).SetTo("test"),
 	})
 	test.fakePayload.On("Table").Return("test")
 	test.fakePayload.On("Index").Return(0)

@@ -1,6 +1,9 @@
 package drivers
 
-import "github.com/lab210-dev/dbkit/specs"
+import (
+	"github.com/lab210-dev/dbkit/specs"
+	"strings"
+)
 
 type where struct {
 	from     specs.DriverField
@@ -26,7 +29,7 @@ func (w *where) SetFrom(from specs.DriverField) specs.DriverWhere {
 }
 
 func (w *where) SetOperator(operator string) specs.DriverWhere {
-	w.operator = operator
+	w.operator = strings.TrimSpace(operator)
 	return w
 }
 

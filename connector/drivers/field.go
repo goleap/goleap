@@ -1,6 +1,9 @@
 package drivers
 
-import "github.com/lab210-dev/dbkit/specs"
+import (
+	"github.com/lab210-dev/dbkit/specs"
+	"strings"
+)
 
 type field struct {
 	index        int
@@ -31,7 +34,7 @@ func (f *field) Name() string {
 }
 
 func (f *field) SetName(name string) specs.DriverField {
-	f.name = name
+	f.name = strings.TrimSpace(name)
 	return f
 }
 

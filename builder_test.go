@@ -7,54 +7,56 @@ import (
 	"github.com/lab210-dev/dbkit/tests/mocks"
 	"github.com/lab210-dev/dbkit/tests/models"
 	"github.com/stretchr/testify/mock"
+	"log"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 )
 
-type OrmTestSuite struct {
+type BuilderTestSuite struct {
 	suite.Suite
 	fakeConnector *mocks.FakeConnector
 }
 
-func (test *OrmTestSuite) SetupTest() {
+func (test *BuilderTestSuite) SetupTest() {
 	test.fakeConnector = mocks.NewFakeConnector(test.T())
 }
 
-func (test *OrmTestSuite) TestGet() {
+func (test *BuilderTestSuite) TestGet() {
 	ctx := context.Background()
-	ormInstance := Use[*models.BaseModel](context.Background(), test.fakeConnector)
-	if !test.NotEmpty(ormInstance) {
+	builderInstance := Use[*models.BaseModel](context.Background(), test.fakeConnector)
+	if !test.NotEmpty(builderInstance) {
 		return
 	}
 
 	Id := uint(1)
 	ExtraId := uint(2)
-	test.fakeConnector.On("Select", ctx, ormInstance.Payload()).Run(func(args mock.Arguments) {
-		err := ormInstance.Payload().OnScan([]any{&Id, &ExtraId})
+	test.fakeConnector.On("Select", ctx, mock.Anything).Run(func(args mock.Arguments) {
+		err := builderInstance.Payload().OnScan([]any{&Id, &ExtraId})
 		if !test.Empty(err) {
 			return
 		}
 	}).Return(nil)
 
-	baseModel, err := ormInstance.Fields("Id", "Extra.Id").Get("Primary")
+	baseModel, err := builderInstance.Fields("Id", "Extra.Id").Get("Primary")
 	if !test.Empty(err) {
 		return
 	}
 
-	test.Equal(0, ormInstance.Payload().Index())
-	test.Equal("test", ormInstance.Payload().Database())
-	test.Equal("base", ormInstance.Payload().Table())
+	test.Equal(0, builderInstance.Payload().Index())
+	test.Equal("test", builderInstance.Payload().Database())
+	test.Equal("base", builderInstance.Payload().Table())
 
 	test.Equal([]specs.DriverField{
-		drivers.NewField().SetName("id").SetIndex(0),
-		drivers.NewField().SetName("id").SetIndex(72),
-	}, ormInstance.Payload().Fields())
+		drivers.NewField().SetName("id").SetIndex(0).SetNameInSchema("Id"),
+		drivers.NewField().SetName("id").SetIndex(72).SetNameInSchema("Extra.Id"),
+	}, builderInstance.Payload().Fields())
 
+	log.Print(baseModel)
 	test.Equal(uint(1), baseModel.Id)
 	test.Equal(uint(2), baseModel.Extra.Id)
 }
 
-func TestSchemaTestSuite(t *testing.T) {
-	suite.Run(t, new(OrmTestSuite))
+func TestBuilderTestSuite(t *testing.T) {
+	suite.Run(t, new(BuilderTestSuite))
 }
