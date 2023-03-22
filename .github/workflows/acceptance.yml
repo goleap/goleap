@@ -9,31 +9,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      mysql:
-        image: mysql:8
-        env:
-          MYSQL_ROOT_PASSWORD: acceptance
-          MYSQL_DATABASE: acceptance
-          MYSQL_USER: acceptance
-          MYSQL_PASSWORD: acceptance
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v1
 
-      - name: Wait for MySQL to start
-        run: |
-          until nc -z -v -w30 127.0.0.1 3306
-          do
-            echo "Waiting for database connection..."
-            sleep 5
-          done
-        env:
-          HOST: localhost
+      - name: Start containers
+        run: make up
 
-      - name: Run script
-        run: mysql -uacceptance -pacceptance -h 127.0.0.1 < tests/acceptance/data/acceptance.sql
+      - name: Run acceptance tests
+        run: make acceptance
+
+      - name: Stop containers
+        if: always()
+        run: make down
