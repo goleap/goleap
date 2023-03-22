@@ -44,7 +44,7 @@ type builder[T specs.Model] struct {
 	driverJoins  []specs.DriverJoin
 	driverWheres []specs.DriverWhere
 
-	focusedSchemaFieldsCopy []any
+	// focusedSchemaFieldsCopy []any
 }
 
 func (o *builder[T]) countFocusedSchemaFields() int {
@@ -123,7 +123,7 @@ func (o *builder[T]) Get(primaryKeyValue any) (result T, err error) {
 
 	if o.countFocusedSchemaFields() == 0 {
 		// TODO (Lab210-dev) : Factory for error. TIP SchemaError, SchemaFieldError, etc.
-		err = &FieldNotFoundError{message: fmt.Sprintf("no fields selected")}
+		err = &FieldNotFoundError{message: "no fields selected"}
 		return
 	}
 

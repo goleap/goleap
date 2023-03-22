@@ -96,6 +96,9 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 	query := fmt.Sprintf("SELECT %s FROM `%s` AS `t%d`%s", builtFields, payload.Table(), payload.Index(), builtWhere)
 
 	queryWithArgs, args, err := sqlx.In(query, args...)
+	if err != nil {
+		return
+	}
 
 	log.WithFields(log.Fields{
 		"type":  "select",
