@@ -17,8 +17,8 @@ jobs:
         run: |
           echo "${{ secrets.ENV_FILE }}" > .env
 
-      - name: Start containers
-        run: make up
+      - name: Start database
+        run: make db
 
       - name: Run acceptance tests
         run: make acceptance
