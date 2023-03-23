@@ -15,7 +15,7 @@ config: ## Validate and view the Compose file.
 build: ## Builds services [s=services]
 	$(COMPOSE_COMMAND) build --force-rm --parallel acceptance
 acceptance: ## Builds, (re)creates, starts, and attaches to containers
-	$(COMPOSE_COMMAND) up --build wait acceptance
+	$(COMPOSE_COMMAND) up --exit-code-from acceptance --build acceptance
 up: ## Builds, (re)creates, starts, and attaches to containers
 	$(COMPOSE_COMMAND) up --force-recreate --remove-orphans --build db
 db: ## Builds, (re)creates, starts, and attaches to containers
