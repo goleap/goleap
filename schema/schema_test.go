@@ -121,7 +121,6 @@ func (test *SchemaTestSuite) TestJoin() {
 	schemaTest := New(&models.BaseModel{}).Parse()
 	test.Equal(schemaTest.GetFieldByName("Extra.Id").Join(), []specs.DriverJoin{
 		drivers.NewJoin().
-			SetFromTable("extra").
 			SetFromTableIndex(72).
 			SetToTable("base").
 			SetToTableIndex(0).

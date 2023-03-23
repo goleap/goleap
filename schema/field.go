@@ -34,7 +34,6 @@ func (field *field) Join() (joins []specs.DriverJoin) {
 	if field.Schema().FromField() != nil {
 		if !field.IsSlice() {
 			join := drivers.NewJoin().
-				SetFromTable(field.Schema().TableName()).
 				SetFromTableIndex(field.Schema().Index()).
 				SetToTable(field.Schema().FromField().Schema().TableName()).
 				SetToTableIndex(field.Schema().FromField().Schema().Index()).

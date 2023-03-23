@@ -46,6 +46,24 @@ func (m *Mysql) buildFields(fields []specs.DriverField) (result string) {
 	return result
 }
 
+func (m *Mysql) buildJoin(joins []specs.DriverJoin) (result string, err error) {
+	for i, field := range joins {
+		if i > 0 {
+			result += " "
+		}
+
+		err := field.Validate()
+		if err != nil {
+			return "", err
+		}
+
+		// TODO Maybe add specific operator for join
+		result += fmt.Sprintf("%s `%s`.`%s` AS `t%d` ON `t%d`.`%s` = `t%d`.`%s`", field.Method(), field.ToSchema(), field.ToTable(), field.ToTableIndex(), field.ToTableIndex(), field.ToKey(), field.FromTableIndex(), field.FromKey())
+	}
+
+	return
+}
+
 func (m *Mysql) buildWhere(fields []specs.DriverWhere) (result string, args []any, err error) {
 	for i, field := range fields {
 
@@ -67,7 +85,7 @@ func (m *Mysql) buildWhere(fields []specs.DriverWhere) (result string, args []an
 	}
 
 	if result != "" {
-		result = fmt.Sprintf(" WHERE %s", result)
+		result = fmt.Sprintf("WHERE %s", result)
 	}
 
 	return
@@ -91,9 +109,22 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 		return
 	}
 
+	builtJoin, err := m.buildJoin(payload.Join())
+	if err != nil {
+		return
+	}
+
 	builtFields := m.buildFields(payload.Fields())
 
-	query := fmt.Sprintf("SELECT %s FROM `%s` AS `t%d`%s", builtFields, payload.Table(), payload.Index(), builtWhere)
+	query := fmt.Sprintf("SELECT %s FROM `%s` AS `t%d`", builtFields, payload.Table(), payload.Index())
+
+	if builtJoin != "" {
+		query += fmt.Sprintf(" %s", builtJoin)
+	}
+
+	if builtWhere != "" {
+		query += fmt.Sprintf(" %s", builtWhere)
+	}
 
 	queryWithArgs, args, err := sqlx.In(query, args...)
 	if err != nil {
