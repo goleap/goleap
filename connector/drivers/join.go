@@ -1,7 +1,6 @@
 package drivers
 
 import (
-	"errors"
 	"fmt"
 	"github.com/lab210-dev/dbkit/connector/drivers/joins"
 	"github.com/lab210-dev/dbkit/specs"
@@ -36,7 +35,7 @@ func (j *join) Validate() error {
 	}
 
 	if len(errList) > 0 {
-		return errors.New(fmt.Sprintf(`The following fields "%s" are mandatory to perform the join.`, strings.Join(errList, ", ")))
+		return fmt.Errorf(`The following fields "%s" are mandatory to perform the join.`, strings.Join(errList, ", "))
 	}
 
 	return nil
