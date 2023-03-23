@@ -12,23 +12,23 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-
-  wait:
-    image: alpine
-    command: >
-      sh -c " until nc -z -v -w30 db 3306; do \
-        echo 'Waiting for database connection...'; \
-        sleep 5; \
-      done"
-    links:
-      - db
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u${MYSQL_USER}", "-p${MYSQL_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   acceptance:
     build:
       context: ./..
       dockerfile: build/images/go/Dockerfile
+    environment:
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     depends_on:
-      wait:
-        condition: service_completed_successfully
+      db:
+        condition: service_healthy
     links:
       - db

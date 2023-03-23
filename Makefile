@@ -19,7 +19,7 @@ acceptance: ## Builds, (re)creates, starts, and attaches to containers
 up: ## Builds, (re)creates, starts, and attaches to containers
 	$(COMPOSE_COMMAND) up --force-recreate --remove-orphans --build db
 db: ## Builds, (re)creates, starts, and attaches to containers
-	$(COMPOSE_COMMAND) up -d --force-recreate --remove-orphans --build db
+	$(COMPOSE_COMMAND) up -d --force-recreate --remove-orphans --build db --wait
 stop: ## Stops running containers without removing them [s=services]
 	$(COMPOSE_COMMAND) stop db
 down: ## Stops containers and removes containers, networks, volumes, and images created by up

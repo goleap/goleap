@@ -19,7 +19,7 @@ func (f *Fixture) Connector() specs.Connector {
 	var err error
 	port, err := strconv.Atoi(os.Getenv("MYSQL_PORT"))
 	if err != nil {
-		panic(err)
+		port = 3306
 	}
 
 	f.connector, err = connector.New("acceptance",
