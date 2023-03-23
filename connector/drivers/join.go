@@ -35,7 +35,7 @@ func (j *join) Validate() error {
 	}
 
 	if len(errList) > 0 {
-		return fmt.Errorf(`The following fields "%s" are mandatory to perform the join.`, strings.Join(errList, ", "))
+		return fmt.Errorf(`the following fields "%s" are mandatory to perform the join`, strings.Join(errList, ", "))
 	}
 
 	return nil
