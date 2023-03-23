@@ -7,7 +7,6 @@ import (
 	"github.com/lab210-dev/dbkit/tests/mocks"
 	"github.com/lab210-dev/dbkit/tests/models"
 	"github.com/stretchr/testify/mock"
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -52,7 +51,6 @@ func (test *BuilderTestSuite) TestGet() {
 		drivers.NewField().SetName("id").SetIndex(72).SetNameInSchema("Extra.Id"),
 	}, builderInstance.Payload().Fields())
 
-	log.Print(baseModel)
 	test.Equal(uint(1), baseModel.Id)
 	test.Equal(uint(2), baseModel.Extra.Id)
 }

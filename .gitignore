@@ -7,5 +7,5 @@
 *.out
 .idea
 vendor/
-coverage.*
+./coverage.*
 .env

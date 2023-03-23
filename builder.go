@@ -44,7 +44,9 @@ type builder[T specs.Model] struct {
 	driverJoins  []specs.DriverJoin
 	driverWheres []specs.DriverWhere
 
-	focusedSchemaFieldsCopy []any
+	payload specs.PayloadAugmented[T]
+
+	// focusedSchemaFieldsCopy []any
 }
 
 func (o *builder[T]) countFocusedSchemaFields() int {
@@ -97,13 +99,17 @@ func (o *builder[T]) getDriverWheres() []specs.DriverWhere {
 	return o.driverWheres
 }
 
-func (o *builder[T]) Payload() specs.PayloadAugmented[T] {
-	payload := NewPayload[T]()
-	payload.SetFields(o.getDriverFields())
-	payload.SetJoins(o.getDriverJoins())
-	payload.SetWheres(o.getDriverWheres())
+func (o *builder[T]) buildPayload() specs.PayloadAugmented[T] {
+	o.payload = NewPayload[T]()
+	o.payload.SetFields(o.getDriverFields())
+	o.payload.SetJoins(o.getDriverJoins())
+	o.payload.SetWheres(o.getDriverWheres())
 
-	return payload
+	return o.payload
+}
+
+func (o *builder[T]) Payload() specs.PayloadAugmented[T] {
+	return o.payload
 }
 
 func (o *builder[T]) Get(primaryKeyValue any) (result T, err error) {
@@ -123,11 +129,11 @@ func (o *builder[T]) Get(primaryKeyValue any) (result T, err error) {
 
 	if o.countFocusedSchemaFields() == 0 {
 		// TODO (Lab210-dev) : Factory for error. TIP SchemaError, SchemaFieldError, etc.
-		err = &FieldNotFoundError{message: fmt.Sprintf("no fields selected")}
+		err = &FieldNotFoundError{message: "no fields selected"}
 		return
 	}
 
-	getPayload := o.Payload()
+	getPayload := o.buildPayload()
 
 	err = o.Connector.Select(o.Context, getPayload)
 	if err != nil {

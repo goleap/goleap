@@ -1,0 +1,28 @@
+name: Acceptance
+
+on:
+  push:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Create env file
+        run: |
+          echo "${{ secrets.ENV_FILE }}" > .env
+
+      - name: Start database
+        run: make db
+
+      - name: Run acceptance tests
+        run: make acceptance
+
+      - name: Stop containers
+        if: always()
+        run: make down

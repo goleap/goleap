@@ -13,9 +13,22 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
 
+  wait:
+    image: alpine
+    command: >
+      sh -c " until nc -z -v -w30 db 3306; do \
+        echo 'Waiting for database connection...'; \
+        sleep 5; \
+      done"
+    links:
+      - db
+
   acceptance:
     build:
       context: ./..
       dockerfile: build/images/go/Dockerfile
+    depends_on:
+      wait:
+        condition: service_completed_successfully
     links:
       - db
