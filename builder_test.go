@@ -23,7 +23,7 @@ func (test *BuilderTestSuite) SetupTest() {
 
 func (test *BuilderTestSuite) TestGet() {
 	ctx := context.Background()
-	builderInstance := Use[*models.BaseModel](context.Background(), test.fakeConnector)
+	builderInstance := Use[*models.CommentsModel](context.Background(), test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return
 	}
@@ -37,22 +37,21 @@ func (test *BuilderTestSuite) TestGet() {
 		}
 	}).Return(nil)
 
-	baseModel, err := builderInstance.Fields("Id", "Extra.Id").Get("Primary")
+	comment, err := builderInstance.Fields("Id", "Post.Id").Get("Primary")
 	if !test.Empty(err) {
 		return
 	}
 
 	test.Equal(0, builderInstance.Payload().Index())
-	test.Equal("test", builderInstance.Payload().Database())
-	test.Equal("base", builderInstance.Payload().Table())
+	test.Equal("acceptance", builderInstance.Payload().Database())
+	test.Equal("posts", builderInstance.Payload().Table())
 
 	test.Equal([]specs.DriverField{
 		drivers.NewField().SetName("id").SetIndex(0).SetNameInSchema("Id"),
-		drivers.NewField().SetName("id").SetIndex(72).SetNameInSchema("Extra.Id"),
+		drivers.NewField().SetName("id").SetIndex(2).SetNameInSchema("Post.Id"),
 	}, builderInstance.Payload().Fields())
 
-	test.Equal(uint(1), baseModel.Id)
-	test.Equal(uint(2), baseModel.Extra.Id)
+	test.Equal(uint(1), comment.Id)
 }
 
 func TestBuilderTestSuite(t *testing.T) {

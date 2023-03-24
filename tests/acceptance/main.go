@@ -41,7 +41,7 @@ func main() {
 			continue
 		}
 
-		log.Println()
+		log.Print(strings.Repeat("-", 100))
 		log.Printf("Running fixture : %s", typeOf.Method(i).Name)
 		log.Print(strings.Repeat("-", 100))
 
@@ -51,6 +51,7 @@ func main() {
 
 		log.Print(strings.Repeat("-", 100))
 		log.Printf("Ending fixture `%s` in %s", typeOf.Method(i).Name, time.Since(timer))
+		log.Print(strings.Repeat("-", 100))
 
 		if errVal := result[0].Interface(); errVal != nil {
 			err := errVal.(error)

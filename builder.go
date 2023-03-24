@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/lab210-dev/dbkit/connector/drivers"
 	"github.com/lab210-dev/dbkit/connector/drivers/operators"
-	"github.com/lab210-dev/dbkit/schema"
+	"github.com/lab210-dev/dbkit/modeldefinition"
 	"github.com/lab210-dev/dbkit/specs"
 )
 
@@ -35,10 +35,10 @@ type builder[T specs.Model] struct {
 	specs.Connector
 
 	model  *T
-	schema specs.Schema
+	schema specs.ModelDefinition
 	fields []string
 
-	focusedSchemaFields []specs.SchemaField
+	focusedSchemaFields []specs.ModelField
 
 	driverFields []specs.DriverField
 	driverJoins  []specs.DriverJoin
@@ -214,7 +214,7 @@ func Use[T specs.Model](ctx context.Context, connector specs.Connector) Builder[
 		Connector: connector,
 
 		model:  &model,
-		schema: schema.New(model).Parse(),
+		schema: modeldefinition.Use(model).Parse(),
 	}
 
 	return builder

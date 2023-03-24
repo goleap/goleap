@@ -7,7 +7,7 @@ import (
 	"github.com/lab210-dev/dbkit/connector/drivers"
 	"github.com/lab210-dev/dbkit/connector/drivers/operators"
 	"github.com/lab210-dev/dbkit/specs"
-	"github.com/lab210-dev/dbkit/tests/acceptance/fixtures/models"
+	"github.com/lab210-dev/dbkit/tests/models"
 )
 
 func (f *Fixture) MysqlDriverSelectWhereEqual(ctx context.Context) (err error) {
@@ -23,7 +23,7 @@ func (f *Fixture) MysqlDriverSelectWhereEqual(ctx context.Context) (err error) {
 			SetOperator(operators.Equal).SetTo(1),
 	}
 
-	selectPayload := dbkit.NewPayload[*models.UserModel]()
+	selectPayload := dbkit.NewPayload[*models.UsersModel]()
 	selectPayload.SetFields(fields)
 	selectPayload.SetJoins(joins)
 	selectPayload.SetWheres(wheres)
@@ -31,6 +31,10 @@ func (f *Fixture) MysqlDriverSelectWhereEqual(ctx context.Context) (err error) {
 	err = f.Connector().Select(ctx, selectPayload)
 	if err != nil {
 		panic(err)
+	}
+
+	if len(selectPayload.Result()) == 0 {
+		return errors.New("result is empty")
 	}
 
 	if selectPayload.Result()[0].Id != 1 {
@@ -52,7 +56,7 @@ func (f *Fixture) MysqlDriverSelectWhereNotEqual(ctx context.Context) (err error
 			SetOperator(operators.NotEqual).SetTo(1),
 	}
 
-	selectPayload := dbkit.NewPayload[*models.UserModel]()
+	selectPayload := dbkit.NewPayload[*models.UsersModel]()
 	selectPayload.SetFields(fields)
 	selectPayload.SetJoins(joins)
 	selectPayload.SetWheres(wheres)
@@ -62,8 +66,10 @@ func (f *Fixture) MysqlDriverSelectWhereNotEqual(ctx context.Context) (err error
 		panic(err)
 	}
 
-	if selectPayload.Result()[0].Id != 2 {
-		return errors.New("result is not equal to 2")
+	for _, user := range selectPayload.Result() {
+		if user.Id == 1 {
+			return errors.New("result is equal to 1")
+		}
 	}
 	return
 }
@@ -81,7 +87,7 @@ func (f *Fixture) MysqlDriverSelectWhereIn(ctx context.Context) (err error) {
 			SetOperator(operators.In).SetTo([]int{2}),
 	}
 
-	selectPayload := dbkit.NewPayload[*models.UserModel]()
+	selectPayload := dbkit.NewPayload[*models.UsersModel]()
 	selectPayload.SetFields(fields)
 	selectPayload.SetJoins(joins)
 	selectPayload.SetWheres(wheres)
@@ -91,8 +97,10 @@ func (f *Fixture) MysqlDriverSelectWhereIn(ctx context.Context) (err error) {
 		panic(err)
 	}
 
-	if selectPayload.Result()[0].Id != 2 {
-		return errors.New("result is not equal to 2")
+	for _, user := range selectPayload.Result() {
+		if user.Id != 2 {
+			return errors.New("result is equal to 2")
+		}
 	}
 	return
 }

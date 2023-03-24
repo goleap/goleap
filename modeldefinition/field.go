@@ -1,4 +1,4 @@
-package schema
+package modeldefinition
 
 import (
 	"fmt"
@@ -12,8 +12,8 @@ import (
 type field struct {
 	sync.Mutex
 	name           string
-	schema         specs.Schema
-	embeddedSchema specs.Schema
+	schema         specs.ModelDefinition
+	embeddedSchema specs.ModelDefinition
 	tags           map[string]string
 
 	recursiveFullName string
@@ -31,18 +31,18 @@ type field struct {
 }
 
 func (field *field) Join() (joins []specs.DriverJoin) {
-	if field.Schema().FromField() != nil {
+	if field.Model().FromField() != nil {
 		if !field.IsSlice() {
 			join := drivers.NewJoin().
-				SetFromTableIndex(field.Schema().Index()).
-				SetToTable(field.Schema().FromField().Schema().TableName()).
-				SetToTableIndex(field.Schema().FromField().Schema().Index()).
-				SetFromKey(field.Schema().FromField().Tags()["column"]).
-				SetToKey(field.Schema().FromField().Tags()["foreignKey"])
+				SetFromTableIndex(field.Model().Index()).
+				SetToTable(field.Model().FromField().Model().TableName()).
+				SetToTableIndex(field.Model().FromField().Model().Index()).
+				SetFromKey(field.Model().FromField().Tags()["column"]).
+				SetToKey(field.Model().FromField().Tags()["foreignKey"])
 
 			joins = append(joins, join)
 		}
-		joins = append(joins, field.Schema().FromField().Join()...)
+		joins = append(joins, field.Model().FromField().Join()...)
 		return
 	}
 	return
@@ -61,14 +61,14 @@ func (field *field) IsSlice() bool {
 }
 
 func (field *field) FromSchemaTypeList() (new []string) {
-	if field.Schema().FromField() != nil {
-		new = append(new, field.Schema().FromField().FromSchemaTypeList()...)
+	if field.Model().FromField() != nil {
+		new = append(new, field.Model().FromField().FromSchemaTypeList()...)
 	}
-	new = append(new, fmt.Sprintf("%v:%v", field.Schema().ModelOrigin().Type(), field.IsSlice()))
+	new = append(new, fmt.Sprintf("%v:%v", field.Model().ModelOrigin().Type(), field.IsSlice()))
 	return
 }
 
-func (field *field) Schema() specs.Schema {
+func (field *field) Model() specs.ModelDefinition {
 	return field.schema
 }
 
@@ -87,23 +87,23 @@ func (field *field) Init() {
 		return
 	}
 
-	if field.Schema().FromField() == nil {
+	if field.Model().FromField() == nil {
 		return
 	}
 
-	field.Schema().FromField().Init()
+	field.Model().FromField().Init()
 
-	if field.Schema().FromField().Value().Kind() == reflect.Ptr {
-		field.Schema().FromField().Value().Set(field.Schema().ModelValue().Addr())
+	if field.Model().FromField().Value().Kind() == reflect.Ptr {
+		field.Model().FromField().Value().Set(field.Model().ModelValue().Addr())
 		return
 	}
 
-	if field.Schema().FromField().Value().Kind() == reflect.Slice {
-		field.Schema().FromField().Value().Set(reflect.Append(field.Schema().FromField().Value(), field.Schema().ModelValue()))
+	if field.Model().FromField().Value().Kind() == reflect.Slice {
+		field.Model().FromField().Value().Set(reflect.Append(field.Model().FromField().Value(), field.Model().ModelValue()))
 		return
 	}
 
-	field.Schema().FromField().Value().Set(field.Schema().ModelValue())
+	field.Model().FromField().Value().Set(field.Model().ModelValue())
 	field.init = true
 }
 
@@ -111,11 +111,11 @@ func (field *field) Tags() map[string]string {
 	return field.tags
 }
 
-func (field *field) EmbeddedSchema() specs.Schema {
+func (field *field) EmbeddedSchema() specs.ModelDefinition {
 	return field.embeddedSchema
 }
 
-func (field *field) SetEmbeddedSchema(embeddedSchema specs.Schema) specs.SchemaField {
+func (field *field) SetEmbeddedSchema(embeddedSchema specs.ModelDefinition) specs.ModelField {
 	field.embeddedSchema = embeddedSchema
 	return field
 }
@@ -128,15 +128,15 @@ func (field *field) SetIsSlice(isSlice bool) {
 	field.isSlice = isSlice
 }
 
-func (schema *schema) parseField(index int) specs.SchemaField {
-	fieldStruct := schema.modelType.Field(index)
+func (md *modelDefinition) parseField(index int) specs.ModelField {
+	fieldStruct := md.modelType.Field(index)
 
 	field := new(field)
 	field.name = fieldStruct.Name
-	field.schema = schema
+	field.schema = md
 	field.fieldType = fieldStruct.Type
 	field.structField = fieldStruct
-	field.fieldValue = schema.modelValue.Field(index)
+	field.fieldValue = md.modelValue.Field(index)
 	field.visitedMap = make(map[string]bool)
 
 	field.tag = fieldStruct.Tag
@@ -188,7 +188,7 @@ func (field *field) IsVisited() bool {
 		countMap[v] = countMap[v] + 1
 	}
 
-	return countMap[fmt.Sprintf("%v:%v", field.Schema().ModelOrigin().Type(), field.IsSlice())] > 2
+	return countMap[fmt.Sprintf("%v:%v", field.Model().ModelOrigin().Type(), field.IsSlice())] > 2
 }
 
 func (field *field) Name() string {
@@ -228,10 +228,10 @@ func (field *field) RecursiveFullName() string {
 
 func (field *field) IsSameSchemaFromField() bool {
 	return field.schema.FromField() != nil &&
-		fmt.Sprintf("%s/%s", field.schema.FromField().Schema().ModelValue().Type(), field.schema.FromField().Name()) == fmt.Sprintf("%s/%s", field.fieldEmbeddedValue.Type(), field.Name())
+		fmt.Sprintf("%s/%s", field.schema.FromField().Model().ModelValue().Type(), field.schema.FromField().Name()) == fmt.Sprintf("%s/%s", field.fieldEmbeddedValue.Type(), field.Name())
 }
 
-func (field *field) RevealEmbeddedSchema() specs.SchemaField {
+func (field *field) RevealEmbeddedSchema() specs.ModelField {
 	field.fieldEmbeddedValue = field.fieldValue
 
 	if field.fieldEmbeddedValue.Kind() == reflect.Ptr {
@@ -261,7 +261,7 @@ func (field *field) RevealEmbeddedSchema() specs.SchemaField {
 		return nil
 	}
 
-	embeddedSchema := New(model).
+	embeddedSchema := Use(model).
 		SetFromField(field).
 		SetIndex(field.schema.Counter()).
 		Parse()

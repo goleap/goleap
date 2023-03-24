@@ -2,13 +2,13 @@ package specs
 
 import "reflect"
 
-type SchemaField interface {
+type ModelField interface {
 	// Init allows you to initialise the field with its default value recursively (to avoid `nil`)
 	Init()
 	// Name returns the name of the field
 	Name() string
-	// Schema returns the schema of the field
-	Schema() Schema
+	// Model returns the schema of the field
+	Model() ModelDefinition
 	// Tags returns the tags of the field
 	Tags() map[string]string
 	FromSchemaTypeList() []string
@@ -27,7 +27,7 @@ type SchemaField interface {
 	Get() any
 
 	HasEmbeddedSchema() bool
-	EmbeddedSchema() Schema
+	EmbeddedSchema() ModelDefinition
 
 	IsPrimaryKey() bool
 }
