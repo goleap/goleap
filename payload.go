@@ -43,11 +43,10 @@ func (p *payload[T]) Mapping() (mapping []any) {
 }
 
 func (p *payload[T]) OnScan(result []any) (err error) {
-	sch := p.ModelDefinition().Copy()
 	for i, field := range p.Fields() {
-		sch.GetFieldByName(field.NameInSchema()).Set(result[i])
+		p.ModelDefinition().GetFieldByName(field.NameInSchema()).Set(result[i])
 	}
-	p.result = append(p.result, sch.Get().(T))
+	p.result = append(p.result, p.ModelDefinition().Copy().(T))
 	return
 }
 

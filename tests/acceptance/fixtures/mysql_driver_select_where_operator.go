@@ -30,7 +30,7 @@ func (f *Fixture) MysqlDriverSelectWhereEqual(ctx context.Context) (err error) {
 
 	err = f.Connector().Select(ctx, selectPayload)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	if len(selectPayload.Result()) == 0 {

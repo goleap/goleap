@@ -31,13 +31,6 @@ func (md *modelDefinition) ModelValue() reflect.Value {
 	return md.modelValue
 }
 
-func (md *modelDefinition) Copy() specs.ModelDefinition {
-	tmp := reflect.New(reflect.TypeOf(md)).Elem()
-	tmp.Set(reflect.ValueOf(md))
-
-	return tmp.Interface().(specs.ModelDefinition)
-}
-
 func Use(model specs.Model) specs.ModelDefinition {
 	schema := new(modelDefinition)
 	schema.Model = model
@@ -67,8 +60,11 @@ func Use(model specs.Model) specs.ModelDefinition {
 	return schema
 }
 
-func (md *modelDefinition) Get() specs.Model {
-	return md.modelValue.Addr().Interface().(specs.Model)
+func (md *modelDefinition) Copy() specs.Model {
+	tmp := reflect.New(md.modelType)
+	tmp.Elem().Set(md.modelValue)
+	// copier.Copy(tmp.Interface(), md.modelValue.Addr().Interface())
+	return tmp.Interface().(specs.Model)
 }
 
 func (md *modelDefinition) SetIndex(index int) specs.ModelDefinition {

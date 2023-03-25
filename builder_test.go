@@ -44,7 +44,7 @@ func (test *BuilderTestSuite) TestGet() {
 
 	test.Equal(0, builderInstance.Payload().Index())
 	test.Equal("acceptance", builderInstance.Payload().Database())
-	test.Equal("posts", builderInstance.Payload().Table())
+	test.Equal("comments", builderInstance.Payload().Table())
 
 	test.Equal([]specs.DriverField{
 		drivers.NewField().SetName("id").SetIndex(0).SetNameInSchema("Id"),

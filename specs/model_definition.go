@@ -23,6 +23,5 @@ type ModelDefinition interface {
 	ModelOrigin() reflect.Value
 
 	GetPrimaryKeyField() ModelField
-	Get() Model
-	Copy() ModelDefinition
+	Copy() Model
 }

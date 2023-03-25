@@ -17,5 +17,5 @@ func (s *CommentsModel) DatabaseName() string {
 }
 
 func (s *CommentsModel) TableName() string {
-	return "posts"
+	return "comments"
 }

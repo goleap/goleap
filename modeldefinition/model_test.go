@@ -5,7 +5,6 @@ import (
 	"github.com/lab210-dev/dbkit/specs"
 	"github.com/lab210-dev/dbkit/tests/models"
 	"github.com/stretchr/testify/suite"
-	"log"
 	"testing"
 )
 
@@ -41,29 +40,27 @@ func (test *SchemaTestSuite) TestFieldInfo() {
 	test.Equal(id.Field(), drivers.NewField().SetIndex(0).SetName("id").SetNameInSchema("Id"))
 }
 
-func (test *SchemaTestSuite) TestGet() {
-	model := &models.UsersModel{}
-	modelDefinition := Use(model).Parse()
-
-	modelDefinition.Get()
-
-	test.Equal(modelDefinition.Get(), model)
-}
-
 func (test *SchemaTestSuite) TestCopy() {
 	model := &models.UsersModel{}
 	modelDefinition := Use(model).Parse()
 
+	test.Equal(modelDefinition.Copy(), model)
+
 	id := uint(1)
 	modelDefinition.GetFieldByName("Id").Set(&id)
 
-	copyOfSchema := modelDefinition.Copy()
-	log.Print(copyOfSchema.GetFieldByName("Id").Get())
+	snapshot := modelDefinition.Copy()
+
+	id2 := uint(2)
+	modelDefinition.GetFieldByName("Id").Set(&id2)
+
+	test.Equal(uint(1), snapshot.(*models.UsersModel).Id)
+	test.Equal(uint(2), modelDefinition.Copy().(*models.UsersModel).Id)
 }
 
 func (test *SchemaTestSuite) TestComplexeModel() {
 	modelDefinition := Use(&models.CommentsModel{}).Parse()
-	test.Equal("posts", modelDefinition.TableName())
+	test.Equal("comments", modelDefinition.TableName())
 	test.Equal("acceptance", modelDefinition.DatabaseName())
 	test.Equal(69, len(modelDefinition.Fields()))
 }
@@ -121,7 +118,7 @@ func (test *SchemaTestSuite) TestJoin() {
 	test.Equal(schemaTest.GetFieldByName("User.Id").Join(), []specs.DriverJoin{
 		drivers.NewJoin().
 			SetFromTableIndex(1).
-			SetToTable("posts").
+			SetToTable("comments").
 			SetToTableIndex(0).
 			SetFromKey("user_id").
 			SetToKey("id"),
@@ -129,7 +126,7 @@ func (test *SchemaTestSuite) TestJoin() {
 	test.Equal(schemaTest.GetFieldByName("Post.Id").Join(), []specs.DriverJoin{
 		drivers.NewJoin().
 			SetFromTableIndex(2).
-			SetToTable("posts").
+			SetToTable("comments").
 			SetToTableIndex(0).
 			SetFromKey("post_id").
 			SetToKey("id"),

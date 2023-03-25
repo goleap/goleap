@@ -21,10 +21,10 @@ type join struct {
 
 func (j *join) Validate() error {
 	var check = map[string]func() string{
-		"FromKey":  j.FromKey,
-		"ToTable":  j.ToTable,
-		"ToKey":    j.ToKey,
-		"ToSchema": j.ToSchema,
+		"FromKey":    j.FromKey,
+		"ToTable":    j.ToTable,
+		"ToKey":      j.ToKey,
+		"ToDatabase": j.ToDatabase,
 	}
 
 	errList := make([]string, 0)
@@ -41,11 +41,11 @@ func (j *join) Validate() error {
 	return nil
 }
 
-func (j *join) ToSchema() string {
+func (j *join) ToDatabase() string {
 	return j.toSchema
 }
 
-func (j *join) SetToSchema(fromSchema string) specs.DriverJoin {
+func (j *join) SetToDatabase(fromSchema string) specs.DriverJoin {
 	j.toSchema = fromSchema
 	return j
 }

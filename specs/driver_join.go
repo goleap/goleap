@@ -11,7 +11,7 @@ type DriverJoin interface {
 	ToTable() string
 	ToTableIndex() int
 	ToKey() string
-	ToSchema() string
+	ToDatabase() string
 
 	Method() string
 
@@ -22,5 +22,5 @@ type DriverJoin interface {
 	SetToTable(toTable string) DriverJoin
 	SetToTableIndex(toTableIndex int) DriverJoin
 	SetToKey(toKey string) DriverJoin
-	SetToSchema(fromSchema string) DriverJoin
+	SetToDatabase(toModel string) DriverJoin
 }

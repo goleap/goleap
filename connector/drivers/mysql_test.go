@@ -434,7 +434,7 @@ func (test *MysqlTestSuite) TestJoin() {
 			SetToTable("comments").
 			SetToKey("comments_id").
 			SetToTableIndex(1).
-			SetToSchema("blog"),
+			SetToDatabase("blog"),
 	})
 	test.fakePayload.On("Table").Return("posts")
 	test.fakePayload.On("Index").Return(0)
@@ -456,7 +456,6 @@ func (test *MysqlTestSuite) TestJoinErr() {
 		return
 	}
 
-	// test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0).SetNameInSchema("Id")})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{
 		NewJoin().
@@ -465,7 +464,7 @@ func (test *MysqlTestSuite) TestJoinErr() {
 			SetToTable("comments").
 			SetToKey("comments_id").
 			SetToTableIndex(1).
-			SetToSchema("blog"),
+			SetToDatabase("blog"),
 	})
 
 	err = drv.Select(context.Background(), test.fakePayload)
