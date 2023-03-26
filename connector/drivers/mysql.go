@@ -11,11 +11,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var generateInArgument = sqlx.In
+
 type Mysql struct {
+	specs.Config
 	db *sql.DB
 }
 
 func (m *Mysql) New(config specs.Config) (err error) {
+	m.Config = config
+
 	dataSource := fmt.Sprintf(
 		"%s:%s@tcp(%s:%d)/%s?parseTime=true&loc=%s",
 		config.User(),
@@ -116,7 +121,7 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 
 	builtFields := m.buildFields(payload.Fields())
 
-	query := fmt.Sprintf("SELECT %s FROM `%s` AS `t%d`", builtFields, payload.Table(), payload.Index())
+	query := fmt.Sprintf("SELECT %s FROM `%s`.`%s` AS `t%d`", builtFields, m.Database(), payload.Table(), payload.Index())
 
 	if builtJoin != "" {
 		query += fmt.Sprintf(" %s", builtJoin)
@@ -126,7 +131,7 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 		query += fmt.Sprintf(" %s", builtWhere)
 	}
 
-	queryWithArgs, args, err := sqlx.In(query, args...)
+	queryWithArgs, args, err := generateInArgument(query, args...)
 	if err != nil {
 		return
 	}
