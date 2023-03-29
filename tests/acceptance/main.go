@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"github.com/lab210-dev/dbkit/tests/acceptance/fixtures"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
+	"log"
 	"reflect"
 	"strings"
 	"time"
@@ -12,7 +13,8 @@ import (
 var ctx context.Context
 
 func init() {
-	log.SetLevel(log.DebugLevel)
+	log.SetFlags(0)
+	logrus.SetLevel(logrus.DebugLevel)
 	ctx = context.Background()
 }
 
@@ -43,19 +45,20 @@ func main() {
 
 		log.Print(strings.Repeat("-", 100))
 		log.Printf("Running fixture : %s", typeOf.Method(i).Name)
-		log.Print(strings.Repeat("-", 100))
+		log.Print("Debug :")
+		log.Println()
 
 		timer := time.Now()
 		args := []reflect.Value{reflect.ValueOf(ctx)}
 		result := method.Call(args)
 
-		log.Print(strings.Repeat("-", 100))
+		log.Println()
 		log.Printf("Ending fixture `%s` in %s", typeOf.Method(i).Name, time.Since(timer))
 		log.Print(strings.Repeat("-", 100))
 
 		if errVal := result[0].Interface(); errVal != nil {
 			err := errVal.(error)
-			log.Errorf("Returned an error: %s", err)
+			log.Printf("Returned an error: %s", err)
 			continue
 		}
 

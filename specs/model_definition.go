@@ -5,13 +5,14 @@ import "reflect"
 type ModelDefinition interface {
 	Model
 
-	Fields() []ModelField
-	FieldByName() map[string]ModelField
+	Fields() []FieldDefinition
+	FieldByName() map[string]FieldDefinition
 
-	GetFieldByName(name string) ModelField
+	GetFieldByName(name string) (FieldDefinition, FieldNotFoundError)
+	GetPrimaryField() (FieldDefinition, PrimaryFieldNotFoundError)
 
-	SetFromField(fromField ModelField) ModelDefinition
-	FromField() ModelField
+	SetFromField(fromField FieldDefinition) ModelDefinition
+	FromField() FieldDefinition
 
 	SetIndex(index int) ModelDefinition
 	Index() int
@@ -22,6 +23,5 @@ type ModelDefinition interface {
 	ModelValue() reflect.Value
 	ModelOrigin() reflect.Value
 
-	GetPrimaryKeyField() ModelField
 	Copy() Model
 }

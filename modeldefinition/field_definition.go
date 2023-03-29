@@ -9,7 +9,7 @@ import (
 	"sync"
 )
 
-type field struct {
+type fieldDefinition struct {
 	sync.Mutex
 	name           string
 	schema         specs.ModelDefinition
@@ -30,7 +30,7 @@ type field struct {
 	visitedMap map[string]bool
 }
 
-func (field *field) Join() (joins []specs.DriverJoin) {
+func (field *fieldDefinition) Join() (joins []specs.DriverJoin) {
 	if field.Model().FromField() != nil {
 		if !field.IsSlice() {
 			join := drivers.NewJoin().
@@ -48,19 +48,19 @@ func (field *field) Join() (joins []specs.DriverJoin) {
 	return
 }
 
-func (field *field) Copy() any {
+func (field *fieldDefinition) Copy() any {
 	return reflect.New(field.fieldType).Interface()
 }
 
-func (field *field) Value() reflect.Value {
+func (field *fieldDefinition) Value() reflect.Value {
 	return field.fieldValue
 }
 
-func (field *field) IsSlice() bool {
+func (field *fieldDefinition) IsSlice() bool {
 	return field.isSlice
 }
 
-func (field *field) FromSchemaTypeList() (new []string) {
+func (field *fieldDefinition) FromSchemaTypeList() (new []string) {
 	if field.Model().FromField() != nil {
 		new = append(new, field.Model().FromField().FromSchemaTypeList()...)
 	}
@@ -68,21 +68,21 @@ func (field *field) FromSchemaTypeList() (new []string) {
 	return
 }
 
-func (field *field) Model() specs.ModelDefinition {
+func (field *fieldDefinition) Model() specs.ModelDefinition {
 	return field.schema
 }
 
-func (field *field) Get() any {
+func (field *fieldDefinition) Get() any {
 	return field.fieldValue.Interface()
 }
 
-func (field *field) Set(value any) {
+func (field *fieldDefinition) Set(value any) {
 	field.fieldValue.Set(reflect.ValueOf(value).Elem())
 
 	field.Init()
 }
 
-func (field *field) Init() {
+func (field *fieldDefinition) Init() {
 	if field.init {
 		return
 	}
@@ -107,31 +107,31 @@ func (field *field) Init() {
 	field.init = true
 }
 
-func (field *field) Tags() map[string]string {
+func (field *fieldDefinition) Tags() map[string]string {
 	return field.tags
 }
 
-func (field *field) EmbeddedSchema() specs.ModelDefinition {
+func (field *fieldDefinition) EmbeddedSchema() specs.ModelDefinition {
 	return field.embeddedSchema
 }
 
-func (field *field) SetEmbeddedSchema(embeddedSchema specs.ModelDefinition) specs.ModelField {
+func (field *fieldDefinition) SetEmbeddedSchema(embeddedSchema specs.ModelDefinition) specs.FieldDefinition {
 	field.embeddedSchema = embeddedSchema
 	return field
 }
 
-func (field *field) HasEmbeddedSchema() bool {
+func (field *fieldDefinition) HasEmbeddedSchema() bool {
 	return field.embeddedSchema != nil
 }
 
-func (field *field) SetIsSlice(isSlice bool) {
+func (field *fieldDefinition) SetIsSlice(isSlice bool) {
 	field.isSlice = isSlice
 }
 
-func (md *modelDefinition) parseField(index int) specs.ModelField {
+func (md *modelDefinition) parseField(index int) specs.FieldDefinition {
 	fieldStruct := md.modelType.Field(index)
 
-	field := new(field)
+	field := new(fieldDefinition)
 	field.name = fieldStruct.Name
 	field.schema = md
 	field.fieldType = fieldStruct.Type
@@ -157,7 +157,7 @@ func (md *modelDefinition) parseField(index int) specs.ModelField {
 	return field
 }
 
-func (field *field) ParseTags() {
+func (field *fieldDefinition) ParseTags() {
 	field.tags = make(map[string]string)
 	// TODO (Lab210-dev) : add support to client choice of tag name
 	tags := field.tag.Get("dbKit")
@@ -178,7 +178,7 @@ func (field *field) ParseTags() {
 	}
 }
 
-func (field *field) IsVisited() bool {
+func (field *fieldDefinition) IsVisited() bool {
 	field.Lock()
 	defer field.Unlock()
 
@@ -191,27 +191,27 @@ func (field *field) IsVisited() bool {
 	return countMap[fmt.Sprintf("%v:%v", field.Model().ModelOrigin().Type(), field.IsSlice())] > 2
 }
 
-func (field *field) Name() string {
+func (field *fieldDefinition) Name() string {
 	return field.name
 }
 
-func (field *field) Index() int {
+func (field *fieldDefinition) Index() int {
 	return field.schema.Index()
 }
 
-func (field *field) Column() string {
+func (field *fieldDefinition) Column() string {
 	return field.tags["column"]
 }
 
-func (field *field) IsPrimaryKey() bool {
+func (field *fieldDefinition) IsPrimaryKey() bool {
 	return field.tags["primaryKey"] == "true"
 }
 
-func (field *field) Field() specs.DriverField {
+func (field *fieldDefinition) Field() specs.DriverField {
 	return drivers.NewField().SetName(field.Column()).SetIndex(field.Index()).SetNameInSchema(field.RecursiveFullName())
 }
 
-func (field *field) RecursiveFullName() string {
+func (field *fieldDefinition) RecursiveFullName() string {
 	// TODO (Lab210-dev) : maybe try to simplify this
 	if field.recursiveFullName != "" {
 		return field.recursiveFullName
@@ -226,12 +226,12 @@ func (field *field) RecursiveFullName() string {
 	return field.recursiveFullName
 }
 
-func (field *field) IsSameSchemaFromField() bool {
+func (field *fieldDefinition) IsSameSchemaFromField() bool {
 	return field.schema.FromField() != nil &&
 		fmt.Sprintf("%s/%s", field.schema.FromField().Model().ModelValue().Type(), field.schema.FromField().Name()) == fmt.Sprintf("%s/%s", field.fieldEmbeddedValue.Type(), field.Name())
 }
 
-func (field *field) RevealEmbeddedSchema() specs.ModelField {
+func (field *fieldDefinition) RevealEmbeddedSchema() specs.FieldDefinition {
 	field.fieldEmbeddedValue = field.fieldValue
 
 	if field.fieldEmbeddedValue.Kind() == reflect.Ptr {

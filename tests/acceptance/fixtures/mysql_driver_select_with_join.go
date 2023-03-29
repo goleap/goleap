@@ -35,7 +35,7 @@ func (f *Fixture) MysqlDriverSelectWithJoin(ctx context.Context) (err error) {
 		return errors.New("result is empty")
 	}
 
-	if total := len(selectPayload.Result()); total != 7 {
+	if total := len(selectPayload.Result()); total != 8 {
 		return errors.New("result is not equal to 7")
 	}
 
@@ -44,9 +44,9 @@ func (f *Fixture) MysqlDriverSelectWithJoin(ctx context.Context) (err error) {
 		sum += int(result.Id)
 	}
 
-	// Validate join return 7 rows with id 1, 2, 3, 4, 5, 6, 7
-	if sum != 28 {
-		return errors.New("result is not equal to 28")
+	// Validate join return 7 rows with id 1, 2, 3, 4, 5, 6, 7, 8
+	if sum != 36 {
+		return errors.New("result is not equal to 36")
 	}
 	return
 }

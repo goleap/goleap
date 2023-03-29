@@ -2,7 +2,7 @@ package specs
 
 import "reflect"
 
-type ModelField interface {
+type FieldDefinition interface {
 	// Init allows you to initialise the field with its default value recursively (to avoid `nil`)
 	Init()
 	// Name returns the name of the field

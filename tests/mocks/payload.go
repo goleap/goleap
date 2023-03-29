@@ -71,10 +71,14 @@ func (_m *FakePayload) Join() []specs.DriverJoin {
 }
 
 // Mapping provides a mock function with given fields:
-func (_m *FakePayload) Mapping() []interface{} {
+func (_m *FakePayload) Mapping() ([]interface{}, error) {
 	ret := _m.Called()
 
 	var r0 []interface{}
+	var r1 error
+	if rf, ok := ret.Get(0).(func() ([]interface{}, error)); ok {
+		return rf()
+	}
 	if rf, ok := ret.Get(0).(func() []interface{}); ok {
 		r0 = rf()
 	} else {
@@ -83,7 +87,13 @@ func (_m *FakePayload) Mapping() []interface{} {
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // OnScan provides a mock function with given fields: _a0
@@ -185,10 +195,10 @@ type mockConstructorTestingTNewPayload interface {
 
 // NewFakePayload creates a new instance of FakePayload. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 func NewFakePayload(t mockConstructorTestingTNewPayload) *FakePayload {
-	mock := &FakePayload{}
-	mock.Mock.Test(t)
+	fakePayload := &FakePayload{}
+	fakePayload.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() { fakePayload.AssertExpectations(t) })
 
-	return mock
+	return fakePayload
 }

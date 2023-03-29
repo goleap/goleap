@@ -2,65 +2,39 @@ package dbkit
 
 import (
 	"context"
-	"fmt"
 	"github.com/lab210-dev/dbkit/connector/drivers"
 	"github.com/lab210-dev/dbkit/connector/drivers/operators"
 	"github.com/lab210-dev/dbkit/modeldefinition"
 	"github.com/lab210-dev/dbkit/specs"
 )
 
-type Builder[T specs.Model] interface {
-	Get(primaryKey any) (T, error)
-	Delete(primaryKey any) error
-
-	Create() (err error)
-	Update() error
-
-	Find() error
-	FindAll() error
-
-	Fields(field ...string) Builder[T]
-	Where(condition specs.WhereCondition) Builder[T]
-	Limit(limit int) Builder[T]
-	Offset(offset int) Builder[T]
-	OrderBy(fields ...string) Builder[T]
-
-	Count() (total int64, err error)
-
-	Payload() specs.PayloadAugmented[T]
-}
-
 type builder[T specs.Model] struct {
 	context.Context
 	specs.Connector
 
-	model  *T
-	schema specs.ModelDefinition
-	fields []string
+	model           *T
+	modelDefinition specs.ModelDefinition
+	fields          []string
 
-	focusedSchemaFields []specs.ModelField
+	focusedSchemaFields []specs.FieldDefinition
 
 	driverFields []specs.DriverField
 	driverJoins  []specs.DriverJoin
 	driverWheres []specs.DriverWhere
 
 	payload specs.PayloadAugmented[T]
-
-	// focusedSchemaFieldsCopy []any
 }
 
 func (o *builder[T]) countFocusedSchemaFields() int {
 	return len(o.focusedSchemaFields)
 }
 
-func (o *builder[T]) buildFieldsFromSchema() (err error) {
+func (o *builder[T]) buildFieldsFromModelDefinition() (err error) {
 	for _, fieldName := range o.fields {
-		field := o.schema.GetFieldByName(fieldName)
+		field, err := o.modelDefinition.GetFieldByName(fieldName)
 
-		if field == nil {
-			// TODO (Lab210-dev) Use a real name of schema.
-			err = &FieldNotFoundError{message: fmt.Sprintf("field `%s` not found in schema `%s`", fieldName, o.schema.TableName()), field: fieldName}
-			return
+		if err != nil {
+			return err
 		}
 
 		o.focusedSchemaFields = append(o.focusedSchemaFields, field)
@@ -114,22 +88,21 @@ func (o *builder[T]) Payload() specs.PayloadAugmented[T] {
 
 func (o *builder[T]) Get(primaryKeyValue any) (result T, err error) {
 
-	o.driverWheres = append(o.driverWheres, drivers.NewWhere().SetFrom(o.schema.GetPrimaryKeyField().Field()).SetOperator(operators.Equal).SetTo(primaryKeyValue))
-
-	primaryKeyField := o.schema.GetPrimaryKeyField()
-	if primaryKeyField == nil {
-		err = &FieldNotFoundError{message: fmt.Sprintf("primary key not found in schema `%s`", o.schema.TableName())}
-		return
-	}
-
-	err = o.buildFieldsFromSchema()
+	primaryKeyField, err := o.modelDefinition.GetPrimaryField()
 	if err != nil {
 		return
 	}
 
+	err = o.buildFieldsFromModelDefinition()
+	if err != nil {
+		return
+	}
+
+	o.driverWheres = append(o.driverWheres, drivers.NewWhere().SetFrom(primaryKeyField.Field()).SetOperator(operators.Equal).SetTo(primaryKeyValue))
+
 	if o.countFocusedSchemaFields() == 0 {
 		// TODO (Lab210-dev) : Factory for error. TIP SchemaError, SchemaFieldError, etc.
-		err = &FieldNotFoundError{message: "no fields selected"}
+		// err = &errors.FieldNotFoundError{message: "no fields selected"}
 		return
 	}
 
@@ -151,7 +124,7 @@ func (o *builder[T]) Get(primaryKeyValue any) (result T, err error) {
 	return
 }
 
-func (o *builder[T]) Delete(primaryKeyValue any) error {
+func (o *builder[T]) Delete(_ any) error {
 	//TODO implement me
 	panic("implement me")
 }
@@ -176,27 +149,27 @@ func (o *builder[T]) FindAll() error {
 	panic("implement me")
 }
 
-func (o *builder[T]) Fields(field ...string) Builder[T] {
+func (o *builder[T]) Fields(field ...string) specs.Builder[T] {
 	o.fields = field
 	return o
 }
 
-func (o *builder[T]) Where(condition specs.WhereCondition) Builder[T] {
+func (o *builder[T]) Where(_ specs.WhereCondition) specs.Builder[T] {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (o *builder[T]) Limit(limit int) Builder[T] {
+func (o *builder[T]) Limit(_ int) specs.Builder[T] {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (o *builder[T]) Offset(offset int) Builder[T] {
+func (o *builder[T]) Offset(_ int) specs.Builder[T] {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (o *builder[T]) OrderBy(fields ...string) Builder[T] {
+func (o *builder[T]) OrderBy(_ ...string) specs.Builder[T] {
 	//TODO implement me
 	panic("implement me")
 }
@@ -206,15 +179,15 @@ func (o *builder[T]) Count() (total int64, err error) {
 	panic("implement me")
 }
 
-func Use[T specs.Model](ctx context.Context, connector specs.Connector) Builder[T] {
+func Use[T specs.Model](ctx context.Context, connector specs.Connector) specs.Builder[T] {
 	var model T
 
-	var builder Builder[T] = &builder[T]{
+	var builder specs.Builder[T] = &builder[T]{
 		Context:   ctx,
 		Connector: connector,
 
-		model:  &model,
-		schema: modeldefinition.Use(model).Parse(),
+		model:           &model,
+		modelDefinition: modeldefinition.Use(model).Parse(),
 	}
 
 	return builder

@@ -1,3 +1,5 @@
+include .env
+
 .DEFAULT_GOAL := help
 COMPOSE_COMMAND = docker compose --env-file .env -f build/docker-compose-dev.yml -p dbkit
 
@@ -26,3 +28,5 @@ stop: ## Stops running containers without removing them [s=services]
 	$(COMPOSE_COMMAND) stop db
 down: ## Stops containers and removes containers, networks, volumes, and images created by up
 	$(COMPOSE_COMMAND) down --rmi all --remove-orphans
+backup: ## Backup database
+	docker exec dbkit-db mysqldump -u root --password=${MYSQL_ROOT_PASSWORD} ${MYSQL_DATABASE} > ./tests/acceptance/data/acceptance.sql

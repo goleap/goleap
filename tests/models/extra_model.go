@@ -1,12 +1,12 @@
 package models
 
-type ExtraModel struct {
+type DebugModel struct {
 }
 
-func (s ExtraModel) DatabaseName() string {
+func (s DebugModel) DatabaseName() string {
 	return "acceptance"
 }
 
-func (s ExtraModel) TableName() string {
+func (s DebugModel) TableName() string {
 	return "extra"
 }

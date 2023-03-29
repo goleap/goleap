@@ -13,7 +13,7 @@ type Payload interface {
 	SetJoins([]DriverJoin) Payload
 	SetWheres([]DriverWhere) Payload
 
-	Mapping() []any
+	Mapping() ([]any, error)
 	OnScan([]any) error
 }
 

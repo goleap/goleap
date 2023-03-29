@@ -17,10 +17,10 @@ type modelDefinition struct {
 	modelType   reflect.Type
 	modelValue  reflect.Value
 
-	fields      []specs.ModelField
-	fieldByName map[string]specs.ModelField
+	fields      []specs.FieldDefinition
+	fieldByName map[string]specs.FieldDefinition
 
-	fromField specs.ModelField
+	fromField specs.FieldDefinition
 }
 
 func (md *modelDefinition) ModelOrigin() reflect.Value {
@@ -55,7 +55,7 @@ func Use(model specs.Model) specs.ModelDefinition {
 		schema.modelValue = schema.modelValue.Elem()
 	}
 
-	schema.fieldByName = make(map[string]specs.ModelField)
+	schema.fieldByName = make(map[string]specs.FieldDefinition)
 
 	return schema
 }
@@ -63,7 +63,6 @@ func Use(model specs.Model) specs.ModelDefinition {
 func (md *modelDefinition) Copy() specs.Model {
 	tmp := reflect.New(md.modelType)
 	tmp.Elem().Set(md.modelValue)
-	// copier.Copy(tmp.Interface(), md.modelValue.Addr().Interface())
 	return tmp.Interface().(specs.Model)
 }
 
@@ -73,7 +72,7 @@ func (md *modelDefinition) SetIndex(index int) specs.ModelDefinition {
 	return md
 }
 
-func (md *modelDefinition) GetPrimaryKeyField() specs.ModelField {
+func (md *modelDefinition) GetPrimaryField() (specs.FieldDefinition, specs.PrimaryFieldNotFoundError) {
 	for _, field := range md.fields {
 
 		if field.Model() != md {
@@ -81,11 +80,11 @@ func (md *modelDefinition) GetPrimaryKeyField() specs.ModelField {
 		}
 
 		if field.IsPrimaryKey() {
-			return field
+			return field, nil
 		}
 
 	}
-	return nil
+	return nil, NewErrNoPrimaryField(md)
 }
 
 func (md *modelDefinition) Index() int {
@@ -101,15 +100,15 @@ func (md *modelDefinition) Counter() int {
 	return md.counter
 }
 
-func (md *modelDefinition) Fields() []specs.ModelField {
+func (md *modelDefinition) Fields() []specs.FieldDefinition {
 	return md.fields
 }
 
-func (md *modelDefinition) FieldByName() map[string]specs.ModelField {
+func (md *modelDefinition) FieldByName() map[string]specs.FieldDefinition {
 	return md.fieldByName
 }
 
-func (md *modelDefinition) AddField(field specs.ModelField) {
+func (md *modelDefinition) AddField(field specs.FieldDefinition) {
 	defer md.Unlock()
 	md.Lock()
 
@@ -126,17 +125,24 @@ func (md *modelDefinition) AddField(field specs.ModelField) {
 	md.fieldByName[field.RecursiveFullName()] = field
 }
 
-func (md *modelDefinition) FromField() specs.ModelField {
+func (md *modelDefinition) FromField() specs.FieldDefinition {
 	return md.fromField
 }
 
-func (md *modelDefinition) SetFromField(fromField specs.ModelField) specs.ModelDefinition {
+func (md *modelDefinition) SetFromField(fromField specs.FieldDefinition) specs.ModelDefinition {
 	md.fromField = fromField
 	return md
 }
 
-func (md *modelDefinition) GetFieldByName(name string) specs.ModelField {
-	return md.fieldByName[name]
+func (md *modelDefinition) GetFieldByName(name string) (specs.FieldDefinition, specs.FieldNotFoundError) {
+	md.Lock()
+	defer md.Unlock()
+
+	if field, ok := md.fieldByName[name]; ok {
+		return field, nil
+	}
+
+	return nil, NewFieldNotFoundError(name, md)
 }
 
 func (md *modelDefinition) Parse() specs.ModelDefinition {

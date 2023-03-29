@@ -1,6 +1,7 @@
 package modeldefinition
 
 import (
+	"errors"
 	"github.com/lab210-dev/dbkit/connector/drivers"
 	"github.com/lab210-dev/dbkit/specs"
 	"github.com/lab210-dev/dbkit/tests/models"
@@ -33,7 +34,10 @@ func (test *SchemaTestSuite) TestFieldInfo() {
 	model := &models.UsersModel{}
 	modelDefinition := Use(model).Parse()
 
-	id := modelDefinition.GetFieldByName("Id")
+	id, err := modelDefinition.GetFieldByName("Id")
+	if !test.NoError(err) {
+		return
+	}
 	test.Equal(id.Column(), "id")
 	test.Equal(id.Index(), 0)
 
@@ -47,12 +51,20 @@ func (test *SchemaTestSuite) TestCopy() {
 	test.Equal(modelDefinition.Copy(), model)
 
 	id := uint(1)
-	modelDefinition.GetFieldByName("Id").Set(&id)
+	field, err := modelDefinition.GetFieldByName("Id")
+	if !test.NoError(err) {
+		return
+	}
+	field.Set(&id)
 
 	snapshot := modelDefinition.Copy()
 
 	id2 := uint(2)
-	modelDefinition.GetFieldByName("Id").Set(&id2)
+	field, err = modelDefinition.GetFieldByName("Id")
+	if !test.NoError(err) {
+		return
+	}
+	field.Set(&id2)
 
 	test.Equal(uint(1), snapshot.(*models.UsersModel).Id)
 	test.Equal(uint(2), modelDefinition.Copy().(*models.UsersModel).Id)
@@ -81,41 +93,81 @@ func (test *SchemaTestSuite) TestSet() {
 
 	// Simple
 	id1 := uint(1)
-	modelDefinition.GetFieldByName("Id").Set(&id1)
+	field, err := modelDefinition.GetFieldByName("Id")
+	if !test.NoError(err) {
+		return
+	}
+	field.Set(&id1)
 	test.Equal(uint(1), model.Id)
+
+	primary, err := modelDefinition.GetPrimaryField()
+	if !test.NoError(err) {
+		return
+	}
+
+	test.Equal(field, primary)
 
 	// Sub Embedded modelDefinition
 	id2 := uint(2)
-	modelDefinition.GetFieldByName("Parent.User.Id").Set(&id2)
+	field, err = modelDefinition.GetFieldByName("Parent.User.Id")
+	if !test.NoError(err) {
+		return
+	}
+	field.Set(&id2)
+
 	test.Equal(uint(2), model.Parent.User.Id)
 
 	// Embedded modelDefinition
 	id3 := uint(3)
-	modelDefinition.GetFieldByName("Parent.Id").Set(&id3)
+	field, err = modelDefinition.GetFieldByName("Parent.Id")
+	if !test.NoError(err) {
+		return
+	}
+	field.Set(&id3)
 	test.Equal(uint(3), model.Parent.Id)
-	test.Equal(uint(3), modelDefinition.GetFieldByName("Parent.Id").Get())
+
+	test.Equal(uint(3), field.Get())
 
 	// Sub Embedded Slice ModelDefinition
 	id4 := uint(4)
-	modelDefinition.GetFieldByName("Post.Comments.Id").Set(&id4)
+	field, err = modelDefinition.GetFieldByName("Post.Comments.Id")
+	if !test.NoError(err) {
+		return
+	}
+	field.Set(&id4)
+
 	test.Equal(uint(4), model.Post.Comments[0].Id)
 
 	newSchema := Use(model).Parse()
 
-	// Two set on same field for testing skip init
+	// Two set on same fieldDefinition for testing skip init
 	id5 := uint(5)
-	newSchema.GetFieldByName("Parent.User.Id").Set(&id5)
-	newSchema.GetFieldByName("Parent.User.Id").Set(&id5)
+	field, err = newSchema.GetFieldByName("Parent.User.Id")
+	if !test.NoError(err) {
+		return
+	}
+
+	field.Set(&id5)
+	field.Set(&id5)
+
 	test.Equal(uint(5), model.Parent.User.Id)
 
-	test.Equal(new(uint), newSchema.GetFieldByName("Parent.User.Id").Copy())
-
-	test.Equal(modelDefinition.GetFieldByName("Id"), modelDefinition.GetPrimaryKeyField())
+	test.Equal(new(uint), field.Copy())
 }
 
 func (test *SchemaTestSuite) TestJoin() {
 	schemaTest := Use(&models.CommentsModel{}).Parse()
-	test.Equal(schemaTest.GetFieldByName("User.Id").Join(), []specs.DriverJoin{
+	userIdFieldDefinition, err := schemaTest.GetFieldByName("User.Id")
+	if !test.NoError(err) {
+		return
+	}
+
+	postIdFieldDefinition, err := schemaTest.GetFieldByName("Post.Id")
+	if !test.NoError(err) {
+		return
+	}
+
+	test.Equal(userIdFieldDefinition.Join(), []specs.DriverJoin{
 		drivers.NewJoin().
 			SetFromTableIndex(1).
 			SetToTable("comments").
@@ -123,7 +175,8 @@ func (test *SchemaTestSuite) TestJoin() {
 			SetFromKey("user_id").
 			SetToKey("id"),
 	})
-	test.Equal(schemaTest.GetFieldByName("Post.Id").Join(), []specs.DriverJoin{
+
+	test.Equal(postIdFieldDefinition.Join(), []specs.DriverJoin{
 		drivers.NewJoin().
 			SetFromTableIndex(2).
 			SetToTable("comments").
@@ -133,12 +186,40 @@ func (test *SchemaTestSuite) TestJoin() {
 	})
 }
 
-func (test *SchemaTestSuite) TestGetPrimaryKeyField() {
+func (test *SchemaTestSuite) TestGetFieldByName() {
 	schemaTest := Use(&models.UsersModel{}).Parse()
-	test.Equal(schemaTest.GetFieldByName("Id"), schemaTest.GetPrimaryKeyField())
 
-	schemaTest = Use(models.ExtraModel{}).Parse()
-	test.Equal(nil, schemaTest.GetPrimaryKeyField())
+	_, err := schemaTest.GetFieldByName("unknown")
+
+	fieldErr := &FieldNotFoundError{}
+	test.True(errors.As(err, &fieldErr))
+
+	test.ErrorContains(err, "fieldDefinition `unknown` not found in schema `UsersModel`")
+}
+
+func (test *SchemaTestSuite) TestGetPrimaryField() {
+	schemaTest := Use(&models.UsersModel{}).Parse()
+
+	idFieldDefinition, err := schemaTest.GetFieldByName("Id")
+	if !test.NoError(err) {
+		return
+	}
+
+	primaryFieldDefinition, err := schemaTest.GetPrimaryField()
+	if !test.NoError(err) {
+		return
+	}
+
+	test.Equal(idFieldDefinition, primaryFieldDefinition)
+
+	schemaTest = Use(models.DebugModel{}).Parse()
+
+	_, err = schemaTest.GetPrimaryField()
+
+	primaryErr := &ErrNoPrimaryField{}
+	test.True(errors.As(err, &primaryErr))
+
+	test.ErrorContains(err, "no primary fieldDefinition")
 }
 
 func TestSchemaTestSuite(t *testing.T) {

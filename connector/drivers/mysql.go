@@ -136,6 +136,11 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 		return
 	}
 
+	mapping, err := payload.Mapping()
+	if err != nil {
+		return
+	}
+
 	log.WithFields(log.Fields{
 		"type":  "select",
 		"query": queryWithArgs,
@@ -147,7 +152,7 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 		return
 	}
 
-	return wrapScan(rows, payload.Mapping(), payload.OnScan)
+	return wrapScan(rows, mapping, payload.OnScan)
 }
 
 func (m *Mysql) Get() *sql.DB {

@@ -34,17 +34,24 @@ func (p *payload[T]) Where() []specs.DriverWhere {
 	return p.wheres
 }
 
-func (p *payload[T]) Mapping() (mapping []any) {
+func (p *payload[T]) Mapping() (mapping []any, err error) {
 	for _, field := range p.Fields() {
-		// TODO (Lab210-dev) Trigger error if field is nil.
-		mapping = append(mapping, p.modelDefinition.GetFieldByName(field.NameInSchema()).Copy())
+		fieldDefinition, err := p.modelDefinition.GetFieldByName(field.NameInSchema())
+		if err != nil {
+			return nil, err
+		}
+		mapping = append(mapping, fieldDefinition.Copy())
 	}
 	return
 }
 
 func (p *payload[T]) OnScan(result []any) (err error) {
 	for i, field := range p.Fields() {
-		p.ModelDefinition().GetFieldByName(field.NameInSchema()).Set(result[i])
+		fieldDefinition, err := p.ModelDefinition().GetFieldByName(field.NameInSchema())
+		if err != nil {
+			return err
+		}
+		fieldDefinition.Set(result[i])
 	}
 	p.result = append(p.result, p.ModelDefinition().Copy().(T))
 	return
