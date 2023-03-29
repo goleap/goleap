@@ -1,28 +1,62 @@
 package drivers
 
-import "github.com/lab210-dev/dbkit/specs"
+import (
+	"fmt"
+	"github.com/lab210-dev/dbkit/connector/drivers/joins"
+	"github.com/lab210-dev/dbkit/specs"
+	"strings"
+)
 
 type join struct {
-	fromTable      string
-	fromTableIndex int
-	toTable        string
-	toTableIndex   int
 	fromKey        string
-	toKey          string
-	method         specs.JoinMethod
+	fromTableIndex int
+
+	toTable      string
+	toKey        string
+	toSchema     string
+	toTableIndex int
+
+	method specs.JoinMethod
+}
+
+func (j *join) Validate() error {
+	var check = map[string]func() string{
+		"FromKey":    j.FromKey,
+		"ToTable":    j.ToTable,
+		"ToKey":      j.ToKey,
+		"ToDatabase": j.ToDatabase,
+	}
+
+	errList := make([]string, 0)
+	for key, c := range check {
+		if c() == "" {
+			errList = append(errList, key)
+		}
+	}
+
+	if len(errList) > 0 {
+		return fmt.Errorf(`the following fields "%s" are mandatory to perform the join`, strings.Join(errList, ", "))
+	}
+
+	return nil
+}
+
+func (j *join) ToDatabase() string {
+	return j.toSchema
+}
+
+func (j *join) SetToDatabase(fromSchema string) specs.DriverJoin {
+	j.toSchema = fromSchema
+	return j
 }
 
 func (j *join) Method() string {
-	return specs.Method[j.method]
+	return joins.Method[j.method]
 }
 
 func (j *join) SetMethod(method specs.JoinMethod) specs.DriverJoin {
 	j.method = method
 	return j
-}
-
-func (j *join) FromTable() string {
-	return j.fromTable
 }
 
 func (j *join) FromTableIndex() int {
@@ -43,11 +77,6 @@ func (j *join) FromKey() string {
 
 func (j *join) ToKey() string {
 	return j.toKey
-}
-
-func (j *join) SetFromTable(fromTable string) specs.DriverJoin {
-	j.fromTable = fromTable
-	return j
 }
 
 func (j *join) SetFromTableIndex(fromTableIndex int) specs.DriverJoin {

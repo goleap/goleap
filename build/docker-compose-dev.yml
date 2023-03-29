@@ -3,6 +3,7 @@ version: "3.9"
 services:
   db:
     image: mysql:8
+    container_name: dbkit-db
     command: --default-authentication-plugin=mysql_native_password
     restart: always
     volumes:
@@ -12,23 +13,34 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u${MYSQL_USER}", "-p${MYSQL_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
-  wait:
-    image: alpine
-    command: >
-      sh -c " until nc -z -v -w30 db 3306; do \
-        echo 'Waiting for database connection...'; \
-        sleep 5; \
-      done"
+  adminer:
+    image: adminer
+    container_name: dbkit-adminer
+    ports:
+      - 9000:8080
+    environment:
+      - ADMINER_DESIGN=pepa-linha
     links:
       - db
 
   acceptance:
+    container_name: dbkit-acceptance
     build:
       context: ./..
       dockerfile: build/images/go/Dockerfile
+    environment:
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     depends_on:
-      wait:
-        condition: service_completed_successfully
+      db:
+        condition: service_healthy
     links:
       - db

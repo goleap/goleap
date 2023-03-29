@@ -1,13 +1,13 @@
 package dbkit
 
 import (
-	"github.com/lab210-dev/dbkit/schema"
+	"github.com/lab210-dev/dbkit/modeldefinition"
 	"github.com/lab210-dev/dbkit/specs"
 )
 
 type payload[T specs.Model] struct {
-	result []T
-	schema specs.Schema
+	result          []T
+	modelDefinition specs.ModelDefinition
 
 	fields []specs.DriverField
 	joins  []specs.DriverJoin
@@ -15,11 +15,11 @@ type payload[T specs.Model] struct {
 }
 
 func (p *payload[T]) Database() string {
-	return p.Schema().DatabaseName()
+	return p.ModelDefinition().DatabaseName()
 }
 
 func (p *payload[T]) Index() int {
-	return p.Schema().Index()
+	return p.ModelDefinition().Index()
 }
 
 func (p *payload[T]) Fields() []specs.DriverField {
@@ -34,25 +34,31 @@ func (p *payload[T]) Where() []specs.DriverWhere {
 	return p.wheres
 }
 
-func (p *payload[T]) Mapping() (mapping []any) {
+func (p *payload[T]) Mapping() (mapping []any, err error) {
 	for _, field := range p.Fields() {
-		// TODO (Lab210-dev) Trigger error if field is nil.
-		mapping = append(mapping, p.schema.GetFieldByName(field.NameInSchema()).Copy())
+		fieldDefinition, err := p.modelDefinition.GetFieldByName(field.NameInSchema())
+		if err != nil {
+			return nil, err
+		}
+		mapping = append(mapping, fieldDefinition.Copy())
 	}
 	return
 }
 
 func (p *payload[T]) OnScan(result []any) (err error) {
-	sch := p.Schema().Copy()
 	for i, field := range p.Fields() {
-		sch.GetFieldByName(field.NameInSchema()).Set(result[i])
+		fieldDefinition, err := p.ModelDefinition().GetFieldByName(field.NameInSchema())
+		if err != nil {
+			return err
+		}
+		fieldDefinition.Set(result[i])
 	}
-	p.result = append(p.result, sch.Get().(T))
+	p.result = append(p.result, p.ModelDefinition().Copy().(T))
 	return
 }
 
 func (p *payload[T]) Table() string {
-	return p.Schema().TableName()
+	return p.ModelDefinition().TableName()
 }
 
 func (p *payload[T]) Result() []T {
@@ -77,17 +83,17 @@ func (p *payload[T]) SetWheres(wheres []specs.DriverWhere) specs.Payload {
 	return p
 }
 
-func (p *payload[T]) SetSchema(schema specs.Schema) specs.Payload {
-	p.schema = schema
+func (p *payload[T]) SetSchema(schema specs.ModelDefinition) specs.Payload {
+	p.modelDefinition = schema
 	return p
 }
 
-func (p *payload[T]) Schema() specs.Schema {
-	if p.schema == nil {
+func (p *payload[T]) ModelDefinition() specs.ModelDefinition {
+	if p.modelDefinition == nil {
 		var model T
-		p.schema = schema.New(model).Parse()
+		p.modelDefinition = modeldefinition.Use(model).Parse()
 	}
-	return p.schema
+	return p.modelDefinition
 }
 
 func NewPayload[T specs.Model]() specs.PayloadAugmented[T] {

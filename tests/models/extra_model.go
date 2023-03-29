@@ -1,15 +1,12 @@
 package models
 
-type ExtraModel struct {
-	BaseModel *BaseModel     `dbKit:"column:recursive_id, foreignKey:id"`
-	ExtraJump ExtraJumpModel `dbKit:"column:extra_jump_id, foreignKey:id"`
-	Id        uint           `dbKit:"column:id, primaryKey"`
+type DebugModel struct {
 }
 
-func (s ExtraModel) DatabaseName() string {
-	return "test"
+func (s DebugModel) DatabaseName() string {
+	return "acceptance"
 }
 
-func (s ExtraModel) TableName() string {
+func (s DebugModel) TableName() string {
 	return "extra"
 }
