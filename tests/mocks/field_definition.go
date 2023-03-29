@@ -34,7 +34,7 @@ func (_m *FakeFieldDefinition) Copy() interface{} {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(interface{})
+			r0 = ret.Get(0)
 		}
 	}
 
@@ -98,7 +98,7 @@ func (_m *FakeFieldDefinition) Get() interface{} {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(interface{})
+			r0 = ret.Get(0)
 		}
 	}
 
