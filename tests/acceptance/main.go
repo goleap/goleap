@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"github.com/lab210-dev/dbkit/tests/acceptance/fixtures"
 	"github.com/sirupsen/logrus"
 	"log"
+	"os"
 	"reflect"
-	"strings"
 	"time"
 )
 
@@ -15,6 +17,9 @@ var ctx context.Context
 func init() {
 	log.SetFlags(0)
 	logrus.SetLevel(logrus.DebugLevel)
+	tmp := bytes.NewBuffer([]byte{})
+	logrus.SetOutput(tmp)
+
 	ctx = context.Background()
 }
 
@@ -22,6 +27,12 @@ func main() {
 	fx := fixtures.Fixture{}
 	rf := reflect.ValueOf(&fx)
 	typeOf := reflect.TypeOf(&fx)
+
+	testsCount := 0
+	failedTestCount := 0
+	passedTestCount := 0
+
+	globalTimer := time.Now()
 
 	for i := 0; i < rf.NumMethod(); i++ {
 
@@ -43,25 +54,33 @@ func main() {
 			continue
 		}
 
-		log.Print(strings.Repeat("-", 100))
-		log.Printf("Running fixture : %s", typeOf.Method(i).Name)
-		log.Print("Debug :")
-		log.Println()
+		testsCount++
 
-		timer := time.Now()
+		state := "\x1b[32mPASS\x1b[0m"
+		timerTest := time.Now()
 		args := []reflect.Value{reflect.ValueOf(ctx)}
 		result := method.Call(args)
 
-		log.Println()
-		log.Printf("Ending fixture `%s` in %s", typeOf.Method(i).Name, time.Since(timer))
-		log.Print(strings.Repeat("-", 100))
-
 		if errVal := result[0].Interface(); errVal != nil {
-			err := errVal.(error)
-			log.Printf("Returned an error: %s", err)
-			continue
+			state = "\x1b[31mFAILED\x1b[0m"
+			failedTestCount++
+		} else {
+			passedTestCount++
 		}
 
-		log.Println()
+		fmt.Printf("%s %s (%s)\n", state, typeOf.Method(i).Name, time.Since(timerTest))
+	}
+
+	var color string
+	if failedTestCount > 0 {
+		color = "\x1b[31m" // Rouge
+	} else {
+		color = "\x1b[32m" // Vert
+	}
+
+	fmt.Printf("\n%sDONE %d tests in %s | Passed: %d Failed: %d\x1b[0m\n", color, testsCount, time.Since(globalTimer), passedTestCount, failedTestCount)
+
+	if failedTestCount > 0 {
+		os.Exit(1)
 	}
 }

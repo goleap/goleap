@@ -63,7 +63,7 @@ func (f *Fixture) MysqlDriverSelectWhereNotEqual(ctx context.Context) (err error
 
 	err = f.Connector().Select(ctx, selectPayload)
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	for _, user := range selectPayload.Result() {
@@ -94,7 +94,7 @@ func (f *Fixture) MysqlDriverSelectWhereIn(ctx context.Context) (err error) {
 
 	err = f.Connector().Select(ctx, selectPayload)
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	for _, user := range selectPayload.Result() {
