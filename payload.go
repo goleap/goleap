@@ -1,7 +1,7 @@
 package dbkit
 
 import (
-	"github.com/lab210-dev/dbkit/modeldefinition"
+	"github.com/lab210-dev/dbkit/definitions"
 	"github.com/lab210-dev/dbkit/specs"
 )
 
@@ -86,7 +86,7 @@ func (p *payload[T]) SetWheres(wheres []specs.DriverWhere) specs.Payload {
 func (p *payload[T]) ModelDefinition() specs.ModelDefinition {
 	if p.modelDefinition == nil {
 		var model T
-		p.modelDefinition = modeldefinition.Use(model).Parse()
+		p.modelDefinition = definitions.Use(model).Parse()
 	}
 	return p.modelDefinition
 }

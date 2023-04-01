@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/lab210-dev/dbkit/connector/drivers"
 	"github.com/lab210-dev/dbkit/connector/drivers/operators"
-	"github.com/lab210-dev/dbkit/modeldefinition"
+	"github.com/lab210-dev/dbkit/definitions"
 	"github.com/lab210-dev/dbkit/specs"
 )
 
@@ -225,7 +225,7 @@ func Use[T specs.Model](ctx context.Context, connector specs.Connector) specs.Bu
 		Connector: connector,
 
 		model:           &model,
-		modelDefinition: modeldefinition.Use(model).Parse(),
+		modelDefinition: definitions.Use(model).Parse(),
 	}
 
 	return builder

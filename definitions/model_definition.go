@@ -1,4 +1,4 @@
-package modeldefinition
+package definitions
 
 import (
 	"github.com/lab210-dev/dbkit/specs"

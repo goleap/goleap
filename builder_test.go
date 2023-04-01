@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/lab210-dev/dbkit/connector/drivers"
-	"github.com/lab210-dev/dbkit/modeldefinition"
+	"github.com/lab210-dev/dbkit/definitions"
 	"github.com/lab210-dev/dbkit/specs"
 	"github.com/lab210-dev/dbkit/tests/mocks"
 	"github.com/lab210-dev/dbkit/tests/models"
@@ -39,11 +39,11 @@ func (test *BuilderTestSuite) TestGetWithNoPrimaryKeyErr() {
 	b := builderInstance.(*builder[*models.CommentsModel])
 	b.modelDefinition = test.fakeModelDefinition
 
-	test.fakeModelDefinition.On("GetPrimaryField").Return(nil, modeldefinition.NewErrNoPrimaryField(nil)).Once()
+	test.fakeModelDefinition.On("GetPrimaryField").Return(nil, definitions.NewErrNoPrimaryField(nil)).Once()
 
 	_, err := builderInstance.Get("Primary")
 
-	primaryErr := &modeldefinition.ErrNoPrimaryField{}
+	primaryErr := &definitions.ErrNoPrimaryField{}
 	test.True(errors.As(err, &primaryErr))
 }
 

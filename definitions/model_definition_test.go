@@ -1,4 +1,4 @@
-package modeldefinition
+package definitions
 
 import (
 	"errors"
