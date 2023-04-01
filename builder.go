@@ -8,6 +8,10 @@ import (
 	"github.com/lab210-dev/dbkit/specs"
 )
 
+var (
+	QueryTypeGet = "Get"
+)
+
 type builder[T specs.Model] struct {
 	context.Context
 	specs.Connector
@@ -29,6 +33,15 @@ type builder[T specs.Model] struct {
 	payload specs.PayloadAugmented[T]
 }
 
+func (o *builder[T]) setQueryType(queryType string) specs.Builder[T] {
+	o.queryType = queryType
+	return o
+}
+
+func (o *builder[T]) QueryType() string {
+	return o.queryType
+}
+
 func (o *builder[T]) execute(flow ...func() error) (err error) {
 	for _, f := range flow {
 		if err := f(); err != nil {
@@ -44,7 +57,7 @@ func (o *builder[T]) valideRequiredField() error {
 		return nil
 	}
 
-	return NewFieldRequiredError("")
+	return NewFieldRequiredError(o.QueryType())
 }
 
 func (o *builder[T]) buildFields() (err error) {
@@ -111,6 +124,8 @@ func (o *builder[T]) Payload() specs.PayloadAugmented[T] {
 }
 
 func (o *builder[T]) Get(primaryKeyValue any) (result T, err error) {
+	o.setQueryType(QueryTypeGet)
+
 	primaryField, err := o.modelDefinition.GetPrimaryField()
 	if err != nil {
 		return
