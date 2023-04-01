@@ -20,21 +20,21 @@ func (w *condition) To() any {
 	return w.to
 }
 
-func (w *condition) SetFrom(from string) specs.WhereCondition {
+func (w *condition) SetFrom(from string) specs.Condition {
 	w.from = from
 	return w
 }
 
-func (w *condition) SetOperator(operator string) specs.WhereCondition {
+func (w *condition) SetOperator(operator string) specs.Condition {
 	w.operator = operator
 	return w
 }
 
-func (w *condition) SetTo(to any) specs.WhereCondition {
+func (w *condition) SetTo(to any) specs.Condition {
 	w.to = to
 	return w
 }
 
-func NewCondition() specs.WhereCondition {
+func NewCondition() specs.Condition {
 	return new(condition)
 }

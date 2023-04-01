@@ -47,7 +47,7 @@ func (test *BuilderTestSuite) TestGetWithNoPrimaryKeyErr() {
 	test.True(errors.As(err, &primaryErr))
 }
 
-func (test *BuilderTestSuite) TestBuildGetFieldByName() {
+func (test *BuilderTestSuite) TestBuildFieldsErr() {
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return
@@ -58,10 +58,77 @@ func (test *BuilderTestSuite) TestBuildGetFieldByName() {
 	b.modelDefinition = test.fakeModelDefinition
 
 	test.fakeModelDefinition.On("GetPrimaryField").Return(test.fakeFieldDefinition, nil)
+	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id")
 	test.fakeModelDefinition.On("GetFieldByName", "unknown").Return(nil, errors.New("test")).Once()
 
 	_, err := builderInstance.Fields("unknown").Get("Primary")
 	test.Error(err)
+}
+
+func (test *BuilderTestSuite) TestValideRequiredFieldErr() {
+	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
+	if !test.NotEmpty(builderInstance) {
+		return
+	}
+
+	// Mock the model definition to return an error
+	b := builderInstance.(*builder[*models.CommentsModel])
+	b.modelDefinition = test.fakeModelDefinition
+
+	test.fakeModelDefinition.On("GetPrimaryField").Return(test.fakeFieldDefinition, nil)
+	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id")
+
+	_, err := builderInstance.Get("Primary")
+	test.Error(err)
+	test.ErrorContains(err, "field required for ")
+}
+
+func (test *BuilderTestSuite) TestBuildWhereErr() {
+	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
+	if !test.NotEmpty(builderInstance) {
+		return
+	}
+
+	// Mock the model definition to return an error
+	b := builderInstance.(*builder[*models.CommentsModel])
+	b.modelDefinition = test.fakeModelDefinition
+
+	test.fakeModelDefinition.On("GetPrimaryField").Return(test.fakeFieldDefinition, nil)
+	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id")
+	test.fakeModelDefinition.On("GetFieldByName", "unknown").Return(nil, nil).Once()
+
+	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(nil, errors.New("test")).Once()
+
+	_, err := builderInstance.Fields("unknown").Get("Primary")
+	test.Error(err)
+}
+
+func (test *BuilderTestSuite) TestGetWithNotFoundErr() {
+	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
+	if !test.NotEmpty(builderInstance) {
+		return
+	}
+
+	test.fakeConnector.On("Select", test.Context, mock.Anything).Return(nil)
+
+	_, err := builderInstance.Fields("Id", "Post.Id").Get("Primary")
+	test.Error(err)
+
+	test.ErrorContains(err, "empty result for CommentsModel")
+}
+
+func (test *BuilderTestSuite) TestGetSelectErr() {
+	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
+	if !test.NotEmpty(builderInstance) {
+		return
+	}
+
+	test.fakeConnector.On("Select", test.Context, mock.Anything).Return(errors.New("select_return_err"))
+
+	_, err := builderInstance.Fields("Id", "Post.Id").Get("Primary")
+	test.Error(err)
+
+	test.ErrorContains(err, "select_return_err")
 }
 
 func (test *BuilderTestSuite) TestGet() {
@@ -87,6 +154,13 @@ func (test *BuilderTestSuite) TestGet() {
 	test.Equal(0, builderInstance.Payload().Index())
 	test.Equal("acceptance", builderInstance.Payload().Database())
 	test.Equal("comments", builderInstance.Payload().Table())
+
+	test.NotEmpty(builderInstance.Payload().Where())
+	for _, condition := range builderInstance.Payload().Where() {
+		test.Equal(drivers.NewField().SetName("id").SetIndex(0).SetNameInSchema("Id"), condition.From())
+		test.Equal("=", condition.Operator())
+		test.Equal("Primary", condition.To())
+	}
 
 	test.Equal([]specs.DriverField{
 		drivers.NewField().SetName("id").SetIndex(0).SetNameInSchema("Id"),
@@ -129,7 +203,7 @@ func (test *BuilderTestSuite) TestUpdate() {
 	})
 }
 
-func (test *BuilderTestSuite) TestFind() {
+/*func (test *BuilderTestSuite) TestFind() {
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return
@@ -138,7 +212,7 @@ func (test *BuilderTestSuite) TestFind() {
 	test.Panics(func() {
 		_ = builderInstance.Find()
 	})
-}
+}*/
 
 func (test *BuilderTestSuite) TestFindAll() {
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
@@ -148,17 +222,6 @@ func (test *BuilderTestSuite) TestFindAll() {
 
 	test.Panics(func() {
 		_ = builderInstance.FindAll()
-	})
-}
-
-func (test *BuilderTestSuite) TestWhere() {
-	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
-	if !test.NotEmpty(builderInstance) {
-		return
-	}
-
-	test.Panics(func() {
-		_ = builderInstance.Where(nil)
 	})
 }
 

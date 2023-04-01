@@ -12,11 +12,15 @@ type builder[T specs.Model] struct {
 	context.Context
 	specs.Connector
 
+	queryType string
+
 	model           *T
 	modelDefinition specs.ModelDefinition
-	fields          []string
 
-	focusedSchemaFields []specs.FieldDefinition
+	fields []string
+	wheres []specs.Condition
+
+	selectedFieldsDefinition []specs.FieldDefinition
 
 	driverFields []specs.DriverField
 	driverJoins  []specs.DriverJoin
@@ -25,11 +29,25 @@ type builder[T specs.Model] struct {
 	payload specs.PayloadAugmented[T]
 }
 
-func (o *builder[T]) countFocusedSchemaFields() int {
-	return len(o.focusedSchemaFields)
+func (o *builder[T]) execute(flow ...func() error) (err error) {
+	for _, f := range flow {
+		if err := f(); err != nil {
+			return err
+		}
+	}
+
+	return
 }
 
-func (o *builder[T]) buildFieldsFromModelDefinition() (err error) {
+func (o *builder[T]) valideRequiredField() error {
+	if len(o.selectedFieldsDefinition) > 0 {
+		return nil
+	}
+
+	return NewFieldRequiredError("")
+}
+
+func (o *builder[T]) buildFields() (err error) {
 	for _, fieldName := range o.fields {
 		field, err := o.modelDefinition.GetFieldByName(fieldName)
 
@@ -37,7 +55,21 @@ func (o *builder[T]) buildFieldsFromModelDefinition() (err error) {
 			return err
 		}
 
-		o.focusedSchemaFields = append(o.focusedSchemaFields, field)
+		o.selectedFieldsDefinition = append(o.selectedFieldsDefinition, field)
+	}
+
+	return
+}
+
+func (o *builder[T]) buildWheres() (err error) {
+	for _, where := range o.wheres {
+
+		fieldDefinition, err := o.modelDefinition.GetFieldByName(where.From())
+		if err != nil {
+			return err
+		}
+
+		o.driverWheres = append(o.driverWheres, drivers.NewWhere().SetFrom(fieldDefinition.Field()).SetOperator(where.Operator()).SetTo(where.To()))
 	}
 
 	return
@@ -45,11 +77,7 @@ func (o *builder[T]) buildFieldsFromModelDefinition() (err error) {
 
 func (o *builder[T]) getDriverFields() []specs.DriverField {
 
-	if len(o.driverFields) > 0 {
-		return o.driverFields
-	}
-
-	for _, field := range o.focusedSchemaFields {
+	for _, field := range o.selectedFieldsDefinition {
 		o.driverFields = append(o.driverFields, field.Field())
 	}
 
@@ -58,11 +86,7 @@ func (o *builder[T]) getDriverFields() []specs.DriverField {
 
 func (o *builder[T]) getDriverJoins() []specs.DriverJoin {
 
-	if len(o.driverJoins) > 0 {
-		return o.driverJoins
-	}
-
-	for _, field := range o.focusedSchemaFields {
+	for _, field := range o.selectedFieldsDefinition {
 		o.driverJoins = append(o.driverJoins, field.Join()...)
 	}
 
@@ -73,13 +97,13 @@ func (o *builder[T]) getDriverWheres() []specs.DriverWhere {
 	return o.driverWheres
 }
 
-func (o *builder[T]) buildPayload() specs.PayloadAugmented[T] {
+func (o *builder[T]) buildPayload() error {
 	o.payload = NewPayload[T]()
 	o.payload.SetFields(o.getDriverFields())
 	o.payload.SetJoins(o.getDriverJoins())
 	o.payload.SetWheres(o.getDriverWheres())
 
-	return o.payload
+	return nil
 }
 
 func (o *builder[T]) Payload() specs.PayloadAugmented[T] {
@@ -87,39 +111,43 @@ func (o *builder[T]) Payload() specs.PayloadAugmented[T] {
 }
 
 func (o *builder[T]) Get(primaryKeyValue any) (result T, err error) {
-
-	primaryKeyField, err := o.modelDefinition.GetPrimaryField()
+	primaryField, err := o.modelDefinition.GetPrimaryField()
 	if err != nil {
 		return
 	}
 
-	err = o.buildFieldsFromModelDefinition()
+	o.Where(NewCondition().SetFrom(primaryField.RecursiveFullName()).
+		SetOperator(operators.Equal).
+		SetTo(primaryKeyValue))
+
+	return o.Find()
+}
+
+func (o *builder[T]) Find() (result T, err error) {
+
+	err = o.execute(
+		o.buildFields,
+		o.valideRequiredField,
+		o.buildWheres,
+		o.buildPayload,
+	)
+
 	if err != nil {
 		return
 	}
 
-	o.driverWheres = append(o.driverWheres, drivers.NewWhere().SetFrom(primaryKeyField.Field()).SetOperator(operators.Equal).SetTo(primaryKeyValue))
-
-	if o.countFocusedSchemaFields() == 0 {
-		// TODO (Lab210-dev) : Factory for error. TIP SchemaError, SchemaFieldError, etc.
-		// err = &errors.FieldNotFoundError{message: "no fields selected"}
-		return
-	}
-
-	getPayload := o.buildPayload()
-
-	err = o.Connector.Select(o.Context, getPayload)
+	err = o.Connector.Select(o.Context, o.payload)
 	if err != nil {
 		return
 	}
 
-	// TODO (Lab210-dev) : Do we throw a "not found" error if the result is empty?
-	if len(getPayload.Result()) == 0 {
+	if len(o.Payload().Result()) == 0 {
+		err = NewNotFoundError(o.modelDefinition.ModelValue().Type().Name())
 		return
 	}
 
 	// NOTE : Result is always a slice, so we need to get the first element.
-	result = getPayload.Result()[0]
+	result = o.Payload().Result()[0]
 
 	return
 }
@@ -139,11 +167,6 @@ func (o *builder[T]) Update() error {
 	panic("implement me")
 }
 
-func (o *builder[T]) Find() error {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (o *builder[T]) FindAll() error {
 	//TODO implement me
 	panic("implement me")
@@ -154,9 +177,9 @@ func (o *builder[T]) Fields(field ...string) specs.Builder[T] {
 	return o
 }
 
-func (o *builder[T]) Where(_ specs.WhereCondition) specs.Builder[T] {
-	//TODO implement me
-	panic("implement me")
+func (o *builder[T]) Where(where specs.Condition) specs.Builder[T] {
+	o.wheres = append(o.wheres, where)
+	return o
 }
 
 func (o *builder[T]) Limit(_ int) specs.Builder[T] {

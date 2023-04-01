@@ -83,11 +83,6 @@ func (p *payload[T]) SetWheres(wheres []specs.DriverWhere) specs.Payload {
 	return p
 }
 
-func (p *payload[T]) SetSchema(schema specs.ModelDefinition) specs.Payload {
-	p.modelDefinition = schema
-	return p
-}
-
 func (p *payload[T]) ModelDefinition() specs.ModelDefinition {
 	if p.modelDefinition == nil {
 		var model T

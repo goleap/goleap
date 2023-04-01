@@ -7,11 +7,11 @@ type Builder[T Model] interface {
 	Create() (err error)
 	Update() error
 
-	Find() error
+	Find() (T, error)
 	FindAll() error
 
 	Fields(field ...string) Builder[T]
-	Where(condition WhereCondition) Builder[T]
+	Where(condition Condition) Builder[T]
 	Limit(limit int) Builder[T]
 	Offset(offset int) Builder[T]
 	OrderBy(fields ...string) Builder[T]
