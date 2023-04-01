@@ -96,6 +96,14 @@ func (m *Mysql) buildWhere(fields []specs.DriverWhere) (result string, args []an
 	return
 }
 
+func (m *Mysql) buildLimit(limit specs.DriverLimit) (result string) {
+	if limit == nil {
+		return
+	}
+
+	return fmt.Sprintf("LIMIT %d, %d", limit.Offset(), limit.Limit())
+}
+
 func (m *Mysql) buildOperator(field specs.DriverWhere) string {
 	switch field.Operator() {
 	case operators.Equal, operators.NotEqual:
@@ -119,9 +127,9 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 		return
 	}
 
-	builtFields := m.buildFields(payload.Fields())
+	buildLimit := m.buildLimit(payload.Limit())
 
-	query := fmt.Sprintf("SELECT %s FROM `%s`.`%s` AS `t%d`", builtFields, m.Database(), payload.Table(), payload.Index())
+	query := fmt.Sprintf("SELECT %s FROM `%s`.`%s` AS `t%d`", m.buildFields(payload.Fields()), m.Database(), payload.Table(), payload.Index())
 
 	if builtJoin != "" {
 		query += fmt.Sprintf(" %s", builtJoin)
@@ -129,6 +137,10 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 
 	if builtWhere != "" {
 		query += fmt.Sprintf(" %s", builtWhere)
+	}
+
+	if buildLimit != "" {
+		query += fmt.Sprintf(" %s", buildLimit)
 	}
 
 	queryWithArgs, args, err := generateInArgument(query, args...)

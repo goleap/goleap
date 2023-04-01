@@ -8,10 +8,12 @@ type Payload interface {
 	Fields() []DriverField
 	Join() []DriverJoin
 	Where() []DriverWhere
+	Limit() DriverLimit
 
 	SetFields([]DriverField) Payload
 	SetJoins([]DriverJoin) Payload
 	SetWheres([]DriverWhere) Payload
+	SetLimit(DriverLimit) Payload
 
 	Mapping() ([]any, error)
 	OnScan([]any) error

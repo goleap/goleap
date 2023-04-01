@@ -12,6 +12,7 @@ type payload[T specs.Model] struct {
 	fields []specs.DriverField
 	joins  []specs.DriverJoin
 	wheres []specs.DriverWhere
+	limit  specs.DriverLimit
 }
 
 func (p *payload[T]) Database() string {
@@ -32,6 +33,10 @@ func (p *payload[T]) Join() []specs.DriverJoin {
 
 func (p *payload[T]) Where() []specs.DriverWhere {
 	return p.wheres
+}
+
+func (p *payload[T]) Limit() specs.DriverLimit {
+	return p.limit
 }
 
 func (p *payload[T]) Mapping() (mapping []any, err error) {
@@ -79,6 +84,12 @@ func (p *payload[T]) SetJoins(joins []specs.DriverJoin) specs.Payload {
 
 func (p *payload[T]) SetWheres(wheres []specs.DriverWhere) specs.Payload {
 	p.wheres = wheres
+
+	return p
+}
+
+func (p *payload[T]) SetLimit(limit specs.DriverLimit) specs.Payload {
+	p.limit = limit
 
 	return p
 }
