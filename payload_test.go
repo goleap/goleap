@@ -15,6 +15,7 @@ type PayloadTestSuite struct {
 	fakeModelDefinition *mocks.FakeModelDefinition
 	fakeFieldDefinition *mocks.FakeFieldDefinition
 	fakeDriverField     *mocks.FakeDriverField
+	fakeDriverLimit     *mocks.FakeDriverLimit
 }
 
 func (test *PayloadTestSuite) SetupTest() {
@@ -22,6 +23,7 @@ func (test *PayloadTestSuite) SetupTest() {
 	test.fakeModelDefinition = mocks.NewFakeModelDefinition(test.T())
 	test.fakeFieldDefinition = mocks.NewFakeFieldDefinition(test.T())
 	test.fakeDriverField = mocks.NewFakeDriverField(test.T())
+	test.fakeDriverLimit = mocks.NewFakeDriverLimit(test.T())
 }
 
 func (test *PayloadTestSuite) TestMappingWithGetFieldByNameErr() {
@@ -86,6 +88,13 @@ func (test *PayloadTestSuite) TestJoin() {
 
 	var t []specs.DriverJoin
 	test.Equal(tmp.Join(), t)
+}
+
+func (test *PayloadTestSuite) TestLimit() {
+	newPayload := NewPayload[specs.Model]()
+	newPayload.SetLimit(test.fakeDriverLimit)
+
+	test.Equal(newPayload.Limit(), test.fakeDriverLimit)
 }
 
 func TestPayloadTestSuite(t *testing.T) {

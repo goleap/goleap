@@ -27,6 +27,8 @@ type MysqlTestSuite struct {
 	fakeRows    *fakesql.FakeRows
 	fakeIn      *mocks.FakeIn
 	fakePayload *mocks.FakePayload
+
+	fakeDriverLimit *mocks.FakeDriverLimit
 }
 
 func (test *MysqlTestSuite) SetupSuite() {
@@ -47,6 +49,7 @@ func (test *MysqlTestSuite) SetupTest() {
 	test.fakeRows = fakesql.NewFakeRows(test.T())
 	test.fakePayload = mocks.NewFakePayload(test.T())
 	test.fakeIn = mocks.NewFakeIn(test.T())
+	test.fakeDriverLimit = mocks.NewFakeDriverLimit(test.T())
 
 	// Resetting with default function
 	generateInArgument = sqlx.In
@@ -99,9 +102,12 @@ func (test *MysqlTestSuite) TestSelectErr() {
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Table").Return("users")
 	test.fakePayload.On("Index").Return(0)
-	test.fakePayload.On("Limit").Return(nil)
+	test.fakePayload.On("Limit").Return(test.fakeDriverLimit)
 
-	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`email` FROM `acceptance`.`users` AS `t0`").Return(nil, errors.New("test")).Once()
+	test.fakeDriverLimit.On("Offset").Return(0)
+	test.fakeDriverLimit.On("Limit").Return(1)
+
+	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`email` FROM `acceptance`.`users` AS `t0` LIMIT 0, 1").Return(nil, errors.New("test")).Once()
 
 	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)

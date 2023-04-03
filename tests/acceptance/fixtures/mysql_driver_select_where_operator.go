@@ -84,20 +84,21 @@ func (f *Fixture) MysqlDriverSelectWhereIn(ctx context.Context) (err error) {
 	wheres := []specs.DriverWhere{
 		drivers.NewWhere().
 			SetFrom(drivers.NewField().SetName("id")).
-			SetOperator(operators.In).SetTo([]int{2}),
+			SetOperator(operators.In).
+			SetTo([]int{2}),
 	}
 
-	selectPayload := dbkit.NewPayload[*models.UsersModel]()
-	selectPayload.SetFields(fields)
-	selectPayload.SetJoins(joins)
-	selectPayload.SetWheres(wheres)
+	payload := dbkit.NewPayload[*models.UsersModel]()
+	payload.SetFields(fields)
+	payload.SetJoins(joins)
+	payload.SetWheres(wheres)
 
-	err = f.Connector().Select(ctx, selectPayload)
+	err = f.Connector().Select(ctx, payload)
 	if err != nil {
 		return
 	}
 
-	for _, user := range selectPayload.Result() {
+	for _, user := range payload.Result() {
 		if user.Id != 2 {
 			return errors.New("result is equal to 2")
 		}
