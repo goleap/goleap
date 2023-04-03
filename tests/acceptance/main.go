@@ -9,16 +9,19 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"strings"
 	"time"
 )
 
 var ctx context.Context
+var debugLog *bytes.Buffer
 
 func init() {
 	log.SetFlags(0)
 	logrus.SetLevel(logrus.DebugLevel)
-	tmp := bytes.NewBuffer([]byte{})
-	logrus.SetOutput(tmp)
+
+	debugLog = bytes.NewBuffer([]byte{})
+	logrus.SetOutput(debugLog)
 
 	ctx = context.Background()
 }
@@ -61,7 +64,10 @@ func main() {
 		args := []reflect.Value{reflect.ValueOf(ctx)}
 		result := method.Call(args)
 
-		if errVal := result[0].Interface(); errVal != nil {
+		if testErr := result[0].Interface(); testErr != nil {
+			logrus.WithFields(logrus.Fields{
+				"test": typeOf.Method(i).Name,
+			}).Error(testErr)
 			state = "\x1b[31mFAILED\x1b[0m"
 			failedTestCount++
 		} else {
@@ -81,6 +87,10 @@ func main() {
 	fmt.Printf("\n%sDONE %d tests in %s | Passed: %d Failed: %d\x1b[0m\n", color, testsCount, time.Since(globalTimer), passedTestCount, failedTestCount)
 
 	if failedTestCount > 0 {
+		// Print debug log
+		fmt.Println("\nDebug log:")
+		fmt.Println(strings.Repeat("-", 50))
+		fmt.Println(debugLog.String())
 		os.Exit(1)
 	}
 }
