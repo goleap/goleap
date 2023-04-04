@@ -13,6 +13,7 @@ import (
 	"time"
 )
 
+var debug = os.Getenv("DEBUG") == "true"
 var ctx context.Context
 var debugLog *bytes.Buffer
 
@@ -61,12 +62,21 @@ func main() {
 
 		state := "\x1b[32mPASS\x1b[0m"
 		timerTest := time.Now()
+
+		logrus.WithFields(logrus.Fields{
+			"name": typeOf.Method(i).Name,
+		}).Debug("Start test")
+
 		args := []reflect.Value{reflect.ValueOf(ctx)}
 		result := method.Call(args)
 
+		logrus.WithFields(logrus.Fields{
+			"name": typeOf.Method(i).Name,
+		}).Debug("End test")
+
 		if testErr := result[0].Interface(); testErr != nil {
 			logrus.WithFields(logrus.Fields{
-				"test": typeOf.Method(i).Name,
+				"name": typeOf.Method(i).Name,
 			}).Error(testErr)
 			state = "\x1b[31mFAILED\x1b[0m"
 			failedTestCount++
@@ -86,11 +96,13 @@ func main() {
 
 	fmt.Printf("\n%sDONE %d tests in %s | Passed: %d Failed: %d\x1b[0m\n", color, testsCount, time.Since(globalTimer), passedTestCount, failedTestCount)
 
-	if failedTestCount > 0 {
-		// Print debug log
+	if debug || failedTestCount > 0 {
 		fmt.Println("\nDebug log:")
 		fmt.Println(strings.Repeat("-", 50))
 		fmt.Println(debugLog.String())
+	}
+
+	if failedTestCount > 0 {
 		os.Exit(1)
 	}
 }

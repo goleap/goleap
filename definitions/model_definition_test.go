@@ -41,7 +41,7 @@ func (test *SchemaTestSuite) TestFieldInfo() {
 	test.Equal(id.Column(), "id")
 	test.Equal(id.Index(), 0)
 
-	test.Equal(id.Field(), drivers.NewField().SetIndex(0).SetName("id").SetNameInSchema("Id"))
+	test.Equal(id.Field(), drivers.NewField().SetIndex(0).SetName("id").SetNameInModel("Id"))
 }
 
 func (test *SchemaTestSuite) TestCopy() {

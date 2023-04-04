@@ -39,16 +39,21 @@ func (m *Mysql) New(config specs.Config) (err error) {
 	return
 }
 
-func (m *Mysql) buildFields(fields []specs.DriverField) (result string) {
+func (m *Mysql) buildFields(fields []specs.DriverField) (result string, err error) {
 	for i, field := range fields {
 		if i > 0 {
 			result += ", "
 		}
 
-		result += fmt.Sprintf("`t%d`.`%s`", field.Index(), field.Name())
+		column, err := field.Column()
+		if err != nil {
+			return "", err
+		}
+
+		result += column
 	}
 
-	return result
+	return result, nil
 }
 
 func (m *Mysql) buildJoin(joins []specs.DriverJoin) (result string, err error) {
@@ -72,19 +77,24 @@ func (m *Mysql) buildJoin(joins []specs.DriverJoin) (result string, err error) {
 func (m *Mysql) buildWhere(fields []specs.DriverWhere) (result string, args []any, err error) {
 	for i, field := range fields {
 
-		operator := m.buildOperator(field)
-		// This case is very strange because it does not generate an error.
-		if operator == "" {
-			return "", nil, fmt.Errorf("unknown operator: %s", field.Operator())
+		operator, err := m.buildOperator(field)
+		if err != nil {
+			return "", nil, err
 		}
 
 		if i > 0 {
 			result += " AND "
 		}
 
-		result += fmt.Sprintf("`t%d`.`%s` %s", field.From().Index(), field.From().Name(), operator)
+		fromField, err := field.From().Column()
+		if err != nil {
+			return "", nil, err
+		}
+
+		result += fmt.Sprintf("%s %s", fromField, operator)
 
 		if field.To() != nil {
+			// TODO Maybe need to interpret the like a DriverField
 			args = append(args, field.To())
 		}
 	}
@@ -104,19 +114,25 @@ func (m *Mysql) buildLimit(limit specs.DriverLimit) (result string) {
 	return fmt.Sprintf("LIMIT %d, %d", limit.Offset(), limit.Limit())
 }
 
-func (m *Mysql) buildOperator(field specs.DriverWhere) string {
+// TODO Create and trigger error when operator is not supported !
+func (m *Mysql) buildOperator(field specs.DriverWhere) (string, error) {
 	switch field.Operator() {
 	case operators.Equal, operators.NotEqual:
-		return fmt.Sprintf("%s ?", field.Operator())
+		return fmt.Sprintf("%s ?", field.Operator()), nil
 	case operators.In, operators.NotIn:
-		return fmt.Sprintf("%s (?)", field.Operator())
+		return fmt.Sprintf("%s (?)", field.Operator()), nil
 	case operators.IsNull, operators.IsNotNull:
-		return field.Operator()
+		return field.Operator(), nil
 	}
-	return ""
+	return "", NewUnknownOperatorErr(field.Operator())
 }
 
 func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
+	buildFields, err := m.buildFields(payload.Fields())
+	if err != nil {
+		return
+	}
+
 	builtWhere, args, err := m.buildWhere(payload.Where())
 	if err != nil {
 		return
@@ -129,7 +145,7 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 
 	buildLimit := m.buildLimit(payload.Limit())
 
-	query := fmt.Sprintf("SELECT %s FROM `%s`.`%s` AS `t%d`", m.buildFields(payload.Fields()), m.Database(), payload.Table(), payload.Index())
+	query := fmt.Sprintf("SELECT %s FROM `%s`.`%s` AS `t%d`", buildFields, m.Database(), payload.Table(), payload.Index())
 
 	if builtJoin != "" {
 		query += fmt.Sprintf(" %s", builtJoin)

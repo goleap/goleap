@@ -113,6 +113,36 @@ func (test *MysqlTestSuite) TestSelectErr() {
 	test.Error(err)
 }
 
+/*func (test *MysqlTestSuite) TestSelectFnField() {
+	drv, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = drv.New(config.New().SetDriver("test").SetDatabase("acceptance"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.fakePayload.On("Mapping").Return([]any{}, nil)
+	test.fakePayload.On("Fields").Return([]specs.DriverField{
+		NewField().SetName("id").SetIndex(0),
+	})
+	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
+	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
+	test.fakePayload.On("Table").Return("users")
+	test.fakePayload.On("Index").Return(0)
+	test.fakePayload.On("Limit").Return(test.fakeDriverLimit)
+
+	test.fakeDriverLimit.On("Offset").Return(0)
+	test.fakeDriverLimit.On("Limit").Return(1)
+
+	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`email` FROM `acceptance`.`users` AS `t0` LIMIT 0, 1").Return(nil, errors.New("test")).Once()
+
+	err = drv.Select(context.Background(), test.fakePayload)
+	test.Error(err)
+}*/
+
 func (test *MysqlTestSuite) TestSelectMappingErr() {
 	drv, err := Get("test")
 	if !test.Empty(err) {
@@ -181,6 +211,7 @@ func (test *MysqlTestSuite) TestSimpleWhereWithBadOperator() {
 		return
 	}
 
+	test.fakePayload.On("Fields").Return([]specs.DriverField{})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
 		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator("").SetTo(1),
 	})
@@ -513,7 +544,7 @@ func (test *MysqlTestSuite) TestJoin() {
 	}
 
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
-	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0).SetNameInSchema("Id")})
+	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0).SetNameInModel("Id")})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{
 		NewJoin().
@@ -547,7 +578,7 @@ func (test *MysqlTestSuite) TestMultiJoin() {
 	}
 
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
-	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0).SetNameInSchema("Id")})
+	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0).SetNameInModel("Id")})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{
 		NewJoin().
@@ -589,6 +620,7 @@ func (test *MysqlTestSuite) TestJoinErr() {
 		return
 	}
 
+	test.fakePayload.On("Fields").Return([]specs.DriverField{})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{
 		NewJoin().

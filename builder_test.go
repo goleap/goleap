@@ -157,14 +157,14 @@ func (test *BuilderTestSuite) TestGet() {
 
 	test.NotEmpty(builderInstance.Payload().Where())
 	for _, condition := range builderInstance.Payload().Where() {
-		test.Equal(drivers.NewField().SetName("id").SetIndex(0).SetNameInSchema("Id"), condition.From())
+		test.Equal(drivers.NewField().SetName("id").SetIndex(0).SetNameInModel("Id"), condition.From())
 		test.Equal("=", condition.Operator())
 		test.Equal("Primary", condition.To())
 	}
 
 	test.Equal([]specs.DriverField{
-		drivers.NewField().SetName("id").SetIndex(0).SetNameInSchema("Id"),
-		drivers.NewField().SetName("id").SetIndex(2).SetNameInSchema("Post.Id"),
+		drivers.NewField().SetName("id").SetIndex(0).SetNameInModel("Id"),
+		drivers.NewField().SetName("id").SetIndex(2).SetNameInModel("Post.Id"),
 	}, builderInstance.Payload().Fields())
 
 	test.Equal(uint(1), comment.Id)

@@ -208,7 +208,7 @@ func (field *fieldDefinition) IsPrimaryKey() bool {
 }
 
 func (field *fieldDefinition) Field() specs.DriverField {
-	return drivers.NewField().SetName(field.Column()).SetIndex(field.Index()).SetNameInSchema(field.RecursiveFullName())
+	return drivers.NewField().SetName(field.Column()).SetIndex(field.Index()).SetNameInModel(field.RecursiveFullName())
 }
 
 func (field *fieldDefinition) RecursiveFullName() string {

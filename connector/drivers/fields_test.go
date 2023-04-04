@@ -1,23 +1,41 @@
 package drivers
 
 import (
-	"github.com/stretchr/testify/assert"
+	"github.com/lab210-dev/dbkit/specs"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestField(t *testing.T) {
-	suite := assert.New(t)
-	f := NewField()
+type FieldTestSuite struct {
+	suite.Suite
+	field *field
+}
 
-	suite.Equal("", f.NameInSchema())
-	f.SetNameInSchema("field_name")
-	suite.Equal("field_name", f.NameInSchema())
+func (suite *FieldTestSuite) SetupTest() {
+	suite.field = NewField().(*field)
+	suite.field.SetIndex(1)
+	suite.field.SetName("name")
+	suite.field.SetNameInModel("name_in_model")
+}
 
-	suite.Equal(0, f.Index())
-	f.SetIndex(5)
-	suite.Equal(5, f.Index())
+func (suite *FieldTestSuite) TestColumn() {
+	column, err := suite.field.Column()
 
-	suite.Equal("", f.Name())
-	f.SetName(" field name ")
-	suite.Equal("field name", f.Name())
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), "`t1`.`name`", column)
+}
+
+func (suite *FieldTestSuite) TestColumnWithFn() {
+	suite.field.SetFn("CONCAT('%', %Name%, '%')", []specs.DriverField{NewField().SetNameInModel("Name").SetName("name")})
+
+	column, err := suite.field.Column()
+
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), "CONCAT('%', `t0`.`name`, '%')", column)
+}
+
+func TestFieldTestSuite(t *testing.T) {
+	suite.Run(t, new(FieldTestSuite))
 }

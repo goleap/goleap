@@ -19,7 +19,7 @@ func (f *Fixture) MysqlDriverSelectWithJoin(ctx context.Context) (err error) {
 			SetToDatabase("acceptance"),
 	}
 	fields := []specs.DriverField{
-		drivers.NewField().SetName("id").SetNameInSchema("Id"),
+		drivers.NewField().SetName("id").SetNameInModel("Id"),
 	}
 
 	selectPayload := dbkit.NewPayload[*models.CommentsModel]()
