@@ -67,6 +67,7 @@ func main() {
 			"name": typeOf.Method(i).Name,
 		}).Debug("Start test")
 
+		fx.Reset()
 		args := []reflect.Value{reflect.ValueOf(ctx)}
 		result := method.Call(args)
 
@@ -74,10 +75,14 @@ func main() {
 			"name": typeOf.Method(i).Name,
 		}).Debug("End test")
 
-		if testErr := result[0].Interface(); testErr != nil {
-			logrus.WithFields(logrus.Fields{
-				"name": typeOf.Method(i).Name,
-			}).Error(testErr)
+		if testErr := result[0].Interface(); testErr != nil || fx.AssertErrorCount() > 0 {
+
+			if testErr != nil {
+				logrus.WithFields(logrus.Fields{
+					"name": typeOf.Method(i).Name,
+				}).Error(testErr)
+			}
+
 			state = "\x1b[31mFAILED\x1b[0m"
 			failedTestCount++
 		} else {

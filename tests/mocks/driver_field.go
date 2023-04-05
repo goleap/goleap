@@ -33,6 +33,22 @@ func (_m *FakeDriverField) Column() (string, error) {
 	return r0, r1
 }
 
+// SetFn provides a mock function with given fields: fn, args
+func (_m *FakeDriverField) SetFn(fn string, args []specs.DriverField) specs.DriverField {
+	ret := _m.Called(fn, args)
+
+	var r0 specs.DriverField
+	if rf, ok := ret.Get(0).(func(string, []specs.DriverField) specs.DriverField); ok {
+		r0 = rf(fn, args)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(specs.DriverField)
+		}
+	}
+
+	return r0
+}
+
 // Index provides a mock function with given fields:
 func (_m *FakeDriverField) Index() int {
 	ret := _m.Called()

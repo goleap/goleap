@@ -9,7 +9,7 @@ import (
 	"github.com/lab210-dev/dbkit/tests/models"
 )
 
-func (f *Fixture) MysqlDriverSelectWithJoin(ctx context.Context) (err error) {
+func (fixture *Fixture) MysqlDriverSelectWithJoin(ctx context.Context) (err error) {
 	joins := []specs.DriverJoin{
 		drivers.NewJoin().
 			SetToTable("posts").
@@ -26,7 +26,7 @@ func (f *Fixture) MysqlDriverSelectWithJoin(ctx context.Context) (err error) {
 	selectPayload.SetFields(fields)
 	selectPayload.SetJoins(joins)
 
-	err = f.Connector().Select(ctx, selectPayload)
+	err = fixture.Connector().Select(ctx, selectPayload)
 	if err != nil {
 		return err
 	}

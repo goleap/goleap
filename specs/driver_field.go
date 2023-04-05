@@ -10,4 +10,5 @@ type DriverField interface {
 	SetIndex(index int) DriverField
 	SetName(name string) DriverField
 	SetNameInModel(nameInSchema string) DriverField
+	SetFn(fn string, args []DriverField) DriverField
 }

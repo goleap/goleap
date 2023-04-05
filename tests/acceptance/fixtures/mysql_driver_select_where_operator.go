@@ -10,7 +10,7 @@ import (
 	"github.com/lab210-dev/dbkit/tests/models"
 )
 
-func (f *Fixture) MysqlDriverSelectWhereEqual(ctx context.Context) (err error) {
+func (fixture *Fixture) MysqlDriverSelectWhereEqual(ctx context.Context) (err error) {
 	var joins []specs.DriverJoin
 	fields := []specs.DriverField{
 		drivers.NewField().
@@ -28,7 +28,7 @@ func (f *Fixture) MysqlDriverSelectWhereEqual(ctx context.Context) (err error) {
 	selectPayload.SetJoins(joins)
 	selectPayload.SetWheres(wheres)
 
-	err = f.Connector().Select(ctx, selectPayload)
+	err = fixture.Connector().Select(ctx, selectPayload)
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func (f *Fixture) MysqlDriverSelectWhereEqual(ctx context.Context) (err error) {
 	return
 }
 
-func (f *Fixture) MysqlDriverSelectWhereNotEqual(ctx context.Context) (err error) {
+func (fixture *Fixture) MysqlDriverSelectWhereNotEqual(ctx context.Context) (err error) {
 	var joins []specs.DriverJoin
 	fields := []specs.DriverField{
 		drivers.NewField().
@@ -61,7 +61,7 @@ func (f *Fixture) MysqlDriverSelectWhereNotEqual(ctx context.Context) (err error
 	selectPayload.SetJoins(joins)
 	selectPayload.SetWheres(wheres)
 
-	err = f.Connector().Select(ctx, selectPayload)
+	err = fixture.Connector().Select(ctx, selectPayload)
 	if err != nil {
 		return
 	}
@@ -74,7 +74,7 @@ func (f *Fixture) MysqlDriverSelectWhereNotEqual(ctx context.Context) (err error
 	return
 }
 
-func (f *Fixture) MysqlDriverSelectWhereIn(ctx context.Context) (err error) {
+func (fixture *Fixture) MysqlDriverSelectWhereIn(ctx context.Context) (err error) {
 	var joins []specs.DriverJoin
 	fields := []specs.DriverField{
 		drivers.NewField().
@@ -93,7 +93,7 @@ func (f *Fixture) MysqlDriverSelectWhereIn(ctx context.Context) (err error) {
 	payload.SetJoins(joins)
 	payload.SetWheres(wheres)
 
-	err = f.Connector().Select(ctx, payload)
+	err = fixture.Connector().Select(ctx, payload)
 	if err != nil {
 		return
 	}

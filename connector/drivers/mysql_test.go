@@ -21,12 +21,13 @@ import (
 
 type MysqlTestSuite struct {
 	suite.Suite
-	fakeDriver  *fakesql.FakeDriver
-	fakeConn    *fakesql.FakeConn
-	fakeStmt    *fakesql.FakeStmt
-	fakeRows    *fakesql.FakeRows
-	fakeIn      *mocks.FakeIn
-	fakePayload *mocks.FakePayload
+	fakeDriver      *fakesql.FakeDriver
+	fakeConn        *fakesql.FakeConn
+	fakeStmt        *fakesql.FakeStmt
+	fakeRows        *fakesql.FakeRows
+	fakeIn          *mocks.FakeIn
+	fakePayload     *mocks.FakePayload
+	fakeDriverField *mocks.FakeDriverField
 
 	fakeDriverLimit *mocks.FakeDriverLimit
 }
@@ -50,6 +51,7 @@ func (test *MysqlTestSuite) SetupTest() {
 	test.fakePayload = mocks.NewFakePayload(test.T())
 	test.fakeIn = mocks.NewFakeIn(test.T())
 	test.fakeDriverLimit = mocks.NewFakeDriverLimit(test.T())
+	test.fakeDriverField = mocks.NewFakeDriverField(test.T())
 
 	// Resetting with default function
 	generateInArgument = sqlx.In
@@ -82,6 +84,84 @@ func (test *MysqlTestSuite) TestCreate() {
 	test.NotEmpty(drv.Get())
 }
 
+func (test *MysqlTestSuite) TestBuildFieldsErr() {
+	drv, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = drv.New(config.New().SetDriver("test"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.fakeDriverField.On("Column").Return("", errors.New("build_field_column_err"))
+
+	_, err = drv.(*Mysql).buildFields([]specs.DriverField{test.fakeDriverField})
+	test.Error(err)
+	test.EqualValues("build_field_column_err", err.Error())
+}
+
+func (test *MysqlTestSuite) TestSelectBuildFieldsErr() {
+	drv, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = drv.New(config.New().SetDriver("test"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.fakePayload.On("Fields").Return([]specs.DriverField{test.fakeDriverField})
+
+	test.fakeDriverField.On("Column").Return("", errors.New("build_field_column_err"))
+
+	err = drv.Select(context.Background(), test.fakePayload)
+	test.Error(err)
+	test.EqualValues("build_field_column_err", err.Error())
+}
+
+func (test *MysqlTestSuite) TestBuildLimit() {
+	drv, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = drv.New(config.New().SetDriver("test"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.fakeDriverLimit.On("Offset").Return(0)
+	test.fakeDriverLimit.On("Limit").Return(1)
+
+	limitValue := drv.(*Mysql).buildLimit(test.fakeDriverLimit)
+	test.EqualValues("LIMIT 0, 1", limitValue)
+}
+
+func (test *MysqlTestSuite) TestBuildWhere() {
+	drv, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = drv.New(config.New().SetDriver("test"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.fakePayload.On("Where").Return([]specs.DriverWhere{
+		NewWhere().SetFrom(test.fakeDriverField).SetOperator(operators.Equal).SetTo(1),
+	})
+
+	test.fakeDriverField.On("Column").Return("", errors.New("build_where_field_column_err"))
+
+	_, _, err = drv.(*Mysql).buildWhere(test.fakePayload.Where())
+	test.Error(err)
+	test.EqualValues("build_where_field_column_err", err.Error())
+}
+
 func (test *MysqlTestSuite) TestSelectErr() {
 	drv, err := Get("test")
 	if !test.Empty(err) {
@@ -112,36 +192,6 @@ func (test *MysqlTestSuite) TestSelectErr() {
 	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)
 }
-
-/*func (test *MysqlTestSuite) TestSelectFnField() {
-	drv, err := Get("test")
-	if !test.Empty(err) {
-		return
-	}
-
-	err = drv.New(config.New().SetDriver("test").SetDatabase("acceptance"))
-	if !test.Empty(err) {
-		return
-	}
-
-	test.fakePayload.On("Mapping").Return([]any{}, nil)
-	test.fakePayload.On("Fields").Return([]specs.DriverField{
-		NewField().SetName("id").SetIndex(0),
-	})
-	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
-	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
-	test.fakePayload.On("Table").Return("users")
-	test.fakePayload.On("Index").Return(0)
-	test.fakePayload.On("Limit").Return(test.fakeDriverLimit)
-
-	test.fakeDriverLimit.On("Offset").Return(0)
-	test.fakeDriverLimit.On("Limit").Return(1)
-
-	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`email` FROM `acceptance`.`users` AS `t0` LIMIT 0, 1").Return(nil, errors.New("test")).Once()
-
-	err = drv.Select(context.Background(), test.fakePayload)
-	test.Error(err)
-}*/
 
 func (test *MysqlTestSuite) TestSelectMappingErr() {
 	drv, err := Get("test")
@@ -213,11 +263,12 @@ func (test *MysqlTestSuite) TestSimpleWhereWithBadOperator() {
 
 	test.fakePayload.On("Fields").Return([]specs.DriverField{})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator("").SetTo(1),
+		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator("unknown").SetTo(1),
 	})
 
 	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)
+	test.EqualValues("unknown operator: unknown", err.Error())
 }
 
 func (test *MysqlTestSuite) TestSimpleWhereIsNullOperator() {

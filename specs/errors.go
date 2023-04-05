@@ -8,3 +8,8 @@ type UnknownOperatorErr interface {
 	error
 	Operator() string
 }
+
+type UnknownFieldsErr interface {
+	error
+	Fields() []string
+}

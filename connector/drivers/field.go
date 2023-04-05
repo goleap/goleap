@@ -62,6 +62,7 @@ func (f *field) fnProcess() (fn string, err error) {
 	re := regexp.MustCompile(`%([a-zA-Z_]+)%`)
 	matches := re.FindAllStringSubmatch(f.Fn(), -1)
 
+	replaceFieldCount := 0
 	for _, match := range matches {
 		for _, arg := range f.FnArgs() {
 			if arg.NameInModel() != match[1] {
@@ -69,12 +70,21 @@ func (f *field) fnProcess() (fn string, err error) {
 			}
 			column, err := arg.Column()
 			if err != nil {
-				continue
+				return "", err
 			}
 
 			fn = strings.Replace(f.Fn(), match[0], column, -1)
+			replaceFieldCount++
 			break
 		}
+	}
+
+	if replaceFieldCount != len(matches) {
+		noFoundFiels := make([]string, 0)
+		for _, match := range matches {
+			noFoundFiels = append(noFoundFiels, match[1])
+		}
+		return "", NewUnknownFieldsErr(noFoundFiels)
 	}
 
 	return
