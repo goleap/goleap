@@ -10,43 +10,41 @@ type FakeDriverJoin struct {
 	mock.Mock
 }
 
-// FromKey provides a mock function with given fields:
-func (_m *FakeDriverJoin) FromKey() string {
+// Formatted provides a mock function with given fields:
+func (_m *FakeDriverJoin) Formatted() (string, error) {
 	ret := _m.Called()
 
 	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func() (string, error)); ok {
+		return rf()
+	}
 	if rf, ok := ret.Get(0).(func() string); ok {
 		r0 = rf()
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	return r0
-}
-
-// FromTable provides a mock function with given fields:
-func (_m *FakeDriverJoin) FromTable() string {
-	ret := _m.Called()
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
 	} else {
-		r0 = ret.Get(0).(string)
+		r1 = ret.Error(1)
 	}
 
-	return r0
+	return r0, r1
 }
 
-// FromTableIndex provides a mock function with given fields:
-func (_m *FakeDriverJoin) FromTableIndex() int {
+// From provides a mock function with given fields:
+func (_m *FakeDriverJoin) From() specs.DriverField {
 	ret := _m.Called()
 
-	var r0 int
-	if rf, ok := ret.Get(0).(func() int); ok {
+	var r0 specs.DriverField
+	if rf, ok := ret.Get(0).(func() specs.DriverField); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(int)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(specs.DriverField)
+		}
 	}
 
 	return r0
@@ -66,45 +64,13 @@ func (_m *FakeDriverJoin) Method() string {
 	return r0
 }
 
-// SetFromKey provides a mock function with given fields: fromKey
-func (_m *FakeDriverJoin) SetFromKey(fromKey string) specs.DriverJoin {
-	ret := _m.Called(fromKey)
+// SetFrom provides a mock function with given fields: field
+func (_m *FakeDriverJoin) SetFrom(field specs.DriverField) specs.DriverJoin {
+	ret := _m.Called(field)
 
 	var r0 specs.DriverJoin
-	if rf, ok := ret.Get(0).(func(string) specs.DriverJoin); ok {
-		r0 = rf(fromKey)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(specs.DriverJoin)
-		}
-	}
-
-	return r0
-}
-
-// SetFromTable provides a mock function with given fields: fromTable
-func (_m *FakeDriverJoin) SetFromTable(fromTable string) specs.DriverJoin {
-	ret := _m.Called(fromTable)
-
-	var r0 specs.DriverJoin
-	if rf, ok := ret.Get(0).(func(string) specs.DriverJoin); ok {
-		r0 = rf(fromTable)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(specs.DriverJoin)
-		}
-	}
-
-	return r0
-}
-
-// SetFromTableIndex provides a mock function with given fields: fromTableIndex
-func (_m *FakeDriverJoin) SetFromTableIndex(fromTableIndex int) specs.DriverJoin {
-	ret := _m.Called(fromTableIndex)
-
-	var r0 specs.DriverJoin
-	if rf, ok := ret.Get(0).(func(int) specs.DriverJoin); ok {
-		r0 = rf(fromTableIndex)
+	if rf, ok := ret.Get(0).(func(specs.DriverField) specs.DriverJoin); ok {
+		r0 = rf(field)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(specs.DriverJoin)
@@ -130,13 +96,13 @@ func (_m *FakeDriverJoin) SetMethod(method specs.JoinMethod) specs.DriverJoin {
 	return r0
 }
 
-// SetToKey provides a mock function with given fields: toKey
-func (_m *FakeDriverJoin) SetToKey(toKey string) specs.DriverJoin {
-	ret := _m.Called(toKey)
+// SetTo provides a mock function with given fields: field
+func (_m *FakeDriverJoin) SetTo(field specs.DriverField) specs.DriverJoin {
+	ret := _m.Called(field)
 
 	var r0 specs.DriverJoin
-	if rf, ok := ret.Get(0).(func(string) specs.DriverJoin); ok {
-		r0 = rf(toKey)
+	if rf, ok := ret.Get(0).(func(specs.DriverField) specs.DriverJoin); ok {
+		r0 = rf(field)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(specs.DriverJoin)
@@ -146,91 +112,47 @@ func (_m *FakeDriverJoin) SetToKey(toKey string) specs.DriverJoin {
 	return r0
 }
 
-// SetToTable provides a mock function with given fields: toTable
-func (_m *FakeDriverJoin) SetToTable(toTable string) specs.DriverJoin {
-	ret := _m.Called(toTable)
+// To provides a mock function with given fields:
+func (_m *FakeDriverJoin) To() specs.DriverField {
+	ret := _m.Called()
 
-	var r0 specs.DriverJoin
-	if rf, ok := ret.Get(0).(func(string) specs.DriverJoin); ok {
-		r0 = rf(toTable)
+	var r0 specs.DriverField
+	if rf, ok := ret.Get(0).(func() specs.DriverField); ok {
+		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(specs.DriverJoin)
+			r0 = ret.Get(0).(specs.DriverField)
 		}
 	}
 
 	return r0
 }
 
-// SetToTableIndex provides a mock function with given fields: toTableIndex
-func (_m *FakeDriverJoin) SetToTableIndex(toTableIndex int) specs.DriverJoin {
-	ret := _m.Called(toTableIndex)
-
-	var r0 specs.DriverJoin
-	if rf, ok := ret.Get(0).(func(int) specs.DriverJoin); ok {
-		r0 = rf(toTableIndex)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(specs.DriverJoin)
-		}
-	}
-
-	return r0
-}
-
-// ToKey provides a mock function with given fields:
-func (_m *FakeDriverJoin) ToKey() string {
+// Validate provides a mock function with given fields:
+func (_m *FakeDriverJoin) Validate() error {
 	ret := _m.Called()
 
-	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(string)
+		r0 = ret.Error(0)
 	}
 
 	return r0
 }
 
-// ToTable provides a mock function with given fields:
-func (_m *FakeDriverJoin) ToTable() string {
-	ret := _m.Called()
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	return r0
-}
-
-// ToTableIndex provides a mock function with given fields:
-func (_m *FakeDriverJoin) ToTableIndex() int {
-	ret := _m.Called()
-
-	var r0 int
-	if rf, ok := ret.Get(0).(func() int); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(int)
-	}
-
-	return r0
-}
-
-type mockConstructorTestingTNewJoin interface {
+type mockConstructorTestingTNewDriverJoin interface {
 	mock.TestingT
 	Cleanup(func())
 }
 
 // NewFakeDriverJoin creates a new instance of FakeDriverJoin. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
-func NewFakeDriverJoin(t mockConstructorTestingTNewJoin) *FakeDriverJoin {
-	fakeJoin := &FakeDriverJoin{}
-	fakeJoin.Mock.Test(t)
+func NewFakeDriverJoin(t mockConstructorTestingTNewDriverJoin) *FakeDriverJoin {
+	fakeDriverJoin := &FakeDriverJoin{}
+	fakeDriverJoin.Mock.Test(t)
 
-	t.Cleanup(func() { fakeJoin.AssertExpectations(t) })
+	t.Cleanup(func() { fakeDriverJoin.AssertExpectations(t) })
 
-	return fakeJoin
+	return fakeDriverJoin
 }

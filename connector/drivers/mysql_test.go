@@ -30,6 +30,7 @@ type MysqlTestSuite struct {
 	fakeDriverField *mocks.FakeDriverField
 
 	fakeDriverLimit *mocks.FakeDriverLimit
+	fakeDriverJoin  *mocks.FakeDriverJoin
 }
 
 func (test *MysqlTestSuite) SetupSuite() {
@@ -52,6 +53,7 @@ func (test *MysqlTestSuite) SetupTest() {
 	test.fakeIn = mocks.NewFakeIn(test.T())
 	test.fakeDriverLimit = mocks.NewFakeDriverLimit(test.T())
 	test.fakeDriverField = mocks.NewFakeDriverField(test.T())
+	test.fakeDriverJoin = mocks.NewFakeDriverJoin(test.T())
 
 	// Resetting with default function
 	generateInArgument = sqlx.In
@@ -138,6 +140,25 @@ func (test *MysqlTestSuite) TestBuildLimit() {
 
 	limitValue := drv.(*Mysql).buildLimit(test.fakeDriverLimit)
 	test.EqualValues("LIMIT 0, 1", limitValue)
+}
+
+func (test *MysqlTestSuite) TestBuildJoin() {
+	drv, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = drv.New(config.New().SetDriver("test"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.fakeDriverJoin.On("Validate").Return(nil)
+	test.fakeDriverJoin.On("Formatted").Return("", errors.New("build_join_validate_err"))
+
+	_, err = drv.(*Mysql).buildJoin([]specs.DriverJoin{test.fakeDriverJoin})
+	test.Error(err)
+	test.EqualValues("build_join_validate_err", err.Error())
 }
 
 func (test *MysqlTestSuite) TestBuildWhere() {
