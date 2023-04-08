@@ -41,7 +41,7 @@ func (test *SchemaTestSuite) TestFieldInfo() {
 	test.Equal(id.Column(), "id")
 	test.Equal(id.Index(), 0)
 
-	test.Equal(id.Field(), drivers.NewField().SetIndex(0).SetName("id").SetNameInModel("Id"))
+	test.Equal(id.Field(), drivers.NewField().SetIndex(0).SetColumn("id").SetName("Id"))
 }
 
 func (test *SchemaTestSuite) TestCopy() {
@@ -169,20 +169,14 @@ func (test *SchemaTestSuite) TestJoin() {
 
 	test.Equal(userIdFieldDefinition.Join(), []specs.DriverJoin{
 		drivers.NewJoin().
-			SetFromTableIndex(1).
-			SetToTable("comments").
-			SetToTableIndex(0).
-			SetFromKey("user_id").
-			SetToKey("id"),
+			SetFrom(drivers.NewField().SetIndex(0).SetColumn("user_id").SetTable("comments").SetDatabase("acceptance")).
+			SetTo(drivers.NewField().SetIndex(1).SetColumn("id").SetTable("users").SetDatabase("acceptance")),
 	})
 
 	test.Equal(postIdFieldDefinition.Join(), []specs.DriverJoin{
 		drivers.NewJoin().
-			SetFromTableIndex(2).
-			SetToTable("comments").
-			SetToTableIndex(0).
-			SetFromKey("post_id").
-			SetToKey("id"),
+			SetFrom(drivers.NewField().SetIndex(0).SetColumn("post_id").SetTable("comments").SetDatabase("acceptance")).
+			SetTo(drivers.NewField().SetIndex(2).SetColumn("id").SetTable("posts").SetDatabase("acceptance")),
 	})
 }
 

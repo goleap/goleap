@@ -8,28 +8,52 @@ import (
 )
 
 type join struct {
-	fromKey        string
-	fromTableIndex int
-
-	toTable      string
-	toKey        string
-	toSchema     string
-	toTableIndex int
+	from specs.DriverField
+	to   specs.DriverField
 
 	method specs.JoinMethod
 }
 
+func (j *join) Method() string {
+	return joins.Method[j.method]
+}
+
+func (j *join) From() specs.DriverField {
+	return j.from
+}
+
+func (j *join) To() specs.DriverField {
+	return j.to
+}
+
+func (j *join) SetMethod(method specs.JoinMethod) specs.DriverJoin {
+	j.method = method
+	return j
+}
+
+func (j *join) SetFrom(field specs.DriverField) specs.DriverJoin {
+	j.from = field
+	return j
+}
+
+func (j *join) SetTo(field specs.DriverField) specs.DriverJoin {
+	j.to = field
+	return j
+}
+
+func (j *join) Formatted() (string, error) {
+	return fmt.Sprintf("%s `%s`.`%s` AS `t%d` ON `t%d`.`%s` = `t%d`.`%s`", j.Method(), j.To().Database(), j.To().Table(), j.To().Index(), j.To().Index(), j.To().Column(), j.From().Index(), j.From().Column()), nil
+}
+
 func (j *join) Validate() error {
-	var check = map[string]func() string{
-		"FromKey":    j.FromKey,
-		"ToTable":    j.ToTable,
-		"ToKey":      j.ToKey,
-		"ToDatabase": j.ToDatabase,
+	var check = map[string]func() specs.DriverField{
+		"From": j.From,
+		"To":   j.To,
 	}
 
 	errList := make([]string, 0)
 	for key, c := range check {
-		if c() == "" {
+		if c() == nil {
 			errList = append(errList, key)
 		}
 	}
@@ -39,69 +63,6 @@ func (j *join) Validate() error {
 	}
 
 	return nil
-}
-
-func (j *join) ToDatabase() string {
-	return j.toSchema
-}
-
-func (j *join) SetToDatabase(fromSchema string) specs.DriverJoin {
-	j.toSchema = fromSchema
-	return j
-}
-
-func (j *join) Method() string {
-	return joins.Method[j.method]
-}
-
-func (j *join) SetMethod(method specs.JoinMethod) specs.DriverJoin {
-	j.method = method
-	return j
-}
-
-func (j *join) FromTableIndex() int {
-	return j.fromTableIndex
-}
-
-func (j *join) ToTable() string {
-	return j.toTable
-}
-
-func (j *join) ToTableIndex() int {
-	return j.toTableIndex
-}
-
-func (j *join) FromKey() string {
-	return j.fromKey
-}
-
-func (j *join) ToKey() string {
-	return j.toKey
-}
-
-func (j *join) SetFromTableIndex(fromTableIndex int) specs.DriverJoin {
-	j.fromTableIndex = fromTableIndex
-	return j
-}
-
-func (j *join) SetToTable(toTable string) specs.DriverJoin {
-	j.toTable = toTable
-	return j
-}
-
-func (j *join) SetToTableIndex(toTableIndex int) specs.DriverJoin {
-	j.toTableIndex = toTableIndex
-	return j
-}
-
-func (j *join) SetFromKey(fromKey string) specs.DriverJoin {
-	j.fromKey = fromKey
-	return j
-}
-
-func (j *join) SetToKey(toKey string) specs.DriverJoin {
-	j.toKey = toKey
-	return j
 }
 
 func NewJoin() specs.DriverJoin {

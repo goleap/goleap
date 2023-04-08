@@ -11,8 +11,8 @@ import (
 func (fixture *Fixture) MysqlDriverSelectWithFieldFn(ctx context.Context) (err error) {
 	fields := []specs.DriverField{
 		drivers.NewField().
-			SetNameInModel("Id").
-			SetFn("%Id% + 1", []specs.DriverField{drivers.NewField().SetName("id").SetIndex(0).SetNameInModel("Id")}),
+			SetName("Id").
+			SetFn("%Id% + 1", []specs.DriverField{drivers.NewField().SetColumn("id").SetIndex(0).SetName("Id")}),
 	}
 
 	selectPayload := dbkit.NewPayload[*models.UsersModel]()

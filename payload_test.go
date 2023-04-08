@@ -36,7 +36,7 @@ func (test *PayloadTestSuite) TestMappingWithGetFieldByNameErr() {
 		test.fakeDriverField,
 	})
 
-	test.fakeDriverField.On("NameInModel").Return("Test").Once()
+	test.fakeDriverField.On("Name").Return("Test").Once()
 	test.fakeModelDefinition.On("GetFieldByName", "Test").Return(nil, errors.New("test")).Once()
 
 	_, err := newPayload.Mapping()
@@ -53,7 +53,7 @@ func (test *PayloadTestSuite) TestMappingSuccessful() {
 		test.fakeDriverField,
 	})
 
-	test.fakeDriverField.On("NameInModel").Return("Test").Once()
+	test.fakeDriverField.On("Name").Return("Test").Once()
 	test.fakeModelDefinition.On("GetFieldByName", "Test").Return(test.fakeFieldDefinition, nil).Once()
 
 	test.fakeFieldDefinition.On("Copy").Return(nil).Once()
@@ -75,7 +75,7 @@ func (test *PayloadTestSuite) TestOnScanGetFieldByNameErr() {
 		test.fakeDriverField,
 	})
 
-	test.fakeDriverField.On("NameInModel").Return("Test").Once()
+	test.fakeDriverField.On("Name").Return("Test").Once()
 	test.fakeModelDefinition.On("GetFieldByName", "Test").Return(nil, errors.New("test")).Once()
 
 	err := newPayload.OnScan([]any{})

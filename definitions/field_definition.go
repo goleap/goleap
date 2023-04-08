@@ -34,11 +34,13 @@ func (field *fieldDefinition) Join() (joins []specs.DriverJoin) {
 	if field.Model().FromField() != nil {
 		if !field.IsSlice() {
 			join := drivers.NewJoin().
-				SetFromTableIndex(field.Model().Index()).
-				SetToTable(field.Model().FromField().Model().TableName()).
-				SetToTableIndex(field.Model().FromField().Model().Index()).
-				SetFromKey(field.Model().FromField().Tags()["column"]).
-				SetToKey(field.Model().FromField().Tags()["foreignKey"])
+				SetFrom(drivers.NewField().SetIndex(field.Model().FromField().Model().Index()).SetTable(field.Model().FromField().Model().TableName()).SetColumn(field.Model().FromField().Tags()["column"]).SetDatabase(field.Model().FromField().Model().DatabaseName())).
+				SetTo(drivers.NewField().SetIndex(field.Model().Index()).SetTable(field.Model().TableName()).SetColumn(field.Model().FromField().Tags()["foreignKey"]).SetDatabase(field.Model().DatabaseName()))
+			//	SetFromTableIndex(field.Model().Index()).
+			//	SetFromKey(field.Model().FromField().Tags()["column"]).
+			//	SetToTable(field.Model().FromField().Model().TableName()).
+			//	SetToTableIndex(field.Model().FromField().Model().Index()).
+			//	SetToKey(field.Model().FromField().Tags()["foreignKey"])
 
 			joins = append(joins, join)
 		}
@@ -208,7 +210,7 @@ func (field *fieldDefinition) IsPrimaryKey() bool {
 }
 
 func (field *fieldDefinition) Field() specs.DriverField {
-	return drivers.NewField().SetName(field.Column()).SetIndex(field.Index()).SetNameInModel(field.RecursiveFullName())
+	return drivers.NewField().SetColumn(field.Column()).SetIndex(field.Index()).SetName(field.RecursiveFullName())
 }
 
 func (field *fieldDefinition) RecursiveFullName() string {

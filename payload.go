@@ -41,7 +41,7 @@ func (p *payload[T]) Limit() specs.DriverLimit {
 
 func (p *payload[T]) Mapping() (mapping []any, err error) {
 	for _, field := range p.Fields() {
-		fieldDefinition, err := p.modelDefinition.GetFieldByName(field.NameInModel())
+		fieldDefinition, err := p.modelDefinition.GetFieldByName(field.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -52,7 +52,7 @@ func (p *payload[T]) Mapping() (mapping []any, err error) {
 
 func (p *payload[T]) OnScan(result []any) (err error) {
 	for i, field := range p.Fields() {
-		fieldDefinition, err := p.ModelDefinition().GetFieldByName(field.NameInModel())
+		fieldDefinition, err := p.ModelDefinition().GetFieldByName(field.Name())
 		if err != nil {
 			return err
 		}

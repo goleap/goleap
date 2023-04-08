@@ -157,14 +157,14 @@ func (test *BuilderTestSuite) TestGet() {
 
 	test.NotEmpty(builderInstance.Payload().Where())
 	for _, condition := range builderInstance.Payload().Where() {
-		test.Equal(drivers.NewField().SetName("id").SetIndex(0).SetNameInModel("Id"), condition.From())
+		test.Equal(drivers.NewField().SetIndex(0).SetColumn("id").SetName("Id"), condition.From())
 		test.Equal("=", condition.Operator())
 		test.Equal("Primary", condition.To())
 	}
 
 	test.Equal([]specs.DriverField{
-		drivers.NewField().SetName("id").SetIndex(0).SetNameInModel("Id"),
-		drivers.NewField().SetName("id").SetIndex(2).SetNameInModel("Post.Id"),
+		drivers.NewField().SetColumn("id").SetIndex(0).SetName("Id"),
+		drivers.NewField().SetColumn("id").SetIndex(2).SetName("Post.Id"),
 	}, builderInstance.Payload().Fields())
 
 	test.Equal(uint(1), comment.Id)
@@ -202,17 +202,6 @@ func (test *BuilderTestSuite) TestUpdate() {
 		_ = builderInstance.Update()
 	})
 }
-
-/*func (test *BuilderTestSuite) TestFind() {
-	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
-	if !test.NotEmpty(builderInstance) {
-		return
-	}
-
-	test.Panics(func() {
-		_ = builderInstance.Find()
-	})
-}*/
 
 func (test *BuilderTestSuite) TestFindAll() {
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)

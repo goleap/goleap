@@ -19,32 +19,32 @@ type FieldTestSuite struct {
 func (suite *FieldTestSuite) SetupTest() {
 	suite.field = NewField().(*field)
 	suite.field.SetIndex(1)
-	suite.field.SetName("name")
-	suite.field.SetNameInModel("name_in_model")
+	suite.field.SetColumn("name")
+	suite.field.SetName("name_in_model")
 
 	suite.fakeField = mocks.NewFakeDriverField(suite.T())
 }
 
 func (suite *FieldTestSuite) TestColumn() {
-	column, err := suite.field.Column()
+	column, err := suite.field.Formatted()
 
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), "`t1`.`name`", column)
 }
 
 func (suite *FieldTestSuite) TestColumnWithFn() {
-	suite.field.SetFn("CONCAT('%', %Name%, '%')", []specs.DriverField{NewField().SetNameInModel("Name").SetName("name")})
+	suite.field.SetFn("CONCAT('%', %Name%, '%')", []specs.DriverField{NewField().SetName("Name").SetColumn("name")})
 
-	column, err := suite.field.Column()
+	column, err := suite.field.Formatted()
 
 	assert.Nil(suite.T(), err)
-	assert.Equal(suite.T(), "CONCAT('%', `t0`.`name`, '%')", column)
+	assert.Equal(suite.T(), "(CONCAT('%', `t0`.`name`, '%'))", column)
 }
 
 func (suite *FieldTestSuite) TestColumnWithFnErrNoMatch() {
-	suite.field.SetFn("CONCAT('%', %Name%, '%')", []specs.DriverField{NewField().SetNameInModel("unknown").SetName("name")})
+	suite.field.SetFn("CONCAT('%', %Name%, '%')", []specs.DriverField{NewField().SetName("unknown").SetColumn("name")})
 
-	column, err := suite.field.Column()
+	column, err := suite.field.Formatted()
 
 	assert.Equal(suite.T(), "", column)
 	assert.Error(suite.T(), err)
@@ -55,12 +55,12 @@ func (suite *FieldTestSuite) TestColumnWithFnErrNoMatch() {
 }
 
 func (suite *FieldTestSuite) TestColumnWithFnColumnErr() {
-	suite.fakeField.On("NameInModel").Return("Name")
-	suite.fakeField.On("Column").Return("", errors.New("column_error"))
+	suite.fakeField.On("Name").Return("Name")
+	suite.fakeField.On("Formatted").Return("", errors.New("column_error"))
 
 	suite.field.SetFn("CONCAT('%', %Name%, '%')", []specs.DriverField{suite.fakeField})
 
-	column, err := suite.field.Column()
+	column, err := suite.field.Formatted()
 
 	assert.Equal(suite.T(), "", column)
 	assert.Error(suite.T(), err)

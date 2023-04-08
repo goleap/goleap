@@ -10,7 +10,36 @@ type FakeDriverField struct {
 	mock.Mock
 }
 
-func (_m *FakeDriverField) Column() (string, error) {
+// Column provides a mock function with given fields:
+func (_m *FakeDriverField) Column() string {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// Database provides a mock function with given fields:
+func (_m *FakeDriverField) Database() string {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// Formatted provides a mock function with given fields:
+func (_m *FakeDriverField) Formatted() (string, error) {
 	ret := _m.Called()
 
 	var r0 string
@@ -31,22 +60,6 @@ func (_m *FakeDriverField) Column() (string, error) {
 	}
 
 	return r0, r1
-}
-
-// SetFn provides a mock function with given fields: fn, args
-func (_m *FakeDriverField) SetFn(fn string, args []specs.DriverField) specs.DriverField {
-	ret := _m.Called(fn, args)
-
-	var r0 specs.DriverField
-	if rf, ok := ret.Get(0).(func(string, []specs.DriverField) specs.DriverField); ok {
-		r0 = rf(fn, args)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(specs.DriverField)
-		}
-	}
-
-	return r0
 }
 
 // Index provides a mock function with given fields:
@@ -77,15 +90,49 @@ func (_m *FakeDriverField) Name() string {
 	return r0
 }
 
-// NameInSchema provides a mock function with given fields:
-func (_m *FakeDriverField) NameInModel() string {
-	ret := _m.Called()
+// SetColumn provides a mock function with given fields: name
+func (_m *FakeDriverField) SetColumn(name string) specs.DriverField {
+	ret := _m.Called(name)
 
-	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
+	var r0 specs.DriverField
+	if rf, ok := ret.Get(0).(func(string) specs.DriverField); ok {
+		r0 = rf(name)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(specs.DriverField)
+		}
+	}
+
+	return r0
+}
+
+// SetDatabase provides a mock function with given fields: name
+func (_m *FakeDriverField) SetDatabase(name string) specs.DriverField {
+	ret := _m.Called(name)
+
+	var r0 specs.DriverField
+	if rf, ok := ret.Get(0).(func(string) specs.DriverField); ok {
+		r0 = rf(name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(specs.DriverField)
+		}
+	}
+
+	return r0
+}
+
+// SetFn provides a mock function with given fields: fn, args
+func (_m *FakeDriverField) SetFn(fn string, args []specs.DriverField) specs.DriverField {
+	ret := _m.Called(fn, args)
+
+	var r0 specs.DriverField
+	if rf, ok := ret.Get(0).(func(string, []specs.DriverField) specs.DriverField); ok {
+		r0 = rf(fn, args)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(specs.DriverField)
+		}
 	}
 
 	return r0
@@ -123,17 +170,31 @@ func (_m *FakeDriverField) SetName(name string) specs.DriverField {
 	return r0
 }
 
-// SetNameInSchema provides a mock function with given fields: nameInSchema
-func (_m *FakeDriverField) SetNameInModel(nameInSchema string) specs.DriverField {
-	ret := _m.Called(nameInSchema)
+// SetTable provides a mock function with given fields: name
+func (_m *FakeDriverField) SetTable(name string) specs.DriverField {
+	ret := _m.Called(name)
 
 	var r0 specs.DriverField
 	if rf, ok := ret.Get(0).(func(string) specs.DriverField); ok {
-		r0 = rf(nameInSchema)
+		r0 = rf(name)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(specs.DriverField)
 		}
+	}
+
+	return r0
+}
+
+// Table provides a mock function with given fields:
+func (_m *FakeDriverField) Table() string {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
 	}
 
 	return r0
@@ -144,7 +205,7 @@ type mockConstructorTestingTNewDriverField interface {
 	Cleanup(func())
 }
 
-// NewFakeDriverField creates a new instance of FakeDriverField. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// NewDriverField creates a new instance of FakeDriverField. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 func NewFakeDriverField(t mockConstructorTestingTNewDriverField) *FakeDriverField {
 	fakeDriverField := &FakeDriverField{}
 	fakeDriverField.Mock.Test(t)

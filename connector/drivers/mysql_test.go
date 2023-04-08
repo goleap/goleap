@@ -95,7 +95,7 @@ func (test *MysqlTestSuite) TestBuildFieldsErr() {
 		return
 	}
 
-	test.fakeDriverField.On("Column").Return("", errors.New("build_field_column_err"))
+	test.fakeDriverField.On("Formatted").Return("", errors.New("build_field_column_err"))
 
 	_, err = drv.(*Mysql).buildFields([]specs.DriverField{test.fakeDriverField})
 	test.Error(err)
@@ -115,7 +115,7 @@ func (test *MysqlTestSuite) TestSelectBuildFieldsErr() {
 
 	test.fakePayload.On("Fields").Return([]specs.DriverField{test.fakeDriverField})
 
-	test.fakeDriverField.On("Column").Return("", errors.New("build_field_column_err"))
+	test.fakeDriverField.On("Formatted").Return("", errors.New("build_field_column_err"))
 
 	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)
@@ -155,7 +155,7 @@ func (test *MysqlTestSuite) TestBuildWhere() {
 		NewWhere().SetFrom(test.fakeDriverField).SetOperator(operators.Equal).SetTo(1),
 	})
 
-	test.fakeDriverField.On("Column").Return("", errors.New("build_where_field_column_err"))
+	test.fakeDriverField.On("Formatted").Return("", errors.New("build_where_field_column_err"))
 
 	_, _, err = drv.(*Mysql).buildWhere(test.fakePayload.Where())
 	test.Error(err)
@@ -175,8 +175,8 @@ func (test *MysqlTestSuite) TestSelectErr() {
 
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
-		NewField().SetName("id").SetIndex(0),
-		NewField().SetName("email").SetIndex(0),
+		NewField().SetColumn("id").SetIndex(0),
+		NewField().SetColumn("email").SetIndex(0),
 	})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
@@ -232,11 +232,11 @@ func (test *MysqlTestSuite) TestSimpleWhere() {
 	}
 
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
-		NewField().SetName("id").SetIndex(0),
-		NewField().SetName("email").SetIndex(0),
+		NewField().SetColumn("id").SetIndex(0),
+		NewField().SetColumn("email").SetIndex(0),
 	})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(operators.Equal).SetTo(1),
+		NewWhere().SetFrom(NewField().SetColumn("id").SetIndex(0)).SetOperator(operators.Equal).SetTo(1),
 	})
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
@@ -283,11 +283,11 @@ func (test *MysqlTestSuite) TestSimpleWhereIsNullOperator() {
 	}
 
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
-		NewField().SetName("id").SetIndex(0),
-		NewField().SetName("label").SetIndex(0),
+		NewField().SetColumn("id").SetIndex(0),
+		NewField().SetColumn("label").SetIndex(0),
 	})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(operators.IsNull),
+		NewWhere().SetFrom(NewField().SetColumn("id").SetIndex(0)).SetOperator(operators.IsNull),
 	})
 
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
@@ -314,11 +314,11 @@ func (test *MysqlTestSuite) TestSimpleWhereInOperator() {
 	}
 
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
-		NewField().SetName("id").SetIndex(0),
-		NewField().SetName("label").SetIndex(0),
+		NewField().SetColumn("id").SetIndex(0),
+		NewField().SetColumn("label").SetIndex(0),
 	})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(operators.In).SetTo([]int{1, 2}),
+		NewWhere().SetFrom(NewField().SetColumn("id").SetIndex(0)).SetOperator(operators.In).SetTo([]int{1, 2}),
 	})
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
@@ -347,11 +347,11 @@ func (test *MysqlTestSuite) TestSimpleWhereInOperatorErr() {
 	}
 
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
-		NewField().SetName("id").SetIndex(0),
-		NewField().SetName("label").SetIndex(0),
+		NewField().SetColumn("id").SetIndex(0),
+		NewField().SetColumn("label").SetIndex(0),
 	})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(operators.In).SetTo([]int{1, 2}),
+		NewWhere().SetFrom(NewField().SetColumn("id").SetIndex(0)).SetOperator(operators.In).SetTo([]int{1, 2}),
 	})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Table").Return("test")
@@ -377,12 +377,12 @@ func (test *MysqlTestSuite) TestWhereMultiEqual() {
 	}
 
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
-		NewField().SetName("id").SetIndex(0),
-		NewField().SetName("email").SetIndex(0),
+		NewField().SetColumn("id").SetIndex(0),
+		NewField().SetColumn("email").SetIndex(0),
 	})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator(operators.Equal).SetTo(1),
-		NewWhere().SetFrom(NewField().SetName("email").SetIndex(0)).SetOperator(operators.Equal).SetTo("test"),
+		NewWhere().SetFrom(NewField().SetColumn("id").SetIndex(0)).SetOperator(operators.Equal).SetTo(1),
+		NewWhere().SetFrom(NewField().SetColumn("email").SetIndex(0)).SetOperator(operators.Equal).SetTo("test"),
 	})
 
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
@@ -408,7 +408,7 @@ func (test *MysqlTestSuite) TestSelect() {
 		return
 	}
 
-	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0)})
+	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetColumn("id").SetIndex(0)})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Table").Return("test")
@@ -455,7 +455,7 @@ func (test *MysqlTestSuite) TestSelectWithNativeScanErr() {
 		return
 	}
 
-	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0)})
+	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetColumn("id").SetIndex(0)})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Table").Return("users")
@@ -500,7 +500,7 @@ func (test *MysqlTestSuite) TestSelectWithNativeWrapScanErr() {
 		return
 	}
 
-	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0)})
+	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetColumn("id").SetIndex(0)})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Table").Return("users")
@@ -547,7 +547,7 @@ func (test *MysqlTestSuite) TestSelectWithWhere() {
 		return
 	}
 
-	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0)})
+	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetColumn("id").SetIndex(0)})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Table").Return("users")
@@ -594,22 +594,18 @@ func (test *MysqlTestSuite) TestJoin() {
 		return
 	}
 
-	test.fakePayload.On("Mapping").Return([]any{}, nil)
-	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0).SetNameInModel("Id")})
+	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetIndex(0).SetColumn("id").SetName("Id")})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{
 		NewJoin().
 			SetMethod(joins.Default).
-			SetFromKey("posts_id").
-			SetFromTableIndex(0).
-			SetToTable("posts").
-			SetToKey("id").
-			SetToTableIndex(1).
-			SetToDatabase("acceptance"),
+			SetTo(NewField().SetIndex(1).SetColumn("id").SetName("Id").SetTable("posts").SetDatabase("acceptance")).
+			SetFrom(NewField().SetIndex(0).SetColumn("posts_id").SetName("Id").SetTable("comments").SetDatabase("acceptance")),
 	})
 	test.fakePayload.On("Limit").Return(nil)
 	test.fakePayload.On("Table").Return("comments")
 	test.fakePayload.On("Index").Return(0)
+	test.fakePayload.On("Mapping").Return([]any{}, nil)
 
 	test.fakeConn.On("Prepare", "SELECT `t0`.`id` FROM `acceptance`.`comments` AS `t0` JOIN `acceptance`.`posts` AS `t1` ON `t1`.`id` = `t0`.`posts_id`").Return(nil, errors.New("test")).Once()
 
@@ -629,26 +625,18 @@ func (test *MysqlTestSuite) TestMultiJoin() {
 	}
 
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
-	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetName("id").SetIndex(0).SetNameInModel("Id")})
+	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetColumn("id").SetIndex(0).SetName("Id")})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{
 		NewJoin().
 			SetMethod(joins.Default).
-			SetFromKey("posts_id").
-			SetFromTableIndex(0).
-			SetToTable("posts").
-			SetToKey("id").
-			SetToTableIndex(1).
-			SetToDatabase("acceptance"),
+			SetTo(NewField().SetIndex(1).SetColumn("id").SetName("Id").SetTable("posts").SetDatabase("acceptance")).
+			SetFrom(NewField().SetIndex(0).SetColumn("posts_id").SetName("Id").SetTable("comments").SetDatabase("acceptance")),
 
 		NewJoin().
 			SetMethod(joins.Default).
-			SetFromKey("users_id").
-			SetFromTableIndex(0).
-			SetToTable("users").
-			SetToKey("id").
-			SetToTableIndex(2).
-			SetToDatabase("acceptance"),
+			SetTo(NewField().SetIndex(2).SetColumn("id").SetName("Id").SetTable("users").SetDatabase("acceptance")).
+			SetFrom(NewField().SetIndex(0).SetColumn("users_id").SetName("Id").SetTable("comments").SetDatabase("acceptance")),
 	})
 	test.fakePayload.On("Limit").Return(nil)
 	test.fakePayload.On("Table").Return("comments")
@@ -675,12 +663,12 @@ func (test *MysqlTestSuite) TestJoinErr() {
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{
 		NewJoin().
-			SetMethod(joins.Default).
-			SetFromTableIndex(0).
-			SetToTable("comments").
-			SetToKey("comments_id").
-			SetToTableIndex(1).
-			SetToDatabase("blog"),
+			SetMethod(joins.Default),
+		/*			SetFromTableIndex(0).
+					SetToTable("comments").
+					SetToKey("comments_id").
+					SetToTableIndex(1).
+					SetToDatabase("blog"),*/
 	})
 
 	err = drv.Select(context.Background(), test.fakePayload)

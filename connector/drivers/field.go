@@ -8,30 +8,32 @@ import (
 )
 
 type field struct {
-	index        int
-	name         string
-	nameInSchema string
+	index    int
+	column   string
+	database string
+	table    string
+	name     string
 
 	// @todo: found a better name for this
 	fn     string
 	fnArgs []specs.DriverField
 }
 
-func (f *field) NameInModel() string {
-	return f.nameInSchema
+func (f *field) Table() string {
+	return f.table
 }
 
-func (f *field) SetNameInModel(nameInSchema string) specs.DriverField {
-	f.nameInSchema = nameInSchema
+func (f *field) SetTable(name string) specs.DriverField {
+	f.table = strings.TrimSpace(name)
 	return f
 }
 
-func (f *field) Index() int {
-	return f.index
+func (f *field) Database() string {
+	return f.database
 }
 
-func (f *field) SetIndex(index int) specs.DriverField {
-	f.index = index
+func (f *field) SetDatabase(name string) specs.DriverField {
+	f.database = strings.TrimSpace(name)
 	return f
 }
 
@@ -44,8 +46,26 @@ func (f *field) SetName(name string) specs.DriverField {
 	return f
 }
 
+func (f *field) Index() int {
+	return f.index
+}
+
+func (f *field) SetIndex(index int) specs.DriverField {
+	f.index = index
+	return f
+}
+
+func (f *field) Column() string {
+	return f.column
+}
+
+func (f *field) SetColumn(name string) specs.DriverField {
+	f.column = strings.TrimSpace(name)
+	return f
+}
+
 func (f *field) SetFn(fn string, args []specs.DriverField) specs.DriverField {
-	f.fn = fn
+	f.fn = fmt.Sprintf("(%s)", fn)
 	f.fnArgs = args
 	return f
 }
@@ -65,10 +85,10 @@ func (f *field) fnProcess() (fn string, err error) {
 	replaceFieldCount := 0
 	for _, match := range matches {
 		for _, arg := range f.FnArgs() {
-			if arg.NameInModel() != match[1] {
+			if arg.Name() != match[1] {
 				continue
 			}
-			column, err := arg.Column()
+			column, err := arg.Formatted()
 			if err != nil {
 				return "", err
 			}
@@ -90,11 +110,11 @@ func (f *field) fnProcess() (fn string, err error) {
 	return
 }
 
-func (f *field) Column() (string, error) {
+func (f *field) Formatted() (string, error) {
 	if f.Fn() != "" {
 		return f.fnProcess()
 	}
-	return fmt.Sprintf("`t%d`.`%s`", f.Index(), f.Name()), nil
+	return fmt.Sprintf("`t%d`.`%s`", f.Index(), f.Column()), nil
 }
 
 func NewField() specs.DriverField {

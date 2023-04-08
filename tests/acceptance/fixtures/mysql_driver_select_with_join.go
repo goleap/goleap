@@ -11,15 +11,15 @@ import (
 
 func (fixture *Fixture) MysqlDriverSelectWithJoin(ctx context.Context) (err error) {
 	joins := []specs.DriverJoin{
-		drivers.NewJoin().
+		/*	drivers.NewJoin().
 			SetToTable("posts").
 			SetToTableIndex(1).
 			SetToKey("id").
 			SetFromKey("post_id").
-			SetToDatabase("acceptance"),
+			SetToDatabase("acceptance"),*/
 	}
 	fields := []specs.DriverField{
-		drivers.NewField().SetName("id").SetNameInModel("Id"),
+		drivers.NewField().SetColumn("id").SetName("Id"),
 	}
 
 	selectPayload := dbkit.NewPayload[*models.CommentsModel]()

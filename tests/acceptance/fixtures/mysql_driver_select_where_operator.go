@@ -14,8 +14,8 @@ func (fixture *Fixture) MysqlDriverSelectWhereEqual(ctx context.Context) (err er
 	var joins []specs.DriverJoin
 	fields := []specs.DriverField{
 		drivers.NewField().
-			SetName("id").
-			SetNameInModel("Id"),
+			SetColumn("id").
+			SetName("Id"),
 	}
 	wheres := []specs.DriverWhere{
 		drivers.NewWhere().
@@ -47,8 +47,8 @@ func (fixture *Fixture) MysqlDriverSelectWhereNotEqual(ctx context.Context) (err
 	var joins []specs.DriverJoin
 	fields := []specs.DriverField{
 		drivers.NewField().
-			SetName("id").
-			SetNameInModel("Id"),
+			SetColumn("id").
+			SetName("Id"),
 	}
 	wheres := []specs.DriverWhere{
 		drivers.NewWhere().
@@ -78,8 +78,8 @@ func (fixture *Fixture) MysqlDriverSelectWhereIn(ctx context.Context) (err error
 	var joins []specs.DriverJoin
 	fields := []specs.DriverField{
 		drivers.NewField().
-			SetName("id").
-			SetNameInModel("Id"),
+			SetColumn("id").
+			SetName("Id"),
 	}
 	wheres := []specs.DriverWhere{
 		drivers.NewWhere().

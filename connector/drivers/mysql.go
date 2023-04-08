@@ -45,7 +45,7 @@ func (m *Mysql) buildFields(fields []specs.DriverField) (result string, err erro
 			result += ", "
 		}
 
-		column, err := field.Column()
+		column, err := field.Formatted()
 		if err != nil {
 			return "", err
 		}
@@ -67,8 +67,12 @@ func (m *Mysql) buildJoin(joins []specs.DriverJoin) (result string, err error) {
 			return "", err
 		}
 
-		// TODO Maybe add specific operator for join
-		result += fmt.Sprintf("%s `%s`.`%s` AS `t%d` ON `t%d`.`%s` = `t%d`.`%s`", field.Method(), field.ToDatabase(), field.ToTable(), field.ToTableIndex(), field.ToTableIndex(), field.ToKey(), field.FromTableIndex(), field.FromKey())
+		formatted, err := field.Formatted()
+		if err != nil {
+			return "", err
+		}
+
+		result += formatted
 	}
 
 	return
@@ -86,7 +90,7 @@ func (m *Mysql) buildWhere(fields []specs.DriverWhere) (result string, args []an
 			result += " AND "
 		}
 
-		fromField, err := field.From().Column()
+		fromField, err := field.From().Formatted()
 		if err != nil {
 			return "", nil, err
 		}
