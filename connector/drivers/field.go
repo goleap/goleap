@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// field is a struct that implements the specs.DriverField interface
 type field struct {
 	index    int
 	column   string
@@ -14,77 +15,94 @@ type field struct {
 	table    string
 	name     string
 
-	// @todo: found a better name for this
-	fn     string
-	fnArgs []specs.DriverField
+	custom     string
+	customArgs []specs.DriverField
 }
 
+// Table returns the table name
 func (f *field) Table() string {
 	return f.table
 }
 
+// SetTable sets the table name
 func (f *field) SetTable(name string) specs.DriverField {
 	f.table = strings.TrimSpace(name)
 	return f
 }
 
+// Database returns the database name
 func (f *field) Database() string {
 	return f.database
 }
 
+// SetDatabase sets the database name
 func (f *field) SetDatabase(name string) specs.DriverField {
 	f.database = strings.TrimSpace(name)
 	return f
 }
 
+// Name returns the name
 func (f *field) Name() string {
 	return f.name
 }
 
+// SetName sets the name
 func (f *field) SetName(name string) specs.DriverField {
 	f.name = strings.TrimSpace(name)
 	return f
 }
 
+// Index returns the index
 func (f *field) Index() int {
 	return f.index
 }
 
+// SetIndex sets the index
 func (f *field) SetIndex(index int) specs.DriverField {
 	f.index = index
 	return f
 }
 
+// Column returns the column name
 func (f *field) Column() string {
 	return f.column
 }
 
+// SetColumn sets the column name
 func (f *field) SetColumn(name string) specs.DriverField {
 	f.column = strings.TrimSpace(name)
 	return f
 }
 
-func (f *field) SetFn(fn string, args []specs.DriverField) specs.DriverField {
-	f.fn = fmt.Sprintf("(%s)", fn)
-	f.fnArgs = args
+// SetCustom sets the custom function
+func (f *field) SetCustom(fn string, args []specs.DriverField) specs.DriverField {
+	f.custom = fmt.Sprintf("(%s)", fn)
+	f.customArgs = args
 	return f
 }
 
-func (f *field) Fn() string {
-	return f.fn
+// IsCustom returns true if the field is a custom function
+func (f *field) IsCustom() bool {
+	return f.custom != ""
 }
 
-func (f *field) FnArgs() []specs.DriverField {
-	return f.fnArgs
+// Custom returns the custom function
+func (f *field) Custom() string {
+	return f.custom
+}
+
+// CustomArgs returns the custom function arguments
+func (f *field) CustomArgs() []specs.DriverField {
+	return f.customArgs
 }
 
 func (f *field) fnProcess() (fn string, err error) {
 	re := regexp.MustCompile(`%([a-zA-Z_]+)%`)
-	matches := re.FindAllStringSubmatch(f.Fn(), -1)
+	matches := re.FindAllStringSubmatch(f.Custom(), -1)
 
 	replaceFieldCount := 0
 	for _, match := range matches {
-		for _, arg := range f.FnArgs() {
+		for _, arg := range f.CustomArgs() {
 			if arg.Name() != match[1] {
 				continue
 			}
@@ -93,7 +111,7 @@ func (f *field) fnProcess() (fn string, err error) {
 				return "", err
 			}
 
-			fn = strings.Replace(f.Fn(), match[0], column, -1)
+			fn = strings.Replace(f.Custom(), match[0], column, -1)
 			replaceFieldCount++
 			break
 		}
@@ -110,13 +128,15 @@ func (f *field) fnProcess() (fn string, err error) {
 	return
 }
 
+// Formatted returns the formatted field
 func (f *field) Formatted() (string, error) {
-	if f.Fn() != "" {
+	if f.Custom() != "" {
 		return f.fnProcess()
 	}
 	return fmt.Sprintf("`t%d`.`%s`", f.Index(), f.Column()), nil
 }
 
+// NewField returns a new field
 func NewField() specs.DriverField {
 	return new(field)
 }

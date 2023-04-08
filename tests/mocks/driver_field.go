@@ -123,7 +123,7 @@ func (_m *FakeDriverField) SetDatabase(name string) specs.DriverField {
 }
 
 // SetFn provides a mock function with given fields: fn, args
-func (_m *FakeDriverField) SetFn(fn string, args []specs.DriverField) specs.DriverField {
+func (_m *FakeDriverField) SetCustom(fn string, args []specs.DriverField) specs.DriverField {
 	ret := _m.Called(fn, args)
 
 	var r0 specs.DriverField

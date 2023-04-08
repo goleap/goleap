@@ -1,5 +1,6 @@
 package specs
 
+// DriverField is the interface that wraps the basic methods of a field.
 type DriverField interface {
 	Index() int
 	Column() string
@@ -13,7 +14,7 @@ type DriverField interface {
 	SetDatabase(name string) DriverField
 	SetName(name string) DriverField
 
-	SetFn(fn string, args []DriverField) DriverField
+	SetCustom(fn string, args []DriverField) DriverField
 
 	Formatted() (string, error)
 }
