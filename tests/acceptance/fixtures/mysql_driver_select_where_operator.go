@@ -19,7 +19,7 @@ func (fixture *Fixture) MysqlDriverSelectWhereEqual(ctx context.Context) (err er
 	}
 	wheres := []specs.DriverWhere{
 		drivers.NewWhere().
-			SetFrom(drivers.NewField().SetName("id")).
+			SetFrom(drivers.NewField().SetColumn("id")).
 			SetOperator(operators.Equal).SetTo(1),
 	}
 
@@ -52,7 +52,7 @@ func (fixture *Fixture) MysqlDriverSelectWhereNotEqual(ctx context.Context) (err
 	}
 	wheres := []specs.DriverWhere{
 		drivers.NewWhere().
-			SetFrom(drivers.NewField().SetName("id")).
+			SetFrom(drivers.NewField().SetColumn("id")).
 			SetOperator(operators.NotEqual).SetTo(1),
 	}
 
@@ -83,7 +83,7 @@ func (fixture *Fixture) MysqlDriverSelectWhereIn(ctx context.Context) (err error
 	}
 	wheres := []specs.DriverWhere{
 		drivers.NewWhere().
-			SetFrom(drivers.NewField().SetName("id")).
+			SetFrom(drivers.NewField().SetColumn("id")).
 			SetOperator(operators.In).
 			SetTo([]int{2}),
 	}
