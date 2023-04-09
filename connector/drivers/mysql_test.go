@@ -20,16 +20,18 @@ import (
 
 type MysqlTestSuite struct {
 	suite.Suite
-	fakeDriver      *fakesql.FakeDriver
-	fakeConn        *fakesql.FakeConn
-	fakeStmt        *fakesql.FakeStmt
-	fakeRows        *fakesql.FakeRows
-	fakeIn          *mocks.FakeIn
+	fakeDriver *fakesql.FakeDriver
+	fakeConn   *fakesql.FakeConn
+	fakeStmt   *fakesql.FakeStmt
+	fakeRows   *fakesql.FakeRows
+	fakeIn     *mocks.FakeIn
+
 	fakePayload     *mocks.FakePayload
 	fakeDriverField *mocks.FakeDriverField
 
 	fakeDriverLimit *mocks.FakeDriverLimit
 	fakeDriverJoin  *mocks.FakeDriverJoin
+	fakeDriverWhere *mocks.FakeDriverWhere
 }
 
 func (test *MysqlTestSuite) SetupSuite() {
@@ -53,6 +55,7 @@ func (test *MysqlTestSuite) SetupTest() {
 	test.fakeDriverLimit = mocks.NewFakeDriverLimit(test.T())
 	test.fakeDriverField = mocks.NewFakeDriverField(test.T())
 	test.fakeDriverJoin = mocks.NewFakeDriverJoin(test.T())
+	test.fakeDriverWhere = mocks.NewFakeDriverWhere(test.T())
 
 	// Resetting with default function
 	generateInArgument = sqlx.In
@@ -171,15 +174,15 @@ func (test *MysqlTestSuite) TestBuildWhere() {
 		return
 	}
 
-	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(test.fakeDriverField).SetOperator(operators.Equal).SetTo(1),
-	})
+	test.fakeDriverWhere.On("Formatted").Return("", nil, errors.New("build_where_err"))
 
-	test.fakeDriverField.On("Formatted").Return("", errors.New("build_where_field_column_err"))
+	test.fakePayload.On("Where").Return([]specs.DriverWhere{
+		test.fakeDriverWhere,
+	})
 
 	_, _, err = drv.(*Mysql).buildWhere(test.fakePayload.Where())
 	test.Error(err)
-	test.EqualValues("build_where_field_column_err", err.Error())
+	test.EqualValues("build_where_err", err.Error())
 }
 
 func (test *MysqlTestSuite) TestSelectErr() {

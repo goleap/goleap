@@ -6,7 +6,6 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	"github.com/lab210-dev/dbkit/connector/drivers/operators"
 	"github.com/lab210-dev/dbkit/specs"
 	log "github.com/sirupsen/logrus"
 )
@@ -78,28 +77,22 @@ func (m *Mysql) buildJoin(joins []specs.DriverJoin) (result string, err error) {
 	return
 }
 
-func (m *Mysql) buildWhere(fields []specs.DriverWhere) (result string, args []any, err error) {
-	for i, field := range fields {
-
-		operator, err := m.buildOperator(field)
-		if err != nil {
-			return "", nil, err
-		}
+func (m *Mysql) buildWhere(wheres []specs.DriverWhere) (result string, args []any, err error) {
+	for i, where := range wheres {
 
 		if i > 0 {
 			result += " AND "
 		}
 
-		fromField, err := field.From().Formatted()
+		formatted, whereArgs, err := where.Formatted()
 		if err != nil {
 			return "", nil, err
 		}
 
-		result += fmt.Sprintf("%s %s", fromField, operator)
+		result += formatted
 
-		if field.To() != nil {
-			// TODO Maybe need to interpret the like a DriverField
-			args = append(args, field.To())
+		if whereArgs != nil {
+			args = append(args, whereArgs)
 		}
 	}
 
@@ -116,19 +109,6 @@ func (m *Mysql) buildLimit(limit specs.DriverLimit) (result string, err error) {
 	}
 
 	return limit.Formatted()
-}
-
-// TODO Create and trigger error when operator is not supported !
-func (m *Mysql) buildOperator(field specs.DriverWhere) (string, error) {
-	switch field.Operator() {
-	case operators.Equal, operators.NotEqual:
-		return fmt.Sprintf("%s ?", field.Operator()), nil
-	case operators.In, operators.NotIn:
-		return fmt.Sprintf("%s (?)", field.Operator()), nil
-	case operators.IsNull, operators.IsNotNull:
-		return field.Operator(), nil
-	}
-	return "", NewUnknownOperatorErr(field.Operator())
 }
 
 func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
