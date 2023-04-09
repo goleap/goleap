@@ -37,3 +37,19 @@ func (e *unknownFieldsErr) Error() string {
 func NewUnknownFieldsErr(fields []string) specs.UnknownFieldsErr {
 	return &unknownFieldsErr{fields: fields}
 }
+
+type requiredFieldJoinErr struct {
+	fields []string
+}
+
+func (e *requiredFieldJoinErr) Fields() []string {
+	return e.fields
+}
+
+func (e *requiredFieldJoinErr) Error() string {
+	return fmt.Sprintf("the following fields \"%s\" are mandatory to perform the join", strings.Join(e.fields, ", "))
+}
+
+func NewRequiredFieldJoinErr(fields []string) specs.RequiredFieldJoinErr {
+	return &requiredFieldJoinErr{fields: fields}
+}

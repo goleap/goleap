@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/lab210-dev/dbkit/connector/drivers/joins"
 	"github.com/lab210-dev/dbkit/specs"
-	"strings"
 )
 
 type join struct {
@@ -41,8 +40,35 @@ func (j *join) SetTo(field specs.DriverField) specs.DriverJoin {
 	return j
 }
 
+func (j *join) toFormatted() (string, error) {
+	formatted, err := j.To().Formatted()
+	if err != nil {
+		return "", err
+	}
+
+	if j.From().IsCustom() {
+		return formatted, nil
+	}
+
+	return fmt.Sprintf("`%s`.`%s` AS `t%d` ON %s", j.To().Database(), j.To().Table(), j.To().Index(), formatted), nil
+}
+
+func (j *join) fromFormatted() (string, error) {
+	return j.From().Formatted()
+}
+
 func (j *join) Formatted() (string, error) {
-	return fmt.Sprintf("%s `%s`.`%s` AS `t%d` ON `t%d`.`%s` = `t%d`.`%s`", j.Method(), j.To().Database(), j.To().Table(), j.To().Index(), j.To().Index(), j.To().Column(), j.From().Index(), j.From().Column()), nil
+	fromFormatted, err := j.fromFormatted()
+	if err != nil {
+		return "", err
+	}
+
+	toFormatted, err := j.toFormatted()
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s %s = %s", j.Method(), toFormatted, fromFormatted), nil
 }
 
 func (j *join) Validate() error {
@@ -59,7 +85,7 @@ func (j *join) Validate() error {
 	}
 
 	if len(errList) > 0 {
-		return fmt.Errorf(`the following fields "%s" are mandatory to perform the join`, strings.Join(errList, ", "))
+		return NewRequiredFieldJoinErr(errList)
 	}
 
 	return nil

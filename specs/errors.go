@@ -13,3 +13,8 @@ type UnknownFieldsErr interface {
 	error
 	Fields() []string
 }
+
+type RequiredFieldJoinErr interface {
+	error
+	Fields() []string
+}

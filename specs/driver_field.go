@@ -8,6 +8,8 @@ type DriverField interface {
 	Table() string
 	Name() string
 
+	IsCustom() bool
+
 	SetIndex(index int) DriverField
 	SetColumn(name string) DriverField
 	SetTable(name string) DriverField
