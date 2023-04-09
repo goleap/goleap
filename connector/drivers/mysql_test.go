@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"io"
-	"log"
 	"testing"
 )
 
@@ -135,10 +134,10 @@ func (test *MysqlTestSuite) TestBuildLimit() {
 		return
 	}
 
-	test.fakeDriverLimit.On("Offset").Return(0)
-	test.fakeDriverLimit.On("Limit").Return(1)
+	test.fakeDriverLimit.On("Formatted").Return("LIMIT 0, 1", nil)
 
-	limitValue := drv.(*Mysql).buildLimit(test.fakeDriverLimit)
+	limitValue, err := drv.(*Mysql).buildLimit(test.fakeDriverLimit)
+	test.NoError(err)
 	test.EqualValues("LIMIT 0, 1", limitValue)
 }
 
@@ -205,8 +204,7 @@ func (test *MysqlTestSuite) TestSelectErr() {
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(test.fakeDriverLimit)
 
-	test.fakeDriverLimit.On("Offset").Return(0)
-	test.fakeDriverLimit.On("Limit").Return(1)
+	test.fakeDriverLimit.On("Formatted").Return("LIMIT 0, 1", nil)
 
 	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`email` FROM `acceptance`.`users` AS `t0` LIMIT 0, 1").Return(nil, errors.New("test")).Once()
 
@@ -669,7 +667,7 @@ func (test *MysqlTestSuite) TestMultiJoin() {
 	test.NotEmpty(err)
 }
 
-func (test *MysqlTestSuite) TestJoinErr() {
+func (test *MysqlTestSuite) TestJoinFormattedErr() {
 	drv, err := Get("test")
 	if !test.Empty(err) {
 		return
@@ -682,19 +680,71 @@ func (test *MysqlTestSuite) TestJoinErr() {
 
 	test.fakePayload.On("Fields").Return([]specs.DriverField{})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
+
+	test.fakeDriverJoin.On("Validate").Return(nil)
+	test.fakeDriverJoin.On("Formatted").Return("", errors.New("join_formatted_err"))
+
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{
-		NewJoin().
-			SetMethod(joins.Default),
-		/*			SetFromTableIndex(0).
-					SetToTable("comments").
-					SetToKey("comments_id").
-					SetToTableIndex(1).
-					SetToDatabase("blog"),*/
+		test.fakeDriverJoin,
 	})
 
 	err = drv.Select(context.Background(), test.fakePayload)
-	log.Print(err)
-	test.NotEmpty(err)
+	test.Error(err)
+	test.Contains(err.Error(), "join_formatted_err")
+}
+
+func (test *MysqlTestSuite) TestJoinValidateErr() {
+	drv, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = drv.New(config.New().SetDriver("test").SetDatabase("acceptance"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.fakePayload.On("Fields").Return([]specs.DriverField{})
+	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
+
+	test.fakeDriverJoin.On("Validate").Return(errors.New("select_join_validate_err"))
+
+	test.fakePayload.On("Join").Return([]specs.DriverJoin{
+		test.fakeDriverJoin,
+	})
+
+	err = drv.Select(context.Background(), test.fakePayload)
+	test.Error(err)
+	test.Contains(err.Error(), "select_join_validate_err")
+}
+
+func (test *MysqlTestSuite) TestLimitErr() {
+	drv, err := Get("test")
+	if !test.Empty(err) {
+		return
+	}
+
+	err = drv.New(config.New().SetDriver("test").SetDatabase("acceptance"))
+	if !test.Empty(err) {
+		return
+	}
+
+	test.fakePayload.On("Fields").Return([]specs.DriverField{})
+	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
+
+	test.fakeDriverJoin.On("Validate").Return(nil)
+	test.fakeDriverJoin.On("Formatted").Return("", nil)
+
+	test.fakePayload.On("Join").Return([]specs.DriverJoin{
+		test.fakeDriverJoin,
+	})
+
+	test.fakePayload.On("Limit").Return(test.fakeDriverLimit)
+	test.fakeDriverLimit.On("Formatted").Return("", errors.New("select_limit_formatted_err"))
+
+	err = drv.Select(context.Background(), test.fakePayload)
+	test.Error(err)
+	test.Contains(err.Error(), "select_limit_formatted_err")
 }
 
 func TestMysqlTestSuite(t *testing.T) {

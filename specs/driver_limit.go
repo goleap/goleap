@@ -6,4 +6,6 @@ type DriverLimit interface {
 
 	SetOffset(index int) DriverLimit
 	SetLimit(index int) DriverLimit
+
+	Formatted() (string, error)
 }

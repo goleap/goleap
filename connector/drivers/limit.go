@@ -1,6 +1,9 @@
 package drivers
 
-import "github.com/lab210-dev/dbkit/specs"
+import (
+	"fmt"
+	"github.com/lab210-dev/dbkit/specs"
+)
 
 type limit struct {
 	limit  int
@@ -23,6 +26,10 @@ func (l *limit) SetOffset(index int) specs.DriverLimit {
 func (l *limit) SetLimit(index int) specs.DriverLimit {
 	l.limit = index
 	return l
+}
+
+func (l *limit) Formatted() (string, error) {
+	return fmt.Sprintf("LIMIT %d, %d", l.Offset(), l.Limit()), nil
 }
 
 func NewLimit() specs.DriverLimit {

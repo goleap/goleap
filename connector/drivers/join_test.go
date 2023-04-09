@@ -135,7 +135,7 @@ func (suite *JoinTestSuite) TestValidateErr() {
 	suite.Contains(err.Error(), "are mandatory to perform the join")
 
 	for _, field := range []string{"From", "To"} {
-		suite.Contains(err.Error(), field)
+		suite.Contains(err.(*requiredFieldJoinErr).Fields(), field)
 	}
 }
 

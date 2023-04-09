@@ -110,12 +110,12 @@ func (m *Mysql) buildWhere(fields []specs.DriverWhere) (result string, args []an
 	return
 }
 
-func (m *Mysql) buildLimit(limit specs.DriverLimit) (result string) {
+func (m *Mysql) buildLimit(limit specs.DriverLimit) (result string, err error) {
 	if limit == nil {
 		return
 	}
 
-	return fmt.Sprintf("LIMIT %d, %d", limit.Offset(), limit.Limit())
+	return limit.Formatted()
 }
 
 // TODO Create and trigger error when operator is not supported !
@@ -147,7 +147,10 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 		return
 	}
 
-	buildLimit := m.buildLimit(payload.Limit())
+	buildLimit, err := m.buildLimit(payload.Limit())
+	if err != nil {
+		return
+	}
 
 	query := fmt.Sprintf("SELECT %s FROM `%s`.`%s` AS `t%d`", buildFields, m.Database(), payload.Table(), payload.Index())
 
