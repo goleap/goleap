@@ -74,7 +74,7 @@ func (fixture *Fixture) MysqlDriverSelectWhereIn(ctx context.Context) (err error
 		drivers.NewWhere().
 			SetFrom(drivers.NewField().SetColumn("id")).
 			SetOperator(operators.In).
-			SetTo([]int{2}),
+			SetTo([]int{2, 999}),
 	}
 
 	payload := dbkit.NewPayload[*models.UsersModel]()
@@ -84,10 +84,37 @@ func (fixture *Fixture) MysqlDriverSelectWhereIn(ctx context.Context) (err error
 
 	err = fixture.Connector().Select(ctx, payload)
 	fixture.Assert().NoError(err)
+	fixture.Assert().Greater(len(payload.Result()), 0)
 
 	for _, user := range payload.Result() {
 		fixture.Assert().NotEqual(1, user.Id)
 	}
+	return
+}
+
+func (fixture *Fixture) MysqlDriverSelectWhereBetween(ctx context.Context) (err error) {
+	var joins []specs.DriverJoin
+	fields := []specs.DriverField{
+		drivers.NewField().
+			SetColumn("id").
+			SetName("Id"),
+	}
+	wheres := []specs.DriverWhere{
+		drivers.NewWhere().
+			SetFrom(drivers.NewField().SetColumn("created_at")).
+			SetOperator(operators.Between).
+			SetTo([]any{"2023-03-28 00:00:00", "2023-03-30 00:00:00"}),
+	}
+
+	payload := dbkit.NewPayload[*models.CommentsModel]()
+	payload.SetFields(fields)
+	payload.SetJoins(joins)
+	payload.SetWheres(wheres)
+
+	err = fixture.Connector().Select(ctx, payload)
+	fixture.Assert().NoError(err)
+	fixture.Assert().Greater(len(payload.Result()), 0)
+
 	return
 }
 

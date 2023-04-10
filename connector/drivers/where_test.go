@@ -47,50 +47,58 @@ func (test *WhereTestSuite) TestWhereBuildOperator() {
 	where := NewWhere().(*where)
 
 	where.SetOperator(operators.Equal)
-	op, err := where.buildOperator()
+	op, flat, err := where.buildOperator()
 	test.NoError(err)
+	test.False(flat)
 
 	test.Equal(op, "= ?")
 
 	where.SetOperator(operators.In)
-	op, err = where.buildOperator()
+	op, flat, err = where.buildOperator()
 	test.NoError(err)
+	test.False(flat)
 
 	test.Equal(op, "IN (?)")
 
 	where.SetOperator(operators.NotIn)
-	op, err = where.buildOperator()
+	op, flat, err = where.buildOperator()
 	test.NoError(err)
+	test.False(flat)
 
 	test.Equal(op, "NOT IN (?)")
 
 	where.SetOperator(operators.IsNull)
-	op, err = where.buildOperator()
+	op, flat, err = where.buildOperator()
 	test.NoError(err)
+	test.False(flat)
 
 	test.Equal(op, "IS NULL")
 
 	where.SetOperator(operators.IsNotNull)
-	op, err = where.buildOperator()
+	op, flat, err = where.buildOperator()
 	test.NoError(err)
+	test.False(flat)
 
 	test.Equal(op, "IS NOT NULL")
 
 	where.SetOperator(operators.NotBetween)
-	op, err = where.buildOperator()
+	op, flat, err = where.buildOperator()
 	test.NoError(err)
+	test.True(flat)
 
 	test.Equal(op, "NOT BETWEEN ? AND ?")
 
 	where.SetOperator(operators.Between)
-	op, err = where.buildOperator()
+	op, flat, err = where.buildOperator()
 	test.NoError(err)
+	test.True(flat)
 
 	test.Equal(op, "BETWEEN ? AND ?")
 
 	where.SetOperator("unknown")
-	_, err = where.buildOperator()
+	_, flat, err = where.buildOperator()
 	test.Error(err)
+	test.False(flat)
 
 	test.IsType(&unknownOperatorErr{}, err)
 	test.Contains(err.Error(), "unknown operator: unknown")
@@ -114,7 +122,23 @@ func (test *WhereTestSuite) TestWhereFormatted() {
 
 	test.NoError(err)
 	test.Equal("`t0`.`id` = ?", formatted)
-	test.Equal("test", args)
+	test.Equal([]any{"test"}, args)
+}
+
+func (test *WhereTestSuite) TestWhereFlatFormatted() {
+	where := NewWhere()
+
+	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
+
+	where.SetFrom(test.fakeDriverField)
+	where.SetOperator(operators.Between)
+	where.SetTo([]any{"2018", "2021"})
+
+	formatted, args, err := where.Formatted()
+
+	test.NoError(err)
+	test.Equal("`t0`.`id` BETWEEN ? AND ?", formatted)
+	test.Equal([]any{"2018", "2021"}, args)
 }
 
 func (test *WhereTestSuite) TestWhereFormattedFromErr() {
@@ -162,7 +186,7 @@ func (test *WhereTestSuite) TestWhereFormattedWithTwoField() {
 
 	test.NoError(err)
 	test.Equal("`t0`.`id` = `t1`.`id`", formatted)
-	test.Equal(nil, args)
+	test.Equal([]any(nil), args)
 }
 
 func TestWhereTestSuite(t *testing.T) {

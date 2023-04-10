@@ -11,13 +11,13 @@ type FakeDriverWhere struct {
 }
 
 // Formatted provides a mock function with given fields
-func (_m *FakeDriverWhere) Formatted() (string, any, error) {
+func (_m *FakeDriverWhere) Formatted() (string, []any, error) {
 	ret := _m.Called()
 
 	var r0 string
-	var r1 any
+	var r1 []any
 	var r2 error
-	if rf, ok := ret.Get(0).(func() (string, any, error)); ok {
+	if rf, ok := ret.Get(0).(func() (string, []any, error)); ok {
 		return rf()
 	}
 	if rf, ok := ret.Get(0).(func() string); ok {
@@ -26,11 +26,11 @@ func (_m *FakeDriverWhere) Formatted() (string, any, error) {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func() any); ok {
+	if rf, ok := ret.Get(1).(func() []any); ok {
 		r1 = rf()
 	} else {
 		if ret.Get(1) != nil {
-			r1 = ret.Get(1)
+			r1 = ret.Get(1).([]any)
 		}
 	}
 

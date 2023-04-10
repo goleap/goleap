@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/lab210-dev/dbkit/connector/drivers/operators"
 	"github.com/lab210-dev/dbkit/specs"
+	"reflect"
 	"strings"
 )
 
@@ -40,22 +41,22 @@ func (w *where) SetTo(to any) specs.DriverWhere {
 	return w
 }
 
-func (w *where) buildOperator() (string, error) {
+func (w *where) buildOperator() (string, bool, error) {
 	switch w.Operator() {
 	case operators.Equal, operators.NotEqual:
-		return fmt.Sprintf("%s ?", w.Operator()), nil
+		return fmt.Sprintf("%s ?", w.Operator()), false, nil
 	case operators.In, operators.NotIn:
-		return fmt.Sprintf("%s (?)", w.Operator()), nil
+		return fmt.Sprintf("%s (?)", w.Operator()), false, nil
 	case operators.Between, operators.NotBetween:
-		return fmt.Sprintf("%s ? AND ?", w.Operator()), nil
+		return fmt.Sprintf("%s ? AND ?", w.Operator()), true, nil
 	case operators.IsNull, operators.IsNotNull:
-		return w.Operator(), nil
+		return w.Operator(), false, nil
 	}
-	return "", NewUnknownOperatorErr(w.Operator())
+	return "", false, NewUnknownOperatorErr(w.Operator())
 }
 
-func (w *where) Formatted() (string, any, error) {
-	operator, err := w.buildOperator()
+func (w *where) Formatted() (string, []any, error) {
+	operator, flat, err := w.buildOperator()
 	if err != nil {
 		return "", nil, err
 	}
@@ -74,7 +75,19 @@ func (w *where) Formatted() (string, any, error) {
 		return fmt.Sprintf("%s %s", from, strings.ReplaceAll(operator, "?", to)), nil, nil
 	}
 
-	return fmt.Sprintf("%s %s", from, operator), w.To(), nil
+	args := []any{w.To()}
+	if flat {
+		args = []any{}
+
+		toValue := reflect.ValueOf(w.To())
+		if toValue.Kind() == reflect.Slice {
+			for i := 0; i < toValue.Len(); i++ {
+				args = append(args, toValue.Index(i).Interface())
+			}
+		}
+	}
+
+	return fmt.Sprintf("%s %s", from, operator), args, nil
 }
 
 func NewWhere() specs.DriverWhere {

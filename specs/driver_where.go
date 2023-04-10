@@ -9,5 +9,5 @@ type DriverWhere interface {
 	SetOperator(operator string) DriverWhere
 	SetTo(to any) DriverWhere
 
-	Formatted() (string, any, error)
+	Formatted() (value string, args []any, err error)
 }

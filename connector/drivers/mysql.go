@@ -92,7 +92,7 @@ func (m *Mysql) buildWhere(wheres []specs.DriverWhere) (result string, args []an
 		result += formatted
 
 		if whereArgs != nil {
-			args = append(args, whereArgs)
+			args = append(args, whereArgs...)
 		}
 	}
 

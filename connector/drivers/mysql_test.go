@@ -386,7 +386,7 @@ func (test *MysqlTestSuite) TestSimpleWhereInOperatorErr() {
 		test.fakeDriverField,
 	})
 
-	test.fakeDriverWhere.On("Formatted").Return("`t0`.`id` IN (?)", []int{1, 2}, nil)
+	test.fakeDriverWhere.On("Formatted").Return("`t0`.`id` IN (?)", []any{[]int{1, 2}}, nil)
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
 		test.fakeDriverWhere,
 	})
