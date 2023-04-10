@@ -25,6 +25,16 @@ func (suite *FieldTestSuite) SetupTest() {
 	suite.fakeField = mocks.NewFakeDriverField(suite.T())
 }
 
+func (suite *FieldTestSuite) TestTable() {
+	suite.field.SetTable("t1")
+	suite.Equal("t1", suite.field.Table())
+}
+
+func (suite *FieldTestSuite) TestDatabase() {
+	suite.field.SetDatabase("db1")
+	suite.Equal("db1", suite.field.Database())
+}
+
 func (suite *FieldTestSuite) TestColumn() {
 	column, err := suite.field.Formatted()
 
