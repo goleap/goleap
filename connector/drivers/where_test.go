@@ -76,6 +76,18 @@ func (test *WhereTestSuite) TestWhereBuildOperator() {
 
 	test.Equal(op, "IS NOT NULL")
 
+	where.SetOperator(operators.NotBetween)
+	op, err = where.buildOperator()
+	test.NoError(err)
+
+	test.Equal(op, "NOT BETWEEN ? AND ?")
+
+	where.SetOperator(operators.Between)
+	op, err = where.buildOperator()
+	test.NoError(err)
+
+	test.Equal(op, "BETWEEN ? AND ?")
+
 	where.SetOperator("unknown")
 	_, err = where.buildOperator()
 	test.Error(err)

@@ -46,6 +46,8 @@ func (w *where) buildOperator() (string, error) {
 		return fmt.Sprintf("%s ?", w.Operator()), nil
 	case operators.In, operators.NotIn:
 		return fmt.Sprintf("%s (?)", w.Operator()), nil
+	case operators.Between, operators.NotBetween:
+		return fmt.Sprintf("%s ? AND ?", w.Operator()), nil
 	case operators.IsNull, operators.IsNotNull:
 		return w.Operator(), nil
 	}

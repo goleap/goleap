@@ -34,7 +34,7 @@ func (fixture *Fixture) Assert() *assert.Assertions {
 
 func (fixture *Fixture) Errorf(format string, args ...any) {
 	fixture.assertErrorCount++
-	fmt.Printf("⤷"+format, args...)
+	fmt.Printf(format, args...)
 }
 
 func (fixture *Fixture) Connector() specs.Connector {

@@ -88,7 +88,6 @@ func main() {
 		} else {
 			passedTestCount++
 		}
-
 		fmt.Printf("%s %s (%s)\n", state, typeOf.Method(i).Name, time.Since(timerTest))
 	}
 

@@ -7,8 +7,6 @@ import (
 	"errors"
 	"github.com/jmoiron/sqlx"
 	"github.com/lab210-dev/dbkit/connector/config"
-	"github.com/lab210-dev/dbkit/connector/drivers/joins"
-	"github.com/lab210-dev/dbkit/connector/drivers/operators"
 	"github.com/lab210-dev/dbkit/specs"
 	"github.com/lab210-dev/dbkit/tests/mocks"
 	"github.com/lab210-dev/dbkit/tests/mocks/fakesql"
@@ -24,8 +22,8 @@ type MysqlTestSuite struct {
 	fakeConn   *fakesql.FakeConn
 	fakeStmt   *fakesql.FakeStmt
 	fakeRows   *fakesql.FakeRows
-	fakeIn     *mocks.FakeIn
 
+	fakeIn          *mocks.FakeIn
 	fakePayload     *mocks.FakePayload
 	fakeDriverField *mocks.FakeDriverField
 
@@ -197,9 +195,12 @@ func (test *MysqlTestSuite) TestSelectErr() {
 	}
 
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
+
+	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
+	test.fakeDriverField.On("Formatted").Return("`t0`.`email`", nil).Once()
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
-		NewField().SetColumn("id").SetIndex(0),
-		NewField().SetColumn("email").SetIndex(0),
+		test.fakeDriverField,
+		test.fakeDriverField,
 	})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
@@ -227,9 +228,12 @@ func (test *MysqlTestSuite) TestSelectMappingErr() {
 	}
 
 	test.fakePayload.On("Mapping").Return([]any{}, errors.New("test_mapping_err"))
+
+	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
+	test.fakeDriverField.On("Formatted").Return("`t0`.`email`", nil).Once()
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
-		NewField().SetName("id").SetIndex(0),
-		NewField().SetName("email").SetIndex(0),
+		test.fakeDriverField,
+		test.fakeDriverField,
 	})
 
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
@@ -253,12 +257,14 @@ func (test *MysqlTestSuite) TestSimpleWhere() {
 		return
 	}
 
+	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
-		NewField().SetColumn("id").SetIndex(0),
-		NewField().SetColumn("email").SetIndex(0),
+		test.fakeDriverField,
 	})
+
+	test.fakeDriverWhere.On("Formatted").Return("`t0`.`id` = ?", []interface{}{1}, nil)
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(NewField().SetColumn("id").SetIndex(0)).SetOperator(operators.Equal).SetTo(1),
+		test.fakeDriverWhere,
 	})
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
@@ -266,7 +272,7 @@ func (test *MysqlTestSuite) TestSimpleWhere() {
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
 
-	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`email` FROM `acceptance`.`users` AS `t0` WHERE `t0`.`id` = ?").Return(nil, errors.New("test")).Once()
+	test.fakeConn.On("Prepare", "SELECT `t0`.`id` FROM `acceptance`.`users` AS `t0` WHERE `t0`.`id` = ?").Return(nil, errors.New("test")).Once()
 
 	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)
@@ -284,13 +290,15 @@ func (test *MysqlTestSuite) TestSimpleWhereWithBadOperator() {
 	}
 
 	test.fakePayload.On("Fields").Return([]specs.DriverField{})
+
+	test.fakeDriverWhere.On("Formatted").Return("", nil, errors.New("build_where_err"))
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(NewField().SetName("id").SetIndex(0)).SetOperator("unknown").SetTo(1),
+		test.fakeDriverWhere,
 	})
 
 	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)
-	test.EqualValues("unknown operator: unknown", err.Error())
+	test.EqualValues("build_where_err", err.Error())
 }
 
 func (test *MysqlTestSuite) TestSimpleWhereIsNullOperator() {
@@ -304,12 +312,14 @@ func (test *MysqlTestSuite) TestSimpleWhereIsNullOperator() {
 		return
 	}
 
+	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
-		NewField().SetColumn("id").SetIndex(0),
-		NewField().SetColumn("label").SetIndex(0),
+		test.fakeDriverField,
 	})
+
+	test.fakeDriverWhere.On("Formatted").Return("`t0`.`id` IS NULL", nil, nil)
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(NewField().SetColumn("id").SetIndex(0)).SetOperator(operators.IsNull),
+		test.fakeDriverWhere,
 	})
 
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
@@ -318,7 +328,7 @@ func (test *MysqlTestSuite) TestSimpleWhereIsNullOperator() {
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
 
-	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `acceptance`.`test` AS `t0` WHERE `t0`.`id` IS NULL").Return(nil, errors.New("test")).Once()
+	test.fakeConn.On("Prepare", "SELECT `t0`.`id` FROM `acceptance`.`test` AS `t0` WHERE `t0`.`id` IS NULL").Return(nil, errors.New("test")).Once()
 
 	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)
@@ -335,20 +345,23 @@ func (test *MysqlTestSuite) TestSimpleWhereInOperator() {
 		return
 	}
 
+	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
-		NewField().SetColumn("id").SetIndex(0),
-		NewField().SetColumn("label").SetIndex(0),
+		test.fakeDriverField,
 	})
+
+	test.fakeDriverWhere.On("Formatted").Return("`t0`.`id` IN (?, ?)", nil, nil)
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(NewField().SetColumn("id").SetIndex(0)).SetOperator(operators.In).SetTo([]int{1, 2}),
+		test.fakeDriverWhere,
 	})
+
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Table").Return("test")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
 
-	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`label` FROM `acceptance`.`test` AS `t0` WHERE `t0`.`id` IN (?, ?)").Return(nil, errors.New("test")).Once()
+	test.fakeConn.On("Prepare", "SELECT `t0`.`id` FROM `acceptance`.`test` AS `t0` WHERE `t0`.`id` IN (?, ?)").Return(nil, errors.New("test")).Once()
 
 	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)
@@ -368,20 +381,23 @@ func (test *MysqlTestSuite) TestSimpleWhereInOperatorErr() {
 		return
 	}
 
+	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
-		NewField().SetColumn("id").SetIndex(0),
-		NewField().SetColumn("label").SetIndex(0),
+		test.fakeDriverField,
 	})
+
+	test.fakeDriverWhere.On("Formatted").Return("`t0`.`id` IN (?)", []int{1, 2}, nil)
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(NewField().SetColumn("id").SetIndex(0)).SetOperator(operators.In).SetTo([]int{1, 2}),
+		test.fakeDriverWhere,
 	})
+
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Table").Return("test")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
 
 	fnErrorMsg := "function `GenerateInArgument` returns an error"
-	test.fakeIn.On("GenerateInArgument", "SELECT `t0`.`id`, `t0`.`label` FROM `acceptance`.`test` AS `t0` WHERE `t0`.`id` IN (?)", []int{1, 2}).Return("", []any{}, errors.New(fnErrorMsg)).Once()
+	test.fakeIn.On("GenerateInArgument", "SELECT `t0`.`id` FROM `acceptance`.`test` AS `t0` WHERE `t0`.`id` IN (?)", []int{1, 2}).Return("", []any{}, errors.New(fnErrorMsg)).Once()
 
 	err = drv.Select(context.Background(), test.fakePayload)
 	test.EqualError(err, fnErrorMsg)
@@ -398,13 +414,16 @@ func (test *MysqlTestSuite) TestWhereMultiEqual() {
 		return
 	}
 
+	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
-		NewField().SetColumn("id").SetIndex(0),
-		NewField().SetColumn("email").SetIndex(0),
+		test.fakeDriverField,
 	})
+
+	test.fakeDriverWhere.On("Formatted").Return("`t0`.`id` = ?", nil, nil).Once()
+	test.fakeDriverWhere.On("Formatted").Return("`t0`.`email` = ?", nil, nil).Once()
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{
-		NewWhere().SetFrom(NewField().SetColumn("id").SetIndex(0)).SetOperator(operators.Equal).SetTo(1),
-		NewWhere().SetFrom(NewField().SetColumn("email").SetIndex(0)).SetOperator(operators.Equal).SetTo("test"),
+		test.fakeDriverWhere,
+		test.fakeDriverWhere,
 	})
 
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
@@ -413,7 +432,7 @@ func (test *MysqlTestSuite) TestWhereMultiEqual() {
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
 
-	test.fakeConn.On("Prepare", "SELECT `t0`.`id`, `t0`.`email` FROM `acceptance`.`users` AS `t0` WHERE `t0`.`id` = ? AND `t0`.`email` = ?").Return(nil, errors.New("test")).Once()
+	test.fakeConn.On("Prepare", "SELECT `t0`.`id` FROM `acceptance`.`users` AS `t0` WHERE `t0`.`id` = ? AND `t0`.`email` = ?").Return(nil, errors.New("test")).Once()
 
 	err = drv.Select(context.Background(), test.fakePayload)
 	test.Error(err)
@@ -430,7 +449,10 @@ func (test *MysqlTestSuite) TestSelect() {
 		return
 	}
 
-	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetColumn("id").SetIndex(0)})
+	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
+	test.fakePayload.On("Fields").Return([]specs.DriverField{
+		test.fakeDriverField,
+	})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Table").Return("test")
@@ -477,7 +499,11 @@ func (test *MysqlTestSuite) TestSelectWithNativeScanErr() {
 		return
 	}
 
-	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetColumn("id").SetIndex(0)})
+	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
+	test.fakePayload.On("Fields").Return([]specs.DriverField{
+		test.fakeDriverField,
+	})
+
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Table").Return("users")
@@ -522,7 +548,11 @@ func (test *MysqlTestSuite) TestSelectWithNativeWrapScanErr() {
 		return
 	}
 
-	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetColumn("id").SetIndex(0)})
+	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
+	test.fakePayload.On("Fields").Return([]specs.DriverField{
+		test.fakeDriverField,
+	})
+
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Table").Return("users")
@@ -569,7 +599,11 @@ func (test *MysqlTestSuite) TestSelectWithWhere() {
 		return
 	}
 
-	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetColumn("id").SetIndex(0)})
+	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
+	test.fakePayload.On("Fields").Return([]specs.DriverField{
+		test.fakeDriverField,
+	})
+
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Table").Return("users")
@@ -616,13 +650,16 @@ func (test *MysqlTestSuite) TestJoin() {
 		return
 	}
 
-	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetIndex(0).SetColumn("id").SetName("Id")})
+	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
+	test.fakePayload.On("Fields").Return([]specs.DriverField{
+		test.fakeDriverField,
+	})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
+
+	test.fakeDriverJoin.On("Validate").Return(nil)
+	test.fakeDriverJoin.On("Formatted").Return("JOIN `acceptance`.`posts` AS `t1` ON `t1`.`id` = `t0`.`posts_id`", nil)
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{
-		NewJoin().
-			SetMethod(joins.Default).
-			SetTo(NewField().SetIndex(1).SetColumn("id").SetName("Id").SetTable("posts").SetDatabase("acceptance")).
-			SetFrom(NewField().SetIndex(0).SetColumn("posts_id").SetName("Id").SetTable("comments").SetDatabase("acceptance")),
+		test.fakeDriverJoin,
 	})
 	test.fakePayload.On("Limit").Return(nil)
 	test.fakePayload.On("Table").Return("comments")
@@ -647,18 +684,21 @@ func (test *MysqlTestSuite) TestMultiJoin() {
 	}
 
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
-	test.fakePayload.On("Fields").Return([]specs.DriverField{NewField().SetColumn("id").SetIndex(0).SetName("Id")})
-	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
-	test.fakePayload.On("Join").Return([]specs.DriverJoin{
-		NewJoin().
-			SetMethod(joins.Default).
-			SetTo(NewField().SetIndex(1).SetColumn("id").SetName("Id").SetTable("posts").SetDatabase("acceptance")).
-			SetFrom(NewField().SetIndex(0).SetColumn("posts_id").SetName("Id").SetTable("comments").SetDatabase("acceptance")),
 
-		NewJoin().
-			SetMethod(joins.Default).
-			SetTo(NewField().SetIndex(2).SetColumn("id").SetName("Id").SetTable("users").SetDatabase("acceptance")).
-			SetFrom(NewField().SetIndex(0).SetColumn("users_id").SetName("Id").SetTable("comments").SetDatabase("acceptance")),
+	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
+	test.fakePayload.On("Fields").Return([]specs.DriverField{
+		test.fakeDriverField,
+	})
+
+	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
+
+	test.fakeDriverJoin.On("Validate").Return(nil)
+	test.fakeDriverJoin.On("Formatted").Return("JOIN `acceptance`.`posts` AS `t1` ON `t1`.`id` = `t0`.`posts_id`", nil).Once()
+	test.fakeDriverJoin.On("Formatted").Return("JOIN `acceptance`.`users` AS `t2` ON `t2`.`id` = `t0`.`users_id`", nil).Once()
+
+	test.fakePayload.On("Join").Return([]specs.DriverJoin{
+		test.fakeDriverJoin,
+		test.fakeDriverJoin,
 	})
 	test.fakePayload.On("Limit").Return(nil)
 	test.fakePayload.On("Table").Return("comments")
