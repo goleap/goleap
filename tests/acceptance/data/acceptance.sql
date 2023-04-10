@@ -1,5 +1,3 @@
-# noinspection SqlNoDataSourceInspectionForFile
-
 -- MySQL dump 10.13  Distrib 8.0.32, for Linux (aarch64)
 --
 -- Host: localhost    Database: acceptance
@@ -48,7 +46,7 @@ CREATE TABLE `comments` (
 
 LOCK TABLES `comments` WRITE;
 /*!40000 ALTER TABLE `comments` DISABLE KEYS */;
-INSERT INTO `comments` VALUES (1,2,1,NULL,'Je pratique la méditation tous les jours et cela a vraiment amélioré ma vie. Je recommande également cette pratique à tout le monde !','2023-03-28 02:38:19','2023-03-28 02:38:19'),(2,3,1,NULL,'Je suis entièrement d\'accord. La méditation est une excellente façon de se recentrer et de réduire le stress.','2023-03-28 02:38:19','2023-03-28 02:38:19'),(3,1,2,NULL,'Je suis jaloux, j\'aimerais voyager en Asie un jour ! Quel était ton endroit préféré que tu as visité ?','2023-03-28 02:38:19','2023-03-28 02:38:19'),(4,2,2,NULL,'C\'était difficile de choisir un endroit préféré, mais je pense que j\'ai adoré Tokyo au Japon. La nourriture était incroyable et il y avait tellement de choses à voir et à faire !','2023-03-28 02:38:19','2023-03-28 02:38:19'),(5,3,3,NULL,'Je suis en train d\'apprendre le français en ce moment, et je trouve que regarder des films et des émissions de télévision en français est vraiment utile pour pratiquer la langue.','2023-03-28 02:38:19','2023-03-28 02:38:19'),(6,1,4,NULL,'Je vais essayer cette recette ce week-end, merci pour le partage !','2023-03-28 02:38:19','2023-03-28 02:38:19'),(7,2,4,6,'J\'ai également essayé cette recette et elle est délicieuse. J\'ai ajouté des pommes de terre et des carottes pour compléter le plat.','2023-03-28 02:38:19','2023-03-28 02:38:19'),(8,3,4,7,'Je suis content de savoir que je ne suis pas le seul à aimer cette recette ! J\'adore aussi ajouter des légumes pour en faire un plat complet.','2023-03-28 02:38:19','2023-03-28 02:38:19');
+INSERT INTO `comments` VALUES (1,2,1,NULL,'Je pratique la méditation tous les jours et cela a vraiment amélioré ma vie. Je recommande également cette pratique à tout le monde !','2023-03-28 02:38:19','2023-03-28 02:38:19'),(2,3,1,NULL,'Je suis entièrement d\'accord. La méditation est une excellente façon de se recentrer et de réduire le stress.','2023-03-29 02:38:19','2023-03-29 02:38:19'),(3,1,2,NULL,'Je suis jaloux, j\'aimerais voyager en Asie un jour ! Quel était ton endroit préféré que tu as visité ?','2023-03-30 02:38:19','2023-03-30 02:38:19'),(4,2,2,NULL,'C\'était difficile de choisir un endroit préféré, mais je pense que j\'ai adoré Tokyo au Japon. La nourriture était incroyable et il y avait tellement de choses à voir et à faire !','2023-03-28 02:38:19','2023-03-28 02:38:19'),(5,3,3,NULL,'Je suis en train d\'apprendre le français en ce moment, et je trouve que regarder des films et des émissions de télévision en français est vraiment utile pour pratiquer la langue.','2023-03-28 02:38:19','2023-03-28 02:38:19'),(6,1,4,NULL,'Je vais essayer cette recette ce week-end, merci pour le partage !','2023-03-28 02:38:19','2023-03-28 02:38:19'),(7,2,4,6,'J\'ai également essayé cette recette et elle est délicieuse. J\'ai ajouté des pommes de terre et des carottes pour compléter le plat.','2023-04-10 18:11:40','2023-04-10 18:11:40'),(8,3,4,7,'Je suis content de savoir que je ne suis pas le seul à aimer cette recette ! J\'adore aussi ajouter des légumes pour en faire un plat complet.','2023-04-10 18:11:49','2023-04-10 18:11:49');
 /*!40000 ALTER TABLE `comments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -119,4 +117,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-03-28  2:40:56
+-- Dump completed on 2023-04-10 22:40:22
