@@ -96,7 +96,10 @@ func (field *fieldDefinition) Init() {
 	field.Model().FromField().Init()
 
 	if field.Model().FromField().Value().Kind() == reflect.Ptr {
-		field.Model().FromField().Value().Set(field.Model().ModelValue().Addr())
+		cpy := reflect.New(field.Model().ModelValue().Type())
+		cpy.Elem().Set(field.Model().ModelValue())
+
+		field.Model().FromField().Value().Set(cpy)
 		return
 	}
 

@@ -70,6 +70,32 @@ func (test *SchemaTestSuite) TestCopy() {
 	test.Equal(uint(2), modelDefinition.Copy().(*models.UsersModel).Id)
 }
 
+func (test *SchemaTestSuite) TestCopy2() {
+	model := &models.CommentsModel{}
+	modelDefinition := Use(model).Parse()
+
+	test.Equal(modelDefinition.Copy(), model)
+
+	id := uint(1)
+	field, err := modelDefinition.GetFieldByName("Parent.Id")
+	if !test.NoError(err) {
+		return
+	}
+	field.Set(&id)
+
+	snapshot := modelDefinition.Copy()
+
+	id2 := uint(2)
+	field, err = modelDefinition.GetFieldByName("Parent.Id")
+	if !test.NoError(err) {
+		return
+	}
+	field.Set(&id2)
+
+	test.Equal(uint(1), snapshot.(*models.CommentsModel).Parent.Id)
+	test.Equal(uint(2), modelDefinition.Copy().(*models.CommentsModel).Parent.Id)
+}
+
 func (test *SchemaTestSuite) TestComplexeModel() {
 	modelDefinition := Use(&models.CommentsModel{}).Parse()
 	test.Equal("comments", modelDefinition.TableName())
