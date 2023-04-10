@@ -69,7 +69,20 @@ func main() {
 
 		fx.Reset()
 		args := []reflect.Value{reflect.ValueOf(ctx)}
-		result := method.Call(args)
+
+		// recover
+		try := func() (result []reflect.Value) {
+			defer func() {
+				if r := recover(); r != nil {
+					result = make([]reflect.Value, 1)
+					result[0] = reflect.ValueOf(fmt.Errorf("%v", r))
+				}
+			}()
+			result = method.Call(args)
+			return
+		}
+
+		result := try()
 
 		logrus.WithFields(logrus.Fields{
 			"name": typeOf.Method(i).Name,

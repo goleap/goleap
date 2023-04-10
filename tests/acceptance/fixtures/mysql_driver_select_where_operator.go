@@ -118,6 +118,32 @@ func (fixture *Fixture) MysqlDriverSelectWhereBetween(ctx context.Context) (err 
 	return
 }
 
+func (fixture *Fixture) MysqlDriverSelectWhereNotBetween(ctx context.Context) (err error) {
+	var joins []specs.DriverJoin
+	fields := []specs.DriverField{
+		drivers.NewField().
+			SetColumn("id").
+			SetName("Id"),
+	}
+	wheres := []specs.DriverWhere{
+		drivers.NewWhere().
+			SetFrom(drivers.NewField().SetColumn("created_at")).
+			SetOperator(operators.NotBetween).
+			SetTo([]any{"2023-03-28 00:00:00", "2023-03-30 00:00:00"}),
+	}
+
+	payload := dbkit.NewPayload[*models.CommentsModel]()
+	payload.SetFields(fields)
+	payload.SetJoins(joins)
+	payload.SetWheres(wheres)
+
+	err = fixture.Connector().Select(ctx, payload)
+	fixture.Assert().NoError(err)
+	fixture.Assert().Greater(len(payload.Result()), 0)
+
+	return
+}
+
 func (fixture *Fixture) MysqlDriverSelectWhereGreaterWithFn(ctx context.Context) (err error) {
 	var joins []specs.DriverJoin
 	fields := []specs.DriverField{
@@ -129,7 +155,7 @@ func (fixture *Fixture) MysqlDriverSelectWhereGreaterWithFn(ctx context.Context)
 		drivers.NewWhere().
 			SetTo(2).
 			SetOperator(operators.Equal).
-			SetFrom(drivers.NewField().SetCustom("SELECT COUNT(id) FROM posts WHERE posts.user_id = %Id%", []specs.DriverField{
+			SetFrom(drivers.NewField().SetCustom("SELECT COUNT(id) FROM posts WHERE posts.user_id = ${Id}", []specs.DriverField{
 				drivers.NewField().SetColumn("id").SetIndex(0).SetName("Id"),
 			})),
 	}

@@ -12,7 +12,7 @@ func (fixture *Fixture) MysqlDriverSelectWithFieldFn(ctx context.Context) (err e
 	fields := []specs.DriverField{
 		drivers.NewField().
 			SetName("Id").
-			SetCustom("SELECT COUNT(id) FROM posts WHERE posts.user_id = %Id%", []specs.DriverField{
+			SetCustom("SELECT COUNT(id) FROM posts WHERE posts.user_id = ${Id}", []specs.DriverField{
 				drivers.NewField().SetColumn("id").SetIndex(0).SetName("Id"),
 			}),
 	}

@@ -43,7 +43,7 @@ func (suite *FieldTestSuite) TestColumn() {
 }
 
 func (suite *FieldTestSuite) TestColumnWithFn() {
-	suite.field.SetCustom("CONCAT('%', %Name%, '%')", []specs.DriverField{NewField().SetName("Name").SetColumn("name")})
+	suite.field.SetCustom("CONCAT('%', ${Name}, '%')", []specs.DriverField{NewField().SetName("Name").SetColumn("name")})
 
 	column, err := suite.field.Formatted()
 
@@ -53,7 +53,7 @@ func (suite *FieldTestSuite) TestColumnWithFn() {
 }
 
 func (suite *FieldTestSuite) TestColumnWithFnErrNoMatch() {
-	suite.field.SetCustom("CONCAT('%', %Name%, '%')", []specs.DriverField{NewField().SetName("unknown").SetColumn("name")})
+	suite.field.SetCustom("CONCAT('%', ${Name}, '%')", []specs.DriverField{NewField().SetName("unknown").SetColumn("name")})
 
 	column, err := suite.field.Formatted()
 
@@ -69,7 +69,7 @@ func (suite *FieldTestSuite) TestColumnWithFnColumnErr() {
 	suite.fakeField.On("Name").Return("Name")
 	suite.fakeField.On("Formatted").Return("", errors.New("column_error"))
 
-	suite.field.SetCustom("CONCAT('%', %Name%, '%')", []specs.DriverField{suite.fakeField})
+	suite.field.SetCustom("CONCAT('%', ${Name}, '%')", []specs.DriverField{suite.fakeField})
 
 	column, err := suite.field.Formatted()
 

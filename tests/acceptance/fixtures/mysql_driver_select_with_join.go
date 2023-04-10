@@ -45,7 +45,7 @@ func (fixture *Fixture) MysqlDriverSelectWithJoinCustom(ctx context.Context) (er
 				drivers.NewField().SetTable("users").SetColumn("id"),
 			).
 			SetTo(
-				drivers.NewField().SetDatabase("acceptance").SetIndex(1).SetTable("posts").SetCustom("SELECT MIN(id) FROM posts WHERE posts.user_id = %Id% LIMIT 1", []specs.DriverField{
+				drivers.NewField().SetDatabase("acceptance").SetIndex(1).SetTable("posts").SetCustom("SELECT MIN(id) FROM posts WHERE posts.user_id = ${Id} LIMIT 1", []specs.DriverField{
 					drivers.NewField().SetColumn("id").SetIndex(0).SetName("Id"),
 				}),
 			),

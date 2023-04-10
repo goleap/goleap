@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Fixture struct {
@@ -40,6 +41,8 @@ func (fixture *Fixture) Assert() *assert.Assertions {
 
 func (fixture *Fixture) Errorf(format string, args ...any) {
 	fixture.assertErrorCount++
+
+	format = strings.ReplaceAll(format, "\n", "\n│")
 	fmt.Printf(format, args...)
 }
 

@@ -96,8 +96,9 @@ func (f *field) CustomArgs() []specs.DriverField {
 	return f.customArgs
 }
 
+// fnProcess processes the custom method for replacing arguments
 func (f *field) fnProcess() (fn string, err error) {
-	re := regexp.MustCompile(`%([a-zA-Z_]+)%`)
+	re := regexp.MustCompile(`\${([a-zA-Z_]+)}`)
 	matches := re.FindAllStringSubmatch(f.Custom(), -1)
 
 	replaceFieldCount := 0
