@@ -14,10 +14,15 @@ type Fixture struct {
 	connector        specs.Connector
 	assert           *assert.Assertions
 	assertErrorCount int
+	assertCount      int
 }
 
 func (fixture *Fixture) AssertErrorCount() int {
 	return fixture.assertErrorCount
+}
+
+func (fixture *Fixture) AssertCount() int {
+	return fixture.assertCount
 }
 
 func (fixture *Fixture) Reset() {
@@ -25,6 +30,7 @@ func (fixture *Fixture) Reset() {
 }
 
 func (fixture *Fixture) Assert() *assert.Assertions {
+	fixture.assertCount++
 	if fixture.assert != nil {
 		return fixture.assert
 	}

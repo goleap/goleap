@@ -98,7 +98,7 @@ func main() {
 		color = "\x1b[32m" // Vert
 	}
 
-	fmt.Printf("\n%sDONE %d tests in %s | Passed: %d Failed: %d\x1b[0m\n", color, testsCount, time.Since(globalTimer), passedTestCount, failedTestCount)
+	fmt.Printf("\n%sDONE %d tests with %d assertions in %s | Passed: %d Failed: %d\x1b[0m\n", color, testsCount, fx.AssertCount(), time.Since(globalTimer), passedTestCount, failedTestCount)
 
 	if debug || failedTestCount > 0 {
 		fmt.Println("\nDebug log:")

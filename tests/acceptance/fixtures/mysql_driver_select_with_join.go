@@ -36,3 +36,31 @@ func (fixture *Fixture) MysqlDriverSelectWithJoin(ctx context.Context) (err erro
 	fixture.Assert().EqualValues(7, selectPayload.Result()[1].Parent.Id)
 	return
 }
+
+func (fixture *Fixture) MysqlDriverSelectWithJoinCustom(ctx context.Context) (err error) {
+	// TODO: Change to real scenario because this is not a real scenario...
+	requiredJoins := []specs.DriverJoin{
+		drivers.NewJoin().SetMethod(joins.Default).
+			SetFrom(
+				drivers.NewField().SetTable("users").SetColumn("id"),
+			).
+			SetTo(
+				drivers.NewField().SetDatabase("acceptance").SetIndex(1).SetTable("posts").SetCustom("SELECT MIN(id) FROM posts WHERE posts.user_id = %Id% LIMIT 1", []specs.DriverField{
+					drivers.NewField().SetColumn("id").SetIndex(0).SetName("Id"),
+				}),
+			),
+	}
+	fields := []specs.DriverField{
+		drivers.NewField().SetIndex(1).SetColumn("id").SetName("Id"),
+	}
+
+	selectPayload := dbkit.NewPayload[*models.UsersModel]()
+	selectPayload.SetFields(fields)
+	selectPayload.SetJoins(requiredJoins)
+
+	err = fixture.Connector().Select(ctx, selectPayload)
+	fixture.Assert().NoError(err)
+
+	fixture.Assert().Len(selectPayload.Result(), 12)
+	return
+}
