@@ -60,6 +60,20 @@ func (test *WhereTestSuite) TestWhereBuildOperator() {
 
 	test.Equal(op, "IN (?)")
 
+	where.SetOperator(operators.Like)
+	op, flat, err = where.buildOperator()
+	test.NoError(err)
+	test.False(flat)
+
+	test.Equal(op, "LIKE ?")
+
+	where.SetOperator(operators.NotLike)
+	op, flat, err = where.buildOperator()
+	test.NoError(err)
+	test.False(flat)
+
+	test.Equal(op, "NOT LIKE ?")
+
 	where.SetOperator(operators.NotIn)
 	op, flat, err = where.buildOperator()
 	test.NoError(err)

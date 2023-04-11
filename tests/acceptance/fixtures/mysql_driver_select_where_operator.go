@@ -118,6 +118,129 @@ func (fixture *Fixture) MysqlDriverSelectWhereBetween(ctx context.Context) (err 
 	return
 }
 
+func (fixture *Fixture) MysqlDriverSelectWhereLike(ctx context.Context) (err error) {
+	var joins []specs.DriverJoin
+	fields := []specs.DriverField{
+		drivers.NewField().
+			SetColumn("content").
+			SetName("Content"),
+	}
+	wheres := []specs.DriverWhere{
+		drivers.NewWhere().
+			SetFrom(drivers.NewField().SetColumn("content")).
+			SetOperator(operators.Like).
+			SetTo("%pratique%"),
+	}
+
+	payload := dbkit.NewPayload[*models.CommentsModel]()
+	payload.SetFields(fields)
+	payload.SetJoins(joins)
+	payload.SetWheres(wheres)
+
+	err = fixture.Connector().Select(ctx, payload)
+	fixture.Assert().NoError(err)
+	fixture.Assert().Greater(len(payload.Result()), 0)
+
+	for _, comment := range payload.Result() {
+		fixture.Assert().NotEmpty(comment.Content)
+		fixture.Assert().Contains(comment.Content, "pratique")
+	}
+
+	return
+}
+
+func (fixture *Fixture) MysqlDriverSelectWhereNotLike(ctx context.Context) (err error) {
+	var joins []specs.DriverJoin
+	fields := []specs.DriverField{
+		drivers.NewField().
+			SetColumn("content").
+			SetName("Content"),
+	}
+	wheres := []specs.DriverWhere{
+		drivers.NewWhere().
+			SetFrom(drivers.NewField().SetColumn("content")).
+			SetOperator(operators.NotLike).
+			SetTo("%pratique%"),
+	}
+
+	payload := dbkit.NewPayload[*models.CommentsModel]()
+	payload.SetFields(fields)
+	payload.SetJoins(joins)
+	payload.SetWheres(wheres)
+
+	err = fixture.Connector().Select(ctx, payload)
+	fixture.Assert().NoError(err)
+	fixture.Assert().Greater(len(payload.Result()), 0)
+
+	for _, comment := range payload.Result() {
+		fixture.Assert().NotEmpty(comment.Content)
+		fixture.Assert().NotContains(comment.Content, "pratique")
+	}
+
+	return
+}
+
+func (fixture *Fixture) MysqlDriverSelectWhereGreaterAndLess(ctx context.Context) (err error) {
+	fields := []specs.DriverField{
+		drivers.NewField().
+			SetColumn("id").
+			SetName("Id"),
+	}
+	wheres := []specs.DriverWhere{
+		drivers.NewWhere().
+			SetFrom(drivers.NewField().SetColumn("id")).
+			SetOperator(operators.Greater).
+			SetTo(1),
+
+		drivers.NewWhere().
+			SetFrom(drivers.NewField().SetColumn("id")).
+			SetOperator(operators.Less).
+			SetTo(3),
+	}
+
+	payload := dbkit.NewPayload[*models.CommentsModel]()
+	payload.SetFields(fields)
+	payload.SetWheres(wheres)
+
+	err = fixture.Connector().Select(ctx, payload)
+	fixture.Assert().NoError(err)
+	fixture.Assert().Len(payload.Result(), 1)
+
+	fixture.Assert().Equal(payload.Result()[0].Id, uint(2))
+
+	return
+}
+
+func (fixture *Fixture) MysqlDriverSelectWhereGreaterOrEqualAndLessOrEqual(ctx context.Context) (err error) {
+	fields := []specs.DriverField{
+		drivers.NewField().
+			SetColumn("id").
+			SetName("Id"),
+	}
+	wheres := []specs.DriverWhere{
+		drivers.NewWhere().
+			SetFrom(drivers.NewField().SetColumn("id")).
+			SetOperator(operators.GreaterOrEqual).
+			SetTo(1),
+		drivers.NewWhere().
+			SetFrom(drivers.NewField().SetColumn("id")).
+			SetOperator(operators.LessOrEqual).
+			SetTo(1),
+	}
+
+	payload := dbkit.NewPayload[*models.CommentsModel]()
+	payload.SetFields(fields)
+	payload.SetWheres(wheres)
+
+	err = fixture.Connector().Select(ctx, payload)
+	fixture.Assert().NoError(err)
+	fixture.Assert().Len(payload.Result(), 1)
+
+	fixture.Assert().Equal(payload.Result()[0].Id, uint(1))
+
+	return
+}
+
 func (fixture *Fixture) MysqlDriverSelectWhereNotBetween(ctx context.Context) (err error) {
 	var joins []specs.DriverJoin
 	fields := []specs.DriverField{

@@ -43,7 +43,7 @@ func (w *where) SetTo(to any) specs.DriverWhere {
 
 func (w *where) buildOperator() (string, bool, error) {
 	switch w.Operator() {
-	case operators.Equal, operators.NotEqual:
+	case operators.Equal, operators.NotEqual, operators.Like, operators.NotLike, operators.Greater, operators.GreaterOrEqual, operators.Less, operators.LessOrEqual:
 		return fmt.Sprintf("%s ?", w.Operator()), false, nil
 	case operators.In, operators.NotIn:
 		return fmt.Sprintf("%s (?)", w.Operator()), false, nil
