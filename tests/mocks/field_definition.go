@@ -11,6 +11,34 @@ type FakeFieldDefinition struct {
 	mock.Mock
 }
 
+// IsSlice provides a mock function with given fields:
+func (_m *FakeFieldDefinition) IsSlice() bool {
+	ret := _m.Called()
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func() bool); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// FromSlice provides a mock function with given fields:
+func (_m *FakeFieldDefinition) FromSlice() bool {
+	ret := _m.Called()
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func() bool); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
 // Column provides a mock function with given fields:
 func (_m *FakeFieldDefinition) Column() string {
 	ret := _m.Called()

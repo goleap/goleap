@@ -4,7 +4,8 @@ import "time"
 
 type PostsModel struct {
 	Id       uint            `dbKit:"column:id, primaryKey"`
-	User     UsersModel      `dbKit:"column:user_id, foreignKey:id"`
+	Creator  UsersModel      `dbKit:"column:c_user_id, foreignKey:id"`
+	Editor   UsersModel      `dbKit:"column:u_user_id, foreignKey:id"`
 	Comments []CommentsModel `dbKit:"column:comments_id, foreignKey:id"`
 	Title    string          `dbKit:"column:title"`
 	Content  string          `dbKit:"column:content"`

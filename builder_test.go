@@ -80,7 +80,7 @@ func (test *BuilderTestSuite) TestValideRequiredFieldErr() {
 
 	_, err := builderInstance.Get("Primary")
 	test.Error(err)
-	test.ErrorContains(err, "field required for ")
+	test.ErrorContains(err, "the method `Get` requires the selection of one or more fields")
 }
 
 func (test *BuilderTestSuite) TestBuildWhereErr() {
@@ -94,8 +94,10 @@ func (test *BuilderTestSuite) TestBuildWhereErr() {
 	b.modelDefinition = test.fakeModelDefinition
 
 	test.fakeModelDefinition.On("GetPrimaryField").Return(test.fakeFieldDefinition, nil)
-	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id")
-	test.fakeModelDefinition.On("GetFieldByName", "unknown").Return(nil, nil).Once()
+	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id").Once()
+
+	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
+	test.fakeModelDefinition.On("GetFieldByName", "unknown").Return(test.fakeFieldDefinition, nil).Once()
 
 	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(nil, errors.New("test")).Once()
 

@@ -263,7 +263,7 @@ func (fixture *Fixture) MysqlDriverSelectWhereGreaterWithFn(ctx context.Context)
 		drivers.NewWhere().
 			SetTo(2).
 			SetOperator(operators.Equal).
-			SetFrom(drivers.NewField().SetCustom("SELECT COUNT(id) FROM posts WHERE posts.user_id = ${Id}", []specs.DriverField{
+			SetFrom(drivers.NewField().SetCustom("SELECT COUNT(id) FROM posts WHERE posts.c_user_id = ${Id}", []specs.DriverField{
 				drivers.NewField().SetColumn("id").SetIndex(0).SetName("Id"),
 			})),
 	}

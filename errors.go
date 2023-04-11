@@ -7,7 +7,7 @@ type FieldRequiredError struct {
 }
 
 func (e *FieldRequiredError) Error() string {
-	return fmt.Sprintf("field required for %s", e.queryType)
+	return fmt.Sprintf("the method `%s` requires the selection of one or more fields", e.queryType)
 }
 
 func NewFieldRequiredError(queryType string) *FieldRequiredError {

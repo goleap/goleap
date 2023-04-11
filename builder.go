@@ -68,6 +68,10 @@ func (o *builder[T]) buildFields() (err error) {
 			return err
 		}
 
+		if field.FromSlice() {
+			continue
+		}
+
 		o.selectedFieldsDefinition = append(o.selectedFieldsDefinition, field)
 	}
 
@@ -97,13 +101,26 @@ func (o *builder[T]) getDriverFields() []specs.DriverField {
 	return o.driverFields
 }
 
-func (o *builder[T]) getDriverJoins() []specs.DriverJoin {
+func (o *builder[T]) getDriverJoins() ([]specs.DriverJoin, error) {
 
+	uniqueJoins := map[string]specs.DriverJoin{}
 	for _, field := range o.selectedFieldsDefinition {
-		o.driverJoins = append(o.driverJoins, field.Join()...)
+
+		for _, join := range field.Join() {
+			formatted, err := join.Formatted()
+			if err != nil {
+				return nil, err
+			}
+			uniqueJoins[formatted] = join
+		}
+
 	}
 
-	return o.driverJoins
+	for _, join := range uniqueJoins {
+		o.driverJoins = append(o.driverJoins, join)
+	}
+
+	return o.driverJoins, nil
 }
 
 func (o *builder[T]) getDriverWheres() []specs.DriverWhere {
@@ -113,8 +130,14 @@ func (o *builder[T]) getDriverWheres() []specs.DriverWhere {
 func (o *builder[T]) buildPayload() error {
 	o.payload = NewPayload[T]()
 	o.payload.SetFields(o.getDriverFields())
-	o.payload.SetJoins(o.getDriverJoins())
 	o.payload.SetWheres(o.getDriverWheres())
+
+	joins, err := o.getDriverJoins()
+	if err != nil {
+		return err
+	}
+
+	o.payload.SetJoins(joins)
 
 	return nil
 }

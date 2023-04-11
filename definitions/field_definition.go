@@ -36,11 +36,6 @@ func (field *fieldDefinition) Join() (joins []specs.DriverJoin) {
 			join := drivers.NewJoin().
 				SetFrom(drivers.NewField().SetIndex(field.Model().FromField().Model().Index()).SetTable(field.Model().FromField().Model().TableName()).SetColumn(field.Model().FromField().Tags()["column"]).SetDatabase(field.Model().FromField().Model().DatabaseName())).
 				SetTo(drivers.NewField().SetIndex(field.Model().Index()).SetTable(field.Model().TableName()).SetColumn(field.Model().FromField().Tags()["foreignKey"]).SetDatabase(field.Model().DatabaseName()))
-			//	SetFromTableIndex(field.Model().Index()).
-			//	SetFromKey(field.Model().FromField().Tags()["column"]).
-			//	SetToTable(field.Model().FromField().Model().TableName()).
-			//	SetToTableIndex(field.Model().FromField().Model().Index()).
-			//	SetToKey(field.Model().FromField().Tags()["foreignKey"])
 
 			joins = append(joins, join)
 		}
@@ -131,6 +126,15 @@ func (field *fieldDefinition) HasEmbeddedSchema() bool {
 
 func (field *fieldDefinition) SetIsSlice(isSlice bool) {
 	field.isSlice = isSlice
+}
+
+func (field *fieldDefinition) FromSlice() bool {
+	if field.Model().FromField() != nil {
+		if field.Model().FromField().FromSlice() {
+			return true
+		}
+	}
+	return field.IsSlice()
 }
 
 func (md *modelDefinition) parseField(index int) specs.FieldDefinition {

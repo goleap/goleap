@@ -11,7 +11,7 @@ type FieldNotFoundError struct {
 }
 
 func (e *FieldNotFoundError) Error() string {
-	return fmt.Sprintf("fieldDefinition `%s` not found in schema `%s`", e.field, e.modelDefinition.ModelValue().Type().Name())
+	return fmt.Sprintf("field `%s` not found in model `%s`", e.field, e.modelDefinition.ModelValue().Type().Name())
 }
 
 func NewFieldNotFoundError(field string, modelDefinition specs.ModelDefinition) *FieldNotFoundError {
@@ -26,7 +26,7 @@ type ErrNoPrimaryField struct {
 }
 
 func (e *ErrNoPrimaryField) Error() string {
-	return fmt.Sprintf("no primary fieldDefinition found in schema `%s`", e.modelDefinition.ModelValue().Type().Name())
+	return fmt.Sprintf("no primary field found in model `%s`", e.modelDefinition.ModelValue().Type().Name())
 }
 
 func NewErrNoPrimaryField(modelDefinition specs.ModelDefinition) *ErrNoPrimaryField {

@@ -29,5 +29,8 @@ type FieldDefinition interface {
 	HasEmbeddedSchema() bool
 	EmbeddedSchema() ModelDefinition
 
+	IsSlice() bool
+	FromSlice() bool
+
 	IsPrimaryKey() bool
 }
