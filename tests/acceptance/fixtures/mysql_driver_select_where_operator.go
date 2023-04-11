@@ -10,7 +10,6 @@ import (
 )
 
 func (fixture *Fixture) MysqlDriverSelectWhereEqual(ctx context.Context) (err error) {
-	var joins []specs.DriverJoin
 	fields := []specs.DriverField{
 		drivers.NewField().
 			SetColumn("id").
@@ -24,7 +23,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereEqual(ctx context.Context) (err er
 
 	selectPayload := dbkit.NewPayload[*models.UsersModel]()
 	selectPayload.SetFields(fields)
-	selectPayload.SetJoins(joins)
 	selectPayload.SetWheres(wheres)
 
 	err = fixture.Connector().Select(ctx, selectPayload)
@@ -37,7 +35,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereEqual(ctx context.Context) (err er
 }
 
 func (fixture *Fixture) MysqlDriverSelectWhereNotEqual(ctx context.Context) (err error) {
-	var joins []specs.DriverJoin
 	fields := []specs.DriverField{
 		drivers.NewField().
 			SetColumn("id").
@@ -51,7 +48,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereNotEqual(ctx context.Context) (err
 
 	selectPayload := dbkit.NewPayload[*models.UsersModel]()
 	selectPayload.SetFields(fields)
-	selectPayload.SetJoins(joins)
 	selectPayload.SetWheres(wheres)
 
 	err = fixture.Connector().Select(ctx, selectPayload)
@@ -64,7 +60,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereNotEqual(ctx context.Context) (err
 }
 
 func (fixture *Fixture) MysqlDriverSelectWhereIn(ctx context.Context) (err error) {
-	var joins []specs.DriverJoin
 	fields := []specs.DriverField{
 		drivers.NewField().
 			SetColumn("id").
@@ -79,7 +74,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereIn(ctx context.Context) (err error
 
 	payload := dbkit.NewPayload[*models.UsersModel]()
 	payload.SetFields(fields)
-	payload.SetJoins(joins)
 	payload.SetWheres(wheres)
 
 	err = fixture.Connector().Select(ctx, payload)
@@ -93,7 +87,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereIn(ctx context.Context) (err error
 }
 
 func (fixture *Fixture) MysqlDriverSelectWhereBetween(ctx context.Context) (err error) {
-	var joins []specs.DriverJoin
 	fields := []specs.DriverField{
 		drivers.NewField().
 			SetColumn("id").
@@ -108,7 +101,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereBetween(ctx context.Context) (err 
 
 	payload := dbkit.NewPayload[*models.CommentsModel]()
 	payload.SetFields(fields)
-	payload.SetJoins(joins)
 	payload.SetWheres(wheres)
 
 	err = fixture.Connector().Select(ctx, payload)
@@ -119,7 +111,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereBetween(ctx context.Context) (err 
 }
 
 func (fixture *Fixture) MysqlDriverSelectWhereLike(ctx context.Context) (err error) {
-	var joins []specs.DriverJoin
 	fields := []specs.DriverField{
 		drivers.NewField().
 			SetColumn("content").
@@ -134,7 +125,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereLike(ctx context.Context) (err err
 
 	payload := dbkit.NewPayload[*models.CommentsModel]()
 	payload.SetFields(fields)
-	payload.SetJoins(joins)
 	payload.SetWheres(wheres)
 
 	err = fixture.Connector().Select(ctx, payload)
@@ -150,7 +140,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereLike(ctx context.Context) (err err
 }
 
 func (fixture *Fixture) MysqlDriverSelectWhereNotLike(ctx context.Context) (err error) {
-	var joins []specs.DriverJoin
 	fields := []specs.DriverField{
 		drivers.NewField().
 			SetColumn("content").
@@ -165,7 +154,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereNotLike(ctx context.Context) (err 
 
 	payload := dbkit.NewPayload[*models.CommentsModel]()
 	payload.SetFields(fields)
-	payload.SetJoins(joins)
 	payload.SetWheres(wheres)
 
 	err = fixture.Connector().Select(ctx, payload)
@@ -242,7 +230,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereGreaterOrEqualAndLessOrEqual(ctx c
 }
 
 func (fixture *Fixture) MysqlDriverSelectWhereNotBetween(ctx context.Context) (err error) {
-	var joins []specs.DriverJoin
 	fields := []specs.DriverField{
 		drivers.NewField().
 			SetColumn("id").
@@ -257,7 +244,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereNotBetween(ctx context.Context) (e
 
 	payload := dbkit.NewPayload[*models.CommentsModel]()
 	payload.SetFields(fields)
-	payload.SetJoins(joins)
 	payload.SetWheres(wheres)
 
 	err = fixture.Connector().Select(ctx, payload)
@@ -268,7 +254,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereNotBetween(ctx context.Context) (e
 }
 
 func (fixture *Fixture) MysqlDriverSelectWhereGreaterWithFn(ctx context.Context) (err error) {
-	var joins []specs.DriverJoin
 	fields := []specs.DriverField{
 		drivers.NewField().
 			SetColumn("id").
@@ -285,7 +270,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereGreaterWithFn(ctx context.Context)
 
 	payload := dbkit.NewPayload[*models.UsersModel]()
 	payload.SetFields(fields)
-	payload.SetJoins(joins)
 	payload.SetWheres(wheres)
 
 	err = fixture.Connector().Select(ctx, payload)
@@ -298,7 +282,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereGreaterWithFn(ctx context.Context)
 }
 
 func (fixture *Fixture) MysqlDriverSelectWhereTwoField(ctx context.Context) (err error) {
-	var joins []specs.DriverJoin
 	fields := []specs.DriverField{
 		drivers.NewField().
 			SetColumn("id").
@@ -313,7 +296,6 @@ func (fixture *Fixture) MysqlDriverSelectWhereTwoField(ctx context.Context) (err
 
 	payload := dbkit.NewPayload[*models.CommentsModel]()
 	payload.SetFields(fields)
-	payload.SetJoins(joins)
 	payload.SetWheres(wheres)
 
 	err = fixture.Connector().Select(ctx, payload)
