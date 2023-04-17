@@ -2,6 +2,7 @@ package specs
 
 import "reflect"
 
+// FieldDefinition is the interface that describes a field
 type FieldDefinition interface {
 	// Init allows you to initialise the field with its default value recursively (to avoid `nil`)
 	Init()
@@ -13,8 +14,13 @@ type FieldDefinition interface {
 	Tags() map[string]string
 	FromSchemaTypeList() []string
 	RecursiveFullName() string
+	FundamentalName() string
 	Column() string
+	ForeignKey() string
 	Index() int
+
+	GetByColumn() (FieldDefinition, error)
+	GetToColumn() (FieldDefinition, error)
 
 	Join() []DriverJoin
 	Field() DriverField

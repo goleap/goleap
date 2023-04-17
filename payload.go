@@ -3,10 +3,12 @@ package dbkit
 import (
 	"github.com/lab210-dev/dbkit/definitions"
 	"github.com/lab210-dev/dbkit/specs"
+	"reflect"
 )
 
 type payload[T specs.Model] struct {
 	result          []T
+	model           T
 	modelDefinition specs.ModelDefinition
 
 	fields []specs.DriverField
@@ -96,13 +98,21 @@ func (p *payload[T]) SetLimit(limit specs.DriverLimit) specs.Payload {
 
 func (p *payload[T]) ModelDefinition() specs.ModelDefinition {
 	if p.modelDefinition == nil {
-		var model T
-		p.modelDefinition = definitions.Use(model).Parse()
+		p.modelDefinition = definitions.Use(p.model).Parse()
 	}
 	return p.modelDefinition
 }
 
-func NewPayload[T specs.Model]() specs.PayloadAugmented[T] {
+func NewPayload[T specs.Model](model ...specs.Model) specs.PayloadAugmented[T] {
 	p := new(payload[T])
+
+	var tmp T
+	p.model = tmp
+
+	valueOf := reflect.ValueOf(p.model)
+	if len(model) > 0 && !valueOf.IsValid() {
+		p.model = model[0].(T)
+	}
+
 	return p
 }

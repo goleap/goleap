@@ -212,12 +212,24 @@ func (field *fieldDefinition) Column() string {
 	return field.tags["column"]
 }
 
+func (field *fieldDefinition) ForeignKey() string {
+	return field.tags["foreignKey"]
+}
+
 func (field *fieldDefinition) IsPrimaryKey() bool {
 	return field.tags["primaryKey"] == "true"
 }
 
 func (field *fieldDefinition) Field() specs.DriverField {
 	return drivers.NewField().SetColumn(field.Column()).SetIndex(field.Index()).SetName(field.RecursiveFullName())
+}
+
+func (field *fieldDefinition) GetByColumn() (specs.FieldDefinition, error) {
+	return field.Model().GetFieldByColumn(field.Column())
+}
+
+func (field *fieldDefinition) GetToColumn() (specs.FieldDefinition, error) {
+	return field.EmbeddedSchema().GetFieldByColumn(field.ForeignKey())
 }
 
 func (field *fieldDefinition) RecursiveFullName() string {
@@ -233,6 +245,10 @@ func (field *fieldDefinition) RecursiveFullName() string {
 
 	field.recursiveFullName = fmt.Sprintf("%s.%s", field.schema.FromField().RecursiveFullName(), field.Name())
 	return field.recursiveFullName
+}
+
+func (field *fieldDefinition) FundamentalName() string {
+	return strings.Split(field.RecursiveFullName(), ".")[0]
 }
 
 func (field *fieldDefinition) IsSameSchemaFromField() bool {

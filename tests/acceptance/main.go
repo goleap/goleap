@@ -9,11 +9,12 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"runtime/debug"
 	"strings"
 	"time"
 )
 
-var debug = os.Getenv("DEBUG") == "true"
+var isDebug = os.Getenv("DEBUG") == "true"
 var ctx context.Context
 var debugLog *bytes.Buffer
 
@@ -76,6 +77,7 @@ func main() {
 				if r := recover(); r != nil {
 					result = make([]reflect.Value, 1)
 					result[0] = reflect.ValueOf(fmt.Errorf("%v", r))
+					debug.PrintStack()
 				}
 			}()
 			result = method.Call(args)
@@ -113,7 +115,7 @@ func main() {
 
 	fmt.Printf("\n%sDONE %d tests with %d assertions in %s | Passed: %d Failed: %d\x1b[0m\n", color, testsCount, fx.AssertCount(), time.Since(globalTimer), passedTestCount, failedTestCount)
 
-	if debug || failedTestCount > 0 {
+	if isDebug || failedTestCount > 0 {
 		fmt.Println("\nDebug log:")
 		fmt.Println(strings.Repeat("-", 50))
 		fmt.Println(debugLog.String())

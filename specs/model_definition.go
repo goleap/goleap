@@ -10,6 +10,7 @@ type ModelDefinition interface {
 
 	GetFieldByName(name string) (FieldDefinition, FieldNotFoundError)
 	GetPrimaryField() (FieldDefinition, PrimaryFieldNotFoundError)
+	GetFieldByColumn(column string) (FieldDefinition, error)
 
 	SetFromField(fromField FieldDefinition) ModelDefinition
 	FromField() FieldDefinition

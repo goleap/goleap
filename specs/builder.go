@@ -8,7 +8,7 @@ type Builder[T Model] interface {
 	Update() error
 
 	Find() (T, error)
-	FindAll() error
+	FindAll() ([]T, error)
 
 	Fields(field ...string) Builder[T]
 	Where(condition Condition) Builder[T]
@@ -19,4 +19,6 @@ type Builder[T Model] interface {
 	Count() (total int64, err error)
 
 	Payload() PayloadAugmented[T]
+
+	SetModel(model T) Builder[T]
 }

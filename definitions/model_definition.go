@@ -1,6 +1,7 @@
 package definitions
 
 import (
+	"errors"
 	"github.com/lab210-dev/dbkit/specs"
 	"reflect"
 	"sync"
@@ -85,6 +86,21 @@ func (md *modelDefinition) GetPrimaryField() (specs.FieldDefinition, specs.Prima
 
 	}
 	return nil, NewErrNoPrimaryField(md)
+}
+
+func (md *modelDefinition) GetFieldByColumn(column string) (specs.FieldDefinition, error) {
+	for _, field := range md.fields {
+
+		if field.Model() != md {
+			continue
+		}
+
+		if field.Column() == column {
+			return field, nil
+		}
+
+	}
+	return nil, errors.New("no field found for column " + column)
 }
 
 func (md *modelDefinition) Index() int {

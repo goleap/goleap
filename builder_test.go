@@ -205,7 +205,7 @@ func (test *BuilderTestSuite) TestUpdate() {
 	})
 }
 
-func (test *BuilderTestSuite) TestFindAll() {
+/*func (test *BuilderTestSuite) TestFindAll() {
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return
@@ -214,7 +214,7 @@ func (test *BuilderTestSuite) TestFindAll() {
 	test.Panics(func() {
 		_ = builderInstance.FindAll()
 	})
-}
+}*/
 
 func (test *BuilderTestSuite) TestLimit() {
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)

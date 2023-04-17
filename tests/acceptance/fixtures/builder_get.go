@@ -18,12 +18,14 @@ func (fixture *Fixture) BuilderGet(ctx context.Context) (err error) {
 
 func (fixture *Fixture) BuilderGetWithJoin(ctx context.Context) (err error) {
 
-	post, err := dbkit.Use[*models.PostsModel](ctx, fixture.Connector()).Fields("Id", "Creator.Id", "Creator.Validated", "Editor.Id", "Comments.Id").Get(1)
+	comment, err := dbkit.Use[*models.CommentsModel](ctx, fixture.Connector()).Fields("Id", "Post.Id", "Post.Comments.Id", "Post.Comments.Content").Get(1)
 
 	fixture.Assert().NoError(err)
-	fixture.Assert().EqualValues(1, post.Id)
-	fixture.Assert().EqualValues(1, post.Creator.Id)
-	fixture.Assert().EqualValues(true, post.Creator.Validated)
+	fixture.Assert().EqualValues(1, comment.Id)
+	fixture.Assert().EqualValues(1, comment.Post.Id)
+	fixture.Assert().Len(comment.Post.Comments, 2)
+	fixture.Assert().EqualValues(1, comment.Post.Comments[0].Id)
+	fixture.Assert().EqualValues(2, comment.Post.Comments[1].Id)
 
 	return
 }

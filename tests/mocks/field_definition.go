@@ -240,6 +240,72 @@ func (_m *FakeFieldDefinition) RecursiveFullName() string {
 	return r0
 }
 
+// FundamentalName provides a mock function with given fields:
+func (_m *FakeFieldDefinition) FundamentalName() string {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// GetByColumn provides a mock function with given fields:
+func (_m *FakeFieldDefinition) GetByColumn() (specs.FieldDefinition, error) {
+	ret := _m.Called()
+
+	var r0 specs.FieldDefinition
+	var r1 error
+	if rf, ok := ret.Get(0).(func() (specs.FieldDefinition, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() specs.FieldDefinition); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(specs.FieldDefinition)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetToColumn provides a mock function with given fields:
+func (_m *FakeFieldDefinition) GetToColumn() (specs.FieldDefinition, error) {
+	ret := _m.Called()
+
+	var r0 specs.FieldDefinition
+	var r1 error
+	if rf, ok := ret.Get(0).(func() (specs.FieldDefinition, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() specs.FieldDefinition); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(specs.FieldDefinition)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Set provides a mock function with given fields: value
 func (_m *FakeFieldDefinition) Set(value interface{}) {
 	_m.Called(value)

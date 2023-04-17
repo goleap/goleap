@@ -103,6 +103,32 @@ func (_m *FakeModelDefinition) FromField() specs.FieldDefinition {
 	return r0
 }
 
+// GetFieldByColumn provides a mock function with given fields: column
+func (_m *FakeModelDefinition) GetFieldByColumn(column string) (specs.FieldDefinition, error) {
+	ret := _m.Called(column)
+
+	var r0 specs.FieldDefinition
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (specs.FieldDefinition, error)); ok {
+		return rf(column)
+	}
+	if rf, ok := ret.Get(0).(func(string) specs.FieldDefinition); ok {
+		r0 = rf(column)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(specs.FieldDefinition)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(column)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetFieldByName provides a mock function with given fields: name
 func (_m *FakeModelDefinition) GetFieldByName(name string) (specs.FieldDefinition, specs.FieldNotFoundError) {
 	ret := _m.Called(name)

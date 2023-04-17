@@ -6,6 +6,7 @@ import (
 	"github.com/lab210-dev/dbkit/specs"
 	"github.com/lab210-dev/dbkit/tests/models"
 	"github.com/stretchr/testify/suite"
+	"log"
 	"testing"
 )
 
@@ -260,6 +261,28 @@ func (test *SchemaTestSuite) TestGetPrimaryField() {
 	test.True(errors.As(err, &primaryErr))
 
 	test.ErrorContains(err, "no primary field found in model `DebugModel`")
+}
+
+func (test *SchemaTestSuite) TestGetToColumn() {
+	schemaTest := Use(&models.CommentsModel{}).Parse()
+
+	idFieldDefinition, err := schemaTest.GetFieldByName("Post.Comments.Content")
+	log.Print(err)
+	if !test.NoError(err) {
+		return
+	}
+
+	tst, err := idFieldDefinition.Model().FromField().GetByColumn()
+	if !test.NoError(err) {
+		return
+	}
+	log.Print(tst.RecursiveFullName())
+
+	tst, err = idFieldDefinition.Model().FromField().GetToColumn()
+	if !test.NoError(err) {
+		return
+	}
+	log.Print(tst.RecursiveFullName())
 }
 
 func TestSchemaTestSuite(t *testing.T) {
