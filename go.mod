@@ -7,7 +7,8 @@ require (
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/joho/godotenv v1.5.1
-	github.com/lab210-dev/structkit v1.0.6
+	github.com/lab210-dev/depkit v1.0.2
+	github.com/lab210-dev/structkit v1.0.8
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.2
 )
@@ -17,7 +18,6 @@ require (
 	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/iancoleman/strcase v0.2.0 // indirect
-	github.com/lab210-dev/servicekit v1.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.1 // indirect

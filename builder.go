@@ -7,11 +7,18 @@ import (
 	"github.com/lab210-dev/dbkit/connector/drivers/operators"
 	"github.com/lab210-dev/dbkit/definitions"
 	"github.com/lab210-dev/dbkit/specs"
+	"github.com/lab210-dev/depkit"
 	"github.com/lab210-dev/structkit"
+	structKitSpecs "github.com/lab210-dev/structkit/specs"
 	"reflect"
 	"strings"
 	"sync"
 )
+
+func init() {
+	depkit.Register[structKitSpecs.Get](structkit.Get)
+	depkit.Register[structKitSpecs.Set](structkit.Set)
+}
 
 var (
 	QueryTypeGet     = "Get"
@@ -226,7 +233,7 @@ func (o *builder[T]) FindAll() ([]T, error) {
 		var in []any
 		var mapping = map[any][]int{}
 		for index, result := range o.Payload().Result() {
-			v := structkit.Get(result, from.RecursiveFullName())
+			v := depkit.Get[structKitSpecs.Get]()(result, from.RecursiveFullName())
 			if v == nil {
 				continue
 			}
@@ -253,8 +260,9 @@ func (o *builder[T]) FindAll() ([]T, error) {
 		}
 
 		for _, result := range data {
-			for _, index := range mapping[structkit.Get(result, toFieldName)] {
-				err := structkit.Set(o.Payload().Result()[index], fmt.Sprintf("%s.%s", fundamentalName, "[*]"), result)
+			index := depkit.Get[structKitSpecs.Get]()(result, toFieldName)
+			for _, index := range mapping[index] {
+				err := depkit.Get[structKitSpecs.Set]()(o.Payload().Result()[index], fmt.Sprintf("%s.%s", fundamentalName, "[*]"), result)
 				if err != nil {
 					return []T{}, err
 				}

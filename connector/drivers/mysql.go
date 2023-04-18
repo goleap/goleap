@@ -7,10 +7,13 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/lab210-dev/dbkit/specs"
+	"github.com/lab210-dev/depkit"
 	log "github.com/sirupsen/logrus"
 )
 
-var generateInArgument = sqlx.In
+func init() {
+	depkit.Register[specs.SqlIn](sqlx.In)
+}
 
 type Mysql struct {
 	specs.Config
@@ -146,7 +149,7 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 		query += fmt.Sprintf(" %s", buildLimit)
 	}
 
-	queryWithArgs, args, err := generateInArgument(query, args...)
+	queryWithArgs, args, err := depkit.Get[specs.SqlIn]()(query, args...)
 	if err != nil {
 		return
 	}
