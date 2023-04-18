@@ -18,7 +18,7 @@ func (e *unknownOperatorErr) Error() string {
 	return fmt.Sprintf("unknown operator: %s", e.Operator())
 }
 
-func NewUnknownOperatorErr(operator string) specs.UnknownOperatorErr {
+func NewUnknownOperatorErr(operator string) specs.ErrUnknownOperator {
 	return &unknownOperatorErr{operator: operator}
 }
 
@@ -34,7 +34,7 @@ func (e *unknownFieldsErr) Error() string {
 	return fmt.Sprintf("unknown fields: %s", strings.Join(e.Fields(), ", "))
 }
 
-func NewUnknownFieldsErr(fields []string) specs.UnknownFieldsErr {
+func NewUnknownFieldsErr(fields []string) specs.ErrUnknownFields {
 	return &unknownFieldsErr{fields: fields}
 }
 
@@ -50,6 +50,6 @@ func (e *requiredFieldJoinErr) Error() string {
 	return fmt.Sprintf("the following fields \"%s\" are mandatory to perform the join", strings.Join(e.fields, ", "))
 }
 
-func NewRequiredFieldJoinErr(fields []string) specs.RequiredFieldJoinErr {
+func NewRequiredFieldJoinErr(fields []string) specs.ErrRequiredFieldJoin {
 	return &requiredFieldJoinErr{fields: fields}
 }

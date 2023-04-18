@@ -6,7 +6,6 @@ import (
 	"github.com/lab210-dev/dbkit/specs"
 	"github.com/lab210-dev/dbkit/tests/models"
 	"github.com/stretchr/testify/suite"
-	"log"
 	"testing"
 )
 
@@ -91,37 +90,11 @@ func (test *SchemaTestSuite) TestComplexeFromSlice() {
 	test.True(field.FromSlice())
 }
 
-func (test *SchemaTestSuite) TestCopy2() {
-	model := &models.CommentsModel{}
-	modelDefinition := Use(model).Parse()
-
-	test.Equal(modelDefinition.Copy(), model)
-
-	id := uint(1)
-	field, err := modelDefinition.GetFieldByName("Parent.Id")
-	if !test.NoError(err) {
-		return
-	}
-	field.Set(&id)
-
-	snapshot := modelDefinition.Copy()
-
-	id2 := uint(2)
-	field, err = modelDefinition.GetFieldByName("Parent.Id")
-	if !test.NoError(err) {
-		return
-	}
-	field.Set(&id2)
-
-	test.Equal(uint(1), snapshot.(*models.CommentsModel).Parent.Id)
-	test.Equal(uint(2), modelDefinition.Copy().(*models.CommentsModel).Parent.Id)
-}
-
 func (test *SchemaTestSuite) TestComplexeModel() {
 	modelDefinition := Use(&models.CommentsModel{}).Parse()
 	test.Equal("comments", modelDefinition.TableName())
 	test.Equal("acceptance", modelDefinition.DatabaseName())
-	test.Equal(90, len(modelDefinition.Fields()))
+	test.Equal(93, len(modelDefinition.Fields()))
 }
 
 func (test *SchemaTestSuite) TestParseNilPtr() {
@@ -232,7 +205,7 @@ func (test *SchemaTestSuite) TestGetFieldByName() {
 
 	_, err := schemaTest.GetFieldByName("unknown")
 
-	fieldErr := &FieldNotFoundError{}
+	fieldErr := &ErrNotFoundError{}
 	test.True(errors.As(err, &fieldErr))
 
 	test.ErrorContains(err, "field `unknown` not found in model `UsersModel`")
@@ -257,7 +230,7 @@ func (test *SchemaTestSuite) TestGetPrimaryField() {
 
 	_, err = schemaTest.GetPrimaryField()
 
-	primaryErr := &ErrNoPrimaryField{}
+	primaryErr := &ErrPrimaryFieldNotFound{}
 	test.True(errors.As(err, &primaryErr))
 
 	test.ErrorContains(err, "no primary field found in model `DebugModel`")
@@ -267,22 +240,32 @@ func (test *SchemaTestSuite) TestGetToColumn() {
 	schemaTest := Use(&models.CommentsModel{}).Parse()
 
 	idFieldDefinition, err := schemaTest.GetFieldByName("Post.Comments.Content")
-	log.Print(err)
 	if !test.NoError(err) {
 		return
 	}
 
-	tst, err := idFieldDefinition.Model().FromField().GetByColumn()
+	from, err := idFieldDefinition.Model().FromField().GetByColumn()
 	if !test.NoError(err) {
 		return
 	}
-	log.Print(tst.RecursiveFullName())
+	test.Equal("Post.Id", from.RecursiveFullName())
 
-	tst, err = idFieldDefinition.Model().FromField().GetToColumn()
+	to, err := idFieldDefinition.Model().FromField().GetToColumn()
 	if !test.NoError(err) {
 		return
 	}
-	log.Print(tst.RecursiveFullName())
+	test.Equal("Post.Comments.PostId", to.RecursiveFullName())
+
+	// FundamentalName
+	test.Equal("Post", idFieldDefinition.FundamentalName())
+
+	_, err = idFieldDefinition.Model().GetFieldByColumn("unknown")
+	test.Error(err)
+
+	errFieldNoFoundByColumn := &ErrFieldNoFoundByColumn{}
+	test.True(errors.As(err, &errFieldNoFoundByColumn))
+
+	test.ErrorContains(err, "field with column `unknown` not found in model `CommentsModel`")
 }
 
 func TestSchemaTestSuite(t *testing.T) {

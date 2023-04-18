@@ -17,6 +17,7 @@ import (
 type BuilderTestSuite struct {
 	suite.Suite
 	context.Context
+
 	fakeConnector       *mocks.FakeConnector
 	fakeModelDefinition *mocks.FakeModelDefinition
 	fakeFieldDefinition *mocks.FakeFieldDefinition
@@ -43,7 +44,7 @@ func (test *BuilderTestSuite) TestGetWithNoPrimaryKeyErr() {
 
 	_, err := builderInstance.Get("Primary")
 
-	primaryErr := &definitions.ErrNoPrimaryField{}
+	primaryErr := &definitions.ErrPrimaryFieldNotFound{}
 	test.True(errors.As(err, &primaryErr))
 }
 
@@ -205,17 +206,6 @@ func (test *BuilderTestSuite) TestUpdate() {
 	})
 }
 
-/*func (test *BuilderTestSuite) TestFindAll() {
-	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
-	if !test.NotEmpty(builderInstance) {
-		return
-	}
-
-	test.Panics(func() {
-		_ = builderInstance.FindAll()
-	})
-}*/
-
 func (test *BuilderTestSuite) TestLimit() {
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
@@ -245,6 +235,7 @@ func (test *BuilderTestSuite) TestOrderBy() {
 	}
 
 	test.Panics(func() {
+		// @TODO Maybe pass OrderBy struct instead of string
 		_ = builderInstance.OrderBy("Id", "ASC")
 	})
 }

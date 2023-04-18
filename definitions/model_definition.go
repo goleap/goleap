@@ -1,7 +1,6 @@
 package definitions
 
 import (
-	"errors"
 	"github.com/lab210-dev/dbkit/specs"
 	"reflect"
 	"sync"
@@ -73,7 +72,7 @@ func (md *modelDefinition) SetIndex(index int) specs.ModelDefinition {
 	return md
 }
 
-func (md *modelDefinition) GetPrimaryField() (specs.FieldDefinition, specs.PrimaryFieldNotFoundError) {
+func (md *modelDefinition) GetPrimaryField() (specs.FieldDefinition, specs.ErrPrimaryFieldNotFound) {
 	for _, field := range md.fields {
 
 		if field.Model() != md {
@@ -88,7 +87,7 @@ func (md *modelDefinition) GetPrimaryField() (specs.FieldDefinition, specs.Prima
 	return nil, NewErrNoPrimaryField(md)
 }
 
-func (md *modelDefinition) GetFieldByColumn(column string) (specs.FieldDefinition, error) {
+func (md *modelDefinition) GetFieldByColumn(column string) (specs.FieldDefinition, specs.ErrFieldNoFoundByColumn) {
 	for _, field := range md.fields {
 
 		if field.Model() != md {
@@ -100,7 +99,7 @@ func (md *modelDefinition) GetFieldByColumn(column string) (specs.FieldDefinitio
 		}
 
 	}
-	return nil, errors.New("no field found for column " + column)
+	return nil, NewErrFieldNoFoundByColumn(column, md)
 }
 
 func (md *modelDefinition) Index() int {
@@ -150,7 +149,7 @@ func (md *modelDefinition) SetFromField(fromField specs.FieldDefinition) specs.M
 	return md
 }
 
-func (md *modelDefinition) GetFieldByName(name string) (specs.FieldDefinition, specs.FieldNotFoundError) {
+func (md *modelDefinition) GetFieldByName(name string) (specs.FieldDefinition, specs.ErrNotFoundError) {
 	md.Lock()
 	defer md.Unlock()
 
@@ -158,7 +157,7 @@ func (md *modelDefinition) GetFieldByName(name string) (specs.FieldDefinition, s
 		return field, nil
 	}
 
-	return nil, NewFieldNotFoundError(name, md)
+	return nil, NewErrFieldNotFound(name, md)
 }
 
 func (md *modelDefinition) Parse() specs.ModelDefinition {

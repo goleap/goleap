@@ -8,9 +8,9 @@ type ModelDefinition interface {
 	Fields() []FieldDefinition
 	FieldByName() map[string]FieldDefinition
 
-	GetFieldByName(name string) (FieldDefinition, FieldNotFoundError)
-	GetPrimaryField() (FieldDefinition, PrimaryFieldNotFoundError)
-	GetFieldByColumn(column string) (FieldDefinition, error)
+	GetFieldByName(name string) (FieldDefinition, ErrNotFoundError)
+	GetPrimaryField() (FieldDefinition, ErrPrimaryFieldNotFound)
+	GetFieldByColumn(column string) (FieldDefinition, ErrFieldNoFoundByColumn)
 
 	SetFromField(fromField FieldDefinition) ModelDefinition
 	FromField() FieldDefinition

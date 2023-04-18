@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/lab210-dev/dbkit/specs"
 	"github.com/lab210-dev/dbkit/tests/mocks"
+	"github.com/lab210-dev/dbkit/tests/models"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )
@@ -95,6 +96,17 @@ func (test *PayloadTestSuite) TestLimit() {
 	newPayload.SetLimit(test.fakeDriverLimit)
 
 	test.Equal(newPayload.Limit(), test.fakeDriverLimit)
+}
+
+func (test *PayloadTestSuite) TestNew() {
+	comment := models.CommentsModel{}
+	newPayload := NewPayload[specs.Model](&comment)
+	test.Equal("acceptance", newPayload.Database())
+	test.Equal("comments", newPayload.Table())
+
+	newWithType := NewPayload[*models.CommentsModel]()
+	test.Equal("acceptance", newWithType.Database())
+	test.Equal("comments", newWithType.Table())
 }
 
 func TestPayloadTestSuite(t *testing.T) {

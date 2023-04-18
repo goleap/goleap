@@ -104,12 +104,12 @@ func (_m *FakeModelDefinition) FromField() specs.FieldDefinition {
 }
 
 // GetFieldByColumn provides a mock function with given fields: column
-func (_m *FakeModelDefinition) GetFieldByColumn(column string) (specs.FieldDefinition, error) {
+func (_m *FakeModelDefinition) GetFieldByColumn(column string) (specs.FieldDefinition, specs.ErrFieldNoFoundByColumn) {
 	ret := _m.Called(column)
 
 	var r0 specs.FieldDefinition
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (specs.FieldDefinition, error)); ok {
+	var r1 specs.ErrFieldNoFoundByColumn
+	if rf, ok := ret.Get(0).(func(string) (specs.FieldDefinition, specs.ErrFieldNoFoundByColumn)); ok {
 		return rf(column)
 	}
 	if rf, ok := ret.Get(0).(func(string) specs.FieldDefinition); ok {
@@ -120,22 +120,22 @@ func (_m *FakeModelDefinition) GetFieldByColumn(column string) (specs.FieldDefin
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
+	if rf, ok := ret.Get(1).(func(string) specs.ErrFieldNoFoundByColumn); ok {
 		r1 = rf(column)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(specs.ErrFieldNoFoundByColumn)
 	}
 
 	return r0, r1
 }
 
 // GetFieldByName provides a mock function with given fields: name
-func (_m *FakeModelDefinition) GetFieldByName(name string) (specs.FieldDefinition, specs.FieldNotFoundError) {
+func (_m *FakeModelDefinition) GetFieldByName(name string) (specs.FieldDefinition, specs.ErrNotFoundError) {
 	ret := _m.Called(name)
 
 	var r0 specs.FieldDefinition
-	var r1 specs.FieldNotFoundError
-	if rf, ok := ret.Get(0).(func(string) (specs.FieldDefinition, specs.FieldNotFoundError)); ok {
+	var r1 specs.ErrNotFoundError
+	if rf, ok := ret.Get(0).(func(string) (specs.FieldDefinition, specs.ErrNotFoundError)); ok {
 		return rf(name)
 	}
 	if rf, ok := ret.Get(0).(func(string) specs.FieldDefinition); ok {
@@ -146,11 +146,11 @@ func (_m *FakeModelDefinition) GetFieldByName(name string) (specs.FieldDefinitio
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) specs.FieldNotFoundError); ok {
+	if rf, ok := ret.Get(1).(func(string) specs.ErrNotFoundError); ok {
 		r1 = rf(name)
 	} else {
 		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(specs.FieldNotFoundError)
+			r1 = ret.Get(1).(specs.ErrNotFoundError)
 		}
 	}
 
@@ -158,12 +158,12 @@ func (_m *FakeModelDefinition) GetFieldByName(name string) (specs.FieldDefinitio
 }
 
 // GetPrimaryField provides a mock function with given fields:
-func (_m *FakeModelDefinition) GetPrimaryField() (specs.FieldDefinition, specs.PrimaryFieldNotFoundError) {
+func (_m *FakeModelDefinition) GetPrimaryField() (specs.FieldDefinition, specs.ErrPrimaryFieldNotFound) {
 	ret := _m.Called()
 
 	var r0 specs.FieldDefinition
-	var r1 specs.PrimaryFieldNotFoundError
-	if rf, ok := ret.Get(0).(func() (specs.FieldDefinition, specs.PrimaryFieldNotFoundError)); ok {
+	var r1 specs.ErrPrimaryFieldNotFound
+	if rf, ok := ret.Get(0).(func() (specs.FieldDefinition, specs.ErrPrimaryFieldNotFound)); ok {
 		return rf()
 	}
 	if rf, ok := ret.Get(0).(func() specs.FieldDefinition); ok {
@@ -174,11 +174,11 @@ func (_m *FakeModelDefinition) GetPrimaryField() (specs.FieldDefinition, specs.P
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() specs.PrimaryFieldNotFoundError); ok {
+	if rf, ok := ret.Get(1).(func() specs.ErrPrimaryFieldNotFound); ok {
 		r1 = rf()
 	} else {
 		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(specs.PrimaryFieldNotFoundError)
+			r1 = ret.Get(1).(specs.ErrPrimaryFieldNotFound)
 		}
 	}
 
