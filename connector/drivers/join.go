@@ -2,8 +2,8 @@ package drivers
 
 import (
 	"fmt"
-	"github.com/lab210-dev/dbkit/connector/drivers/joins"
-	"github.com/lab210-dev/dbkit/specs"
+	"github.com/kitstack/dbkit/connector/drivers/joins"
+	"github.com/kitstack/dbkit/specs"
 )
 
 type join struct {

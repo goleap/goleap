@@ -2,9 +2,9 @@ package fixtures
 
 import (
 	"fmt"
-	"github.com/lab210-dev/dbkit/connector"
-	"github.com/lab210-dev/dbkit/connector/config"
-	"github.com/lab210-dev/dbkit/specs"
+	"github.com/kitstack/dbkit/connector"
+	"github.com/kitstack/dbkit/connector/config"
+	"github.com/kitstack/dbkit/specs"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"strconv"

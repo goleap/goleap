@@ -1,8 +1,8 @@
 package dbkit
 
 import (
-	"github.com/lab210-dev/dbkit/definitions"
-	"github.com/lab210-dev/dbkit/specs"
+	"github.com/kitstack/dbkit/definitions"
+	"github.com/kitstack/dbkit/specs"
 	"reflect"
 )
 

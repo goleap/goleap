@@ -2,10 +2,10 @@ package fixtures
 
 import (
 	"context"
-	"github.com/lab210-dev/dbkit"
-	"github.com/lab210-dev/dbkit/connector/drivers"
-	"github.com/lab210-dev/dbkit/specs"
-	"github.com/lab210-dev/dbkit/tests/models"
+	"github.com/kitstack/dbkit"
+	"github.com/kitstack/dbkit/connector/drivers"
+	"github.com/kitstack/dbkit/specs"
+	"github.com/kitstack/dbkit/tests/models"
 )
 
 func (fixture *Fixture) MysqlDriverSelectWithFieldFn(ctx context.Context) (err error) {

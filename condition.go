@@ -1,6 +1,6 @@
 package dbkit
 
-import "github.com/lab210-dev/dbkit/specs"
+import "github.com/kitstack/dbkit/specs"
 
 type condition struct {
 	from     string

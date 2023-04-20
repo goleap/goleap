@@ -2,8 +2,8 @@ package fixtures
 
 import (
 	"context"
-	"github.com/lab210-dev/dbkit"
-	"github.com/lab210-dev/dbkit/tests/models"
+	"github.com/kitstack/dbkit"
+	"github.com/kitstack/dbkit/tests/models"
 )
 
 func (fixture *Fixture) BuilderGet(ctx context.Context) (err error) {

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	"github.com/lab210-dev/dbkit/specs"
-	"github.com/lab210-dev/depkit"
+	"github.com/kitstack/dbkit/specs"
+	"github.com/kitstack/depkit"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -1,7 +1,7 @@
 package definitions
 
 import (
-	"github.com/lab210-dev/dbkit/specs"
+	"github.com/kitstack/dbkit/specs"
 	"reflect"
 	"sync"
 )
@@ -180,7 +180,7 @@ func (md *modelDefinition) Parse() specs.ModelDefinition {
 		md.AddField(field)
 	}
 
-	// TODO (Lab210-dev) : use a setter to set this value
+	// TODO (kitstack) : use a setter to set this value
 	md.parsed = true
 
 	return md

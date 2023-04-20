@@ -2,8 +2,8 @@ package drivers
 
 import (
 	"errors"
-	"github.com/lab210-dev/dbkit/connector/drivers/operators"
-	"github.com/lab210-dev/dbkit/tests/mocks"
+	"github.com/kitstack/dbkit/connector/drivers/operators"
+	"github.com/kitstack/dbkit/tests/mocks"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )

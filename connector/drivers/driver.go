@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
-	"github.com/lab210-dev/dbkit/specs"
+	"github.com/kitstack/dbkit/specs"
 )
 
 type Value driver.Value

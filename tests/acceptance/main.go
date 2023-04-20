@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/lab210-dev/dbkit/tests/acceptance/fixtures"
+	"github.com/kitstack/dbkit/tests/acceptance/fixtures"
 	"github.com/sirupsen/logrus"
 	"log"
 	"os"

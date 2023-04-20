@@ -2,8 +2,8 @@ package definitions
 
 import (
 	"fmt"
-	"github.com/lab210-dev/dbkit/connector/drivers"
-	"github.com/lab210-dev/dbkit/specs"
+	"github.com/kitstack/dbkit/connector/drivers"
+	"github.com/kitstack/dbkit/specs"
 	"reflect"
 	"strings"
 	"sync"
@@ -168,7 +168,7 @@ func (md *modelDefinition) parseField(index int) specs.FieldDefinition {
 
 func (field *fieldDefinition) ParseTags() {
 	field.tags = make(map[string]string)
-	// TODO (Lab210-dev) : add support to client choice of tag name
+	// TODO (kitstack) : add support to client choice of tag name
 	tags := field.tag.Get("dbKit")
 
 	for _, tag := range strings.Split(tags, ",") {
@@ -233,7 +233,7 @@ func (field *fieldDefinition) GetToColumn() (specs.FieldDefinition, error) {
 }
 
 func (field *fieldDefinition) RecursiveFullName() string {
-	// TODO (Lab210-dev) : maybe try to simplify this
+	// TODO (kitstack) : maybe try to simplify this
 	if field.recursiveFullName != "" {
 		return field.recursiveFullName
 	}

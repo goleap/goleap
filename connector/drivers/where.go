@@ -2,8 +2,8 @@ package drivers
 
 import (
 	"fmt"
-	"github.com/lab210-dev/dbkit/connector/drivers/operators"
-	"github.com/lab210-dev/dbkit/specs"
+	"github.com/kitstack/dbkit/connector/drivers/operators"
+	"github.com/kitstack/dbkit/specs"
 	"reflect"
 	"strings"
 )

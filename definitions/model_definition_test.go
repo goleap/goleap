@@ -2,9 +2,9 @@ package definitions
 
 import (
 	"errors"
-	"github.com/lab210-dev/dbkit/connector/drivers"
-	"github.com/lab210-dev/dbkit/specs"
-	"github.com/lab210-dev/dbkit/tests/models"
+	"github.com/kitstack/dbkit/connector/drivers"
+	"github.com/kitstack/dbkit/specs"
+	"github.com/kitstack/dbkit/tests/models"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )

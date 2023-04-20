@@ -3,7 +3,7 @@ package mocks
 import (
 	"context"
 	"database/sql"
-	"github.com/lab210-dev/dbkit/specs"
+	"github.com/kitstack/dbkit/specs"
 	"github.com/stretchr/testify/mock"
 )
 

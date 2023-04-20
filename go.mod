@@ -1,4 +1,4 @@
-module github.com/lab210-dev/dbkit
+module github.com/kitstack/dbkit
 
 go 1.20
 
@@ -7,8 +7,8 @@ require (
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/joho/godotenv v1.5.1
-	github.com/lab210-dev/depkit v1.0.2
-	github.com/lab210-dev/structkit v1.0.8
+	github.com/kitstack/depkit v1.1.0
+	github.com/kitstack/structkit v1.1.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.2
 )

@@ -1,7 +1,7 @@
 package mocks
 
 import (
-	specs "github.com/lab210-dev/dbkit/specs"
+	specs "github.com/kitstack/dbkit/specs"
 	mock "github.com/stretchr/testify/mock"
 )
 
