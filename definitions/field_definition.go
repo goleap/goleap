@@ -138,7 +138,7 @@ func (field *fieldDefinition) FromSlice() bool {
 }
 
 func (md *modelDefinition) parseField(index int) specs.FieldDefinition {
-	fieldStruct := md.modelType.Field(index)
+	fieldStruct := md.ModelValue().Type().Field(index)
 
 	field := new(fieldDefinition)
 	field.name = fieldStruct.Name

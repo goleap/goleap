@@ -14,7 +14,6 @@ type modelDefinition struct {
 	counter     int
 	parsed      bool
 	modelOrigin reflect.Value
-	modelType   reflect.Type
 	modelValue  reflect.Value
 
 	fields      []specs.FieldDefinition
@@ -27,6 +26,10 @@ func (md *modelDefinition) ModelOrigin() reflect.Value {
 	return md.modelOrigin
 }
 
+func (md *modelDefinition) TypeName() string {
+	return md.ModelValue().Type().Name()
+}
+
 func (md *modelDefinition) ModelValue() reflect.Value {
 	return md.modelValue
 }
@@ -35,20 +38,17 @@ func Use(model specs.Model) specs.ModelDefinition {
 	schema := new(modelDefinition)
 	schema.Model = model
 
-	schema.modelType = reflect.TypeOf(model)
+	//schema.modelType = reflect.TypeOf(model)
 	schema.modelValue = reflect.ValueOf(model)
 	schema.modelOrigin = schema.modelValue
 
-	if schema.modelType.Kind() == reflect.Struct {
-		schema.modelValue = reflect.New(schema.modelType).Elem().Addr()
-		schema.modelType = schema.modelValue.Type()
+	if schema.ModelValue().Type().Kind() == reflect.Struct {
+		schema.modelValue = reflect.New(schema.ModelValue().Type()).Elem().Addr()
 	}
 
-	if schema.modelType.Kind() == reflect.Ptr {
-		schema.modelType = schema.modelType.Elem()
-
+	if schema.ModelValue().Type().Kind() == reflect.Ptr {
 		if schema.modelValue.IsNil() {
-			schema.modelValue = reflect.New(schema.modelType)
+			schema.modelValue = reflect.New(schema.ModelValue().Type().Elem())
 			schema.Model = schema.modelValue.Interface().(specs.Model)
 		}
 
@@ -61,7 +61,7 @@ func Use(model specs.Model) specs.ModelDefinition {
 }
 
 func (md *modelDefinition) Copy() specs.Model {
-	tmp := reflect.New(md.modelType)
+	tmp := reflect.New(md.ModelValue().Type())
 	tmp.Elem().Set(md.modelValue)
 	return tmp.Interface().(specs.Model)
 }
@@ -166,8 +166,8 @@ func (md *modelDefinition) Parse() specs.ModelDefinition {
 		return md
 	}
 
-	for i := 0; i < md.modelType.NumField(); i++ {
-		fieldStruct := md.modelType.Field(i)
+	for i := 0; i < md.ModelValue().Type().NumField(); i++ {
+		fieldStruct := md.ModelValue().Type().Field(i)
 		if !fieldStruct.IsExported() {
 			continue
 		}

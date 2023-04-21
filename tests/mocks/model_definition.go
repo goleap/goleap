@@ -227,6 +227,20 @@ func (_m *FakeModelDefinition) ModelValue() reflect.Value {
 	return r0
 }
 
+// TypeName provides a mock function with given fields:
+func (_m *FakeModelDefinition) TypeName() string {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
 // Parse provides a mock function with given fields:
 func (_m *FakeModelDefinition) Parse() specs.ModelDefinition {
 	ret := _m.Called()

@@ -18,6 +18,8 @@ import (
 func init() {
 	depkit.Register[structKitSpecs.Get](structkit.Get)
 	depkit.Register[structKitSpecs.Set](structkit.Set)
+	depkit.Register[specs.UseModelDefinition](definitions.Use)
+	depkit.Register[specs.NewPayload[specs.Model]](NewPayload[specs.Model])
 }
 
 var (
@@ -153,7 +155,7 @@ func (o *builder[T]) getDriverWheres() []specs.DriverWhere {
 }
 
 func (o *builder[T]) buildPayload() error {
-	o.payload = NewPayload[T](o.model)
+	o.payload = depkit.Get[specs.NewPayload[T]]()(o.model)
 	o.payload.SetFields(o.getDriverFields())
 	o.payload.SetWheres(o.getDriverWheres())
 
@@ -193,7 +195,7 @@ func (o *builder[T]) Find() (result T, err error) {
 	}
 
 	if len(data) == 0 {
-		err = NewNotFoundError(o.modelDefinition.ModelValue().Type().Name())
+		err = NewNotFoundError(o.modelDefinition.TypeName())
 		return
 	}
 
@@ -339,7 +341,7 @@ func (o *builder[T]) Count() (total int64, err error) {
 
 func (o *builder[T]) SetModel(model T) specs.Builder[T] {
 	o.model = model
-	o.modelDefinition = definitions.Use(model).Parse()
+	o.modelDefinition = depkit.Get[specs.UseModelDefinition]()(model).Parse()
 
 	return o
 }

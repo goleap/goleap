@@ -1,5 +1,7 @@
 package specs
 
+type NewPayload[T Model] func(model ...Model) PayloadAugmented[T]
+
 type Payload interface {
 	Table() string
 	Database() string
