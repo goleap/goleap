@@ -19,7 +19,6 @@ func init() {
 	depkit.Register[structKitSpecs.Get](structkit.Get)
 	depkit.Register[structKitSpecs.Set](structkit.Set)
 	depkit.Register[specs.UseModelDefinition](definitions.Use)
-	depkit.Register[specs.NewPayload[specs.Model]](NewPayload[specs.Model])
 }
 
 var (
@@ -221,6 +220,8 @@ func (o *builder[T]) FindAll() ([]T, error) {
 		return nil, err
 	}
 
+	result := o.Payload().Result()
+
 	for fundamentalName, m := range o.dependencies {
 		from, err := m.FromField().GetByColumn()
 		if err != nil {
@@ -234,8 +235,8 @@ func (o *builder[T]) FindAll() ([]T, error) {
 
 		var in []any
 		var mapping = map[any][]int{}
-		for index, result := range o.Payload().Result() {
-			v := depkit.Get[structKitSpecs.Get]()(result, from.RecursiveFullName())
+		for index, current := range result {
+			v := depkit.Get[structKitSpecs.Get]()(current, from.RecursiveFullName())
 			if v == nil {
 				continue
 			}
@@ -255,16 +256,16 @@ func (o *builder[T]) FindAll() ([]T, error) {
 			sub.Where(where)
 		}
 
-		data, err := sub.FindAll()
+		manyResult, err := sub.FindAll()
 
 		if err != nil {
 			return []T{}, err
 		}
 
-		for _, result := range data {
-			index := depkit.Get[structKitSpecs.Get]()(result, toFieldName)
+		for _, current := range manyResult {
+			index := depkit.Get[structKitSpecs.Get]()(current, toFieldName)
 			for _, index := range mapping[index] {
-				err := depkit.Get[structKitSpecs.Set]()(o.Payload().Result()[index], fmt.Sprintf("%s.%s", fundamentalName, "[*]"), result)
+				err := depkit.Get[structKitSpecs.Set]()(result[index], fmt.Sprintf("%s.%s", fundamentalName, "[*]"), current)
 				if err != nil {
 					return []T{}, err
 				}
@@ -272,7 +273,7 @@ func (o *builder[T]) FindAll() ([]T, error) {
 		}
 	}
 
-	return o.Payload().Result(), nil
+	return result, nil
 }
 
 func (o *builder[T]) extractFieldsByFundamentalName(fundamentalName string) (fields []string) {
@@ -342,6 +343,8 @@ func (o *builder[T]) Count() (total int64, err error) {
 func (o *builder[T]) SetModel(model T) specs.Builder[T] {
 	o.model = model
 	o.modelDefinition = depkit.Get[specs.UseModelDefinition]()(model).Parse()
+
+	depkit.Register[specs.NewPayload[T]](NewPayload[T])
 
 	return o
 }
