@@ -3,8 +3,13 @@ package dbkit
 import (
 	"github.com/kitstack/dbkit/definitions"
 	"github.com/kitstack/dbkit/specs"
+	"github.com/kitstack/depkit"
 	"reflect"
 )
+
+func init() {
+	depkit.Register[specs.UseModelDefinition](definitions.Use)
+}
 
 type payload[T specs.Model] struct {
 	result          []T
@@ -98,7 +103,7 @@ func (p *payload[T]) SetLimit(limit specs.DriverLimit) specs.Payload {
 
 func (p *payload[T]) ModelDefinition() specs.ModelDefinition {
 	if p.modelDefinition == nil {
-		p.modelDefinition = definitions.Use(p.model).Parse()
+		p.modelDefinition = depkit.Get[specs.UseModelDefinition]()(p.model).Parse()
 	}
 	return p.modelDefinition
 }

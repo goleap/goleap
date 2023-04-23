@@ -16,8 +16,6 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// TODO - Try to use more injection dependencies like definition and payload
-
 type BuilderTestSuite struct {
 	suite.Suite
 	context.Context
