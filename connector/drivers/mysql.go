@@ -20,6 +20,7 @@ type Mysql struct {
 	db *sql.DB
 }
 
+// New is a function to create a new mysql driver.
 func (m *Mysql) New(config specs.Config) (err error) {
 	m.Config = config
 
@@ -114,6 +115,13 @@ func (m *Mysql) buildLimit(limit specs.DriverLimit) (result string, err error) {
 	return limit.Formatted()
 }
 
+// Db is a helper function to get the database connection.
+func (m *Mysql) Db() *sql.DB {
+	return m.db
+}
+
+// Select TODO: add options for passing tx
+// Select is a helper function to select data from database.
 func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 	buildFields, err := m.buildFields(payload.Fields())
 	if err != nil {
@@ -165,7 +173,7 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 		"args":  args,
 	}).Debug("Execute: Select()")
 
-	rows, err := m.db.QueryContext(ctx, queryWithArgs, args...)
+	rows, err := m.Db().QueryContext(ctx, queryWithArgs, args...)
 	if err != nil {
 		return
 	}

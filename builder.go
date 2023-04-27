@@ -2,24 +2,13 @@ package dbkit
 
 import (
 	"context"
-	"fmt"
 	"github.com/kitstack/dbkit/connector/drivers"
 	"github.com/kitstack/dbkit/connector/drivers/operators"
-	"github.com/kitstack/dbkit/definitions"
 	"github.com/kitstack/dbkit/specs"
 	"github.com/kitstack/depkit"
-	"github.com/kitstack/structkit"
-	structKitSpecs "github.com/kitstack/structkit/specs"
 	"reflect"
-	"strings"
 	"sync"
 )
-
-func init() {
-	depkit.Register[structKitSpecs.Get](structkit.Get)
-	depkit.Register[structKitSpecs.Set](structkit.Set)
-	depkit.Register[specs.UseModelDefinition](definitions.Use)
-}
 
 var (
 	QueryTypeGet     = "Get"
@@ -28,9 +17,12 @@ var (
 )
 
 type builder[T specs.Model] struct {
-	context.Context
-	specs.Connector
 	sync.Mutex
+
+	context   context.Context
+	connector specs.Connector
+
+	subBuilder specs.SubBuilder[T]
 
 	queryType string
 
@@ -47,8 +39,18 @@ type builder[T specs.Model] struct {
 	driverWheres []specs.DriverWhere
 
 	payload specs.PayloadAugmented[T]
+}
 
-	dependencies map[string]specs.ModelDefinition
+func (o *builder[T]) Context() context.Context {
+	return o.context
+}
+
+func (o *builder[T]) Connector() specs.Connector {
+	return o.connector
+}
+
+func (o *builder[T]) SubBuilder() specs.SubBuilder[T] {
+	return o.subBuilder
 }
 
 func (o *builder[T]) setQueryType(queryType string) specs.Builder[T] {
@@ -90,7 +92,7 @@ func (o *builder[T]) buildFields() (err error) {
 		}
 
 		if field.FromSlice() {
-			o.addDependency(field)
+			o.subBuilder.AddJob(o, field.Model().FromField().RecursiveFullName(), field.Model())
 			continue
 		}
 
@@ -112,10 +114,6 @@ func (o *builder[T]) buildWheres() (err error) {
 	}
 
 	return
-}
-
-func (o *builder[T]) addDependency(field specs.FieldDefinition) {
-	o.dependencies[field.Model().FromField().RecursiveFullName()] = field.Model()
 }
 
 func (o *builder[T]) getDriverFields() []specs.DriverField {
@@ -180,7 +178,7 @@ func (o *builder[T]) Get(primaryKeyValue any) (result T, err error) {
 		return
 	}
 
-	o.Where(NewCondition().SetFrom(primaryField.RecursiveFullName()).
+	o.SetWhere(NewCondition().SetFrom(primaryField.RecursiveFullName()).
 		SetOperator(operators.Equal).
 		SetTo(primaryKeyValue))
 
@@ -215,84 +213,17 @@ func (o *builder[T]) FindAll() ([]T, error) {
 		return nil, err
 	}
 
-	err = o.Connector.Select(o.Context, o.payload)
+	err = o.Connector().Select(o.Context(), o.Payload())
 	if err != nil {
 		return nil, err
 	}
 
-	result := o.Payload().Result()
-
-	for fundamentalName, m := range o.dependencies {
-		from, err := m.FromField().GetByColumn()
-		if err != nil {
-			return []T{}, err
-		}
-
-		to, err := m.FromField().GetToColumn()
-		if err != nil {
-			return []T{}, err
-		}
-
-		var in []any
-		var mapping = map[any][]int{}
-		for index, current := range result {
-			v := depkit.Get[structKitSpecs.Get]()(current, from.RecursiveFullName())
-			if v == nil {
-				continue
-			}
-
-			in = append(in, v)
-			mapping[v] = append(mapping[v], index)
-		}
-
-		toFieldName := strings.Replace(to.RecursiveFullName(), fmt.Sprintf("%s.", fundamentalName), "", 1)
-
-		sub := Use[specs.Model](o.Context, o.Connector).
-			SetModel(to.Model().Copy()).
-			Fields(append(o.extractFieldsByFundamentalName(fundamentalName), toFieldName)...)
-
-		sub.Where(NewCondition().SetFrom(toFieldName).SetOperator(operators.In).SetTo(in))
-		for _, where := range o.extractWheresByFundamentalName(fundamentalName) {
-			sub.Where(where)
-		}
-
-		manyResult, err := sub.FindAll()
-
-		if err != nil {
-			return []T{}, err
-		}
-
-		for _, current := range manyResult {
-			index := depkit.Get[structKitSpecs.Get]()(current, toFieldName)
-			for _, index := range mapping[index] {
-				err := depkit.Get[structKitSpecs.Set]()(result[index], fmt.Sprintf("%s.%s", fundamentalName, "[*]"), current)
-				if err != nil {
-					return []T{}, err
-				}
-			}
-		}
+	err = o.SubBuilder().Execute()
+	if err != nil {
+		return nil, err
 	}
 
-	return result, nil
-}
-
-func (o *builder[T]) extractFieldsByFundamentalName(fundamentalName string) (fields []string) {
-	for _, field := range o.fields {
-		if strings.HasPrefix(field, fmt.Sprintf("%s.", fundamentalName)) {
-			fields = append(fields, strings.Replace(field, fmt.Sprintf("%s.", fundamentalName), "", 1))
-		}
-	}
-	return
-}
-
-func (o *builder[T]) extractWheresByFundamentalName(fundamentalName string) (fields []specs.Condition) {
-	for _, field := range o.wheres {
-		if strings.HasPrefix(field.From(), fmt.Sprintf("%s.", fundamentalName)) {
-			field.SetFrom(strings.Replace(field.From(), fmt.Sprintf("%s.", fundamentalName), "", 1))
-			fields = append(fields, field)
-		}
-	}
-	return
+	return o.Payload().Result(), nil
 }
 
 func (o *builder[T]) Delete(_ any) error {
@@ -310,27 +241,35 @@ func (o *builder[T]) Update() error {
 	panic("implement me")
 }
 
-func (o *builder[T]) Fields(field ...string) specs.Builder[T] {
+func (o *builder[T]) SetFields(field ...string) specs.Builder[T] {
 	o.fields = field
 	return o
 }
 
-func (o *builder[T]) Where(where specs.Condition) specs.Builder[T] {
+func (o *builder[T]) SetWhere(where specs.Condition) specs.Builder[T] {
 	o.wheres = append(o.wheres, where)
 	return o
 }
 
-func (o *builder[T]) Limit(_ int) specs.Builder[T] {
+func (o *builder[T]) Wheres() []specs.Condition {
+	return o.wheres
+}
+
+func (o *builder[T]) Fields() []string {
+	return o.fields
+}
+
+func (o *builder[T]) SetLimit(_ int) specs.Builder[T] {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (o *builder[T]) Offset(_ int) specs.Builder[T] {
+func (o *builder[T]) SetOffset(_ int) specs.Builder[T] {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (o *builder[T]) OrderBy(_ ...string) specs.Builder[T] {
+func (o *builder[T]) SetOrderBy(_ ...string) specs.Builder[T] {
 	//TODO implement me
 	panic("implement me")
 }
@@ -352,10 +291,12 @@ func (o *builder[T]) SetModel(model T) specs.Builder[T] {
 func Use[T specs.Model](ctx context.Context, connector specs.Connector) specs.Builder[T] {
 	var model T
 
+	injectGenericDependencies[T]()
+
 	var builder specs.Builder[T] = &builder[T]{
-		Context:      ctx,
-		Connector:    connector,
-		dependencies: make(map[string]specs.ModelDefinition),
+		context:    ctx,
+		connector:  connector,
+		subBuilder: depkit.Get[specs.NewSubBuilder[T]]()(),
 	}
 
 	t := reflect.ValueOf(model)

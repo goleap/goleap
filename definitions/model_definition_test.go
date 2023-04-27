@@ -266,6 +266,9 @@ func (test *SchemaTestSuite) TestGetToColumn() {
 	test.True(errors.As(err, &errFieldNoFoundByColumn))
 
 	test.ErrorContains(err, "field with column `unknown` not found in model `CommentsModel`")
+	test.Equal("unknown", errFieldNoFoundByColumn.Column())
+	test.Equal("CommentsModel", errFieldNoFoundByColumn.ModelDefinition().TypeName())
+
 }
 
 func TestSchemaTestSuite(t *testing.T) {

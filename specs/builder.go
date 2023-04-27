@@ -1,6 +1,13 @@
 package specs
 
+import "context"
+
+type BuilderUse[T Model] func(ctx context.Context, connector Connector) Builder[T]
+
 type Builder[T Model] interface {
+	Context() context.Context
+	Connector() Connector
+
 	Get(primaryKey any) (T, error)
 	Delete(primaryKey any) error
 
@@ -10,15 +17,18 @@ type Builder[T Model] interface {
 	Find() (T, error)
 	FindAll() ([]T, error)
 
-	Fields(field ...string) Builder[T]
-	Where(condition Condition) Builder[T]
-	Limit(limit int) Builder[T]
-	Offset(offset int) Builder[T]
-	OrderBy(fields ...string) Builder[T]
+	SetFields(field ...string) Builder[T]
+	SetWhere(condition Condition) Builder[T]
+	SetLimit(limit int) Builder[T]
+	SetOffset(offset int) Builder[T]
+	SetOrderBy(fields ...string) Builder[T]
 
 	Count() (total int64, err error)
 
 	Payload() PayloadAugmented[T]
 
 	SetModel(model T) Builder[T]
+
+	Fields() []string
+	Wheres() []Condition
 }

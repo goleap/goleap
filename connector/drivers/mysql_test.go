@@ -62,7 +62,6 @@ func (test *MysqlTestSuite) SetupTest() {
 	depkit.Register[specs.SqlIn](test.fakeSqlIn.Execute)
 
 	test.fakeDriver.ExpectedCalls = nil
-	test.fakeDriver.On("Open", ":@tcp(:3306)/acceptance?parseTime=true&loc=Local").Return(test.fakeConn, nil)
 }
 
 func (test *MysqlTestSuite) TestNew() {
@@ -177,11 +176,12 @@ func (test *MysqlTestSuite) TestBuildWhere() {
 
 	test.fakeDriverWhere.On("Formatted").Return("", nil, errors.New("build_where_err"))
 
-	test.fakePayload.On("Where").Return([]specs.DriverWhere{
+	wheres := []specs.DriverWhere{
 		test.fakeDriverWhere,
-	})
+	}
+	// test.fakePayload.On("SetWheres").Return(wheres)
 
-	_, _, err = drv.(*Mysql).buildWhere(test.fakePayload.Where())
+	_, _, err = drv.(*Mysql).buildWhere(wheres)
 	test.Error(err)
 	test.EqualValues("build_where_err", err.Error())
 }
@@ -196,6 +196,8 @@ func (test *MysqlTestSuite) TestSelectErr() {
 	if !test.Empty(err) {
 		return
 	}
+
+	test.fakeDriver.On("Open", ":@tcp(:3306)/acceptance?parseTime=true&loc=Local").Return(test.fakeConn, nil)
 
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
 
@@ -232,6 +234,8 @@ func (test *MysqlTestSuite) TestSelectMappingErr() {
 		return
 	}
 
+	test.fakeDriver.On("Open", ":@tcp(:3306)/acceptance?parseTime=true&loc=Local").Return(test.fakeConn, nil)
+
 	test.fakePayload.On("Mapping").Return([]any{}, errors.New("test_mapping_err"))
 
 	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
@@ -264,6 +268,8 @@ func (test *MysqlTestSuite) TestSimpleWhere() {
 	if !test.Empty(err) {
 		return
 	}
+
+	test.fakeDriver.On("Open", ":@tcp(:3306)/acceptance?parseTime=true&loc=Local").Return(test.fakeConn, nil)
 
 	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
@@ -323,6 +329,8 @@ func (test *MysqlTestSuite) TestSimpleWhereIsNullOperator() {
 		return
 	}
 
+	test.fakeDriver.On("Open", ":@tcp(:3306)/acceptance?parseTime=true&loc=Local").Return(test.fakeConn, nil)
+
 	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
 		test.fakeDriverField,
@@ -358,6 +366,8 @@ func (test *MysqlTestSuite) TestSimpleWhereInOperator() {
 	if !test.Empty(err) {
 		return
 	}
+
+	test.fakeDriver.On("Open", ":@tcp(:3306)/acceptance?parseTime=true&loc=Local").Return(test.fakeConn, nil)
 
 	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
@@ -432,6 +442,8 @@ func (test *MysqlTestSuite) TestWhereMultiEqual() {
 		return
 	}
 
+	test.fakeDriver.On("Open", ":@tcp(:3306)/acceptance?parseTime=true&loc=Local").Return(test.fakeConn, nil)
+
 	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
 		test.fakeDriverField,
@@ -469,6 +481,8 @@ func (test *MysqlTestSuite) TestSelect() {
 	if !test.Empty(err) {
 		return
 	}
+
+	test.fakeDriver.On("Open", ":@tcp(:3306)/acceptance?parseTime=true&loc=Local").Return(test.fakeConn, nil)
 
 	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
@@ -522,6 +536,8 @@ func (test *MysqlTestSuite) TestSelectWithNativeScanErr() {
 		return
 	}
 
+	test.fakeDriver.On("Open", ":@tcp(:3306)/acceptance?parseTime=true&loc=Local").Return(test.fakeConn, nil)
+
 	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
 		test.fakeDriverField,
@@ -573,6 +589,8 @@ func (test *MysqlTestSuite) TestSelectWithNativeWrapScanErr() {
 	if !test.Empty(err) {
 		return
 	}
+
+	test.fakeDriver.On("Open", ":@tcp(:3306)/acceptance?parseTime=true&loc=Local").Return(test.fakeConn, nil)
 
 	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
@@ -628,6 +646,8 @@ func (test *MysqlTestSuite) TestSelectWithWhere() {
 		return
 	}
 
+	test.fakeDriver.On("Open", ":@tcp(:3306)/acceptance?parseTime=true&loc=Local").Return(test.fakeConn, nil)
+
 	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
 		test.fakeDriverField,
@@ -682,6 +702,8 @@ func (test *MysqlTestSuite) TestJoin() {
 		return
 	}
 
+	test.fakeDriver.On("Open", ":@tcp(:3306)/acceptance?parseTime=true&loc=Local").Return(test.fakeConn, nil)
+
 	test.fakeDriverField.On("Formatted").Return("`t0`.`id`", nil).Once()
 	test.fakePayload.On("Fields").Return([]specs.DriverField{
 		test.fakeDriverField,
@@ -718,6 +740,8 @@ func (test *MysqlTestSuite) TestMultiJoin() {
 	if !test.Empty(err) {
 		return
 	}
+
+	test.fakeDriver.On("Open", ":@tcp(:3306)/acceptance?parseTime=true&loc=Local").Return(test.fakeConn, nil)
 
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
 

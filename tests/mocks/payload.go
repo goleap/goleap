@@ -224,7 +224,7 @@ type mockConstructorTestingTNewPayload interface {
 	Cleanup(func())
 }
 
-// FakePayloadConstruct creates a new instance of FakePayload. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// NewFakePayload creates a new instance of FakePayload. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 func NewFakePayload(t mockConstructorTestingTNewPayload) *FakePayload {
 	fakePayload := &FakePayload{}
 	fakePayload.Mock.Test(t)

@@ -8,7 +8,7 @@ import (
 
 func (fixture *Fixture) BuilderGet(ctx context.Context) (err error) {
 
-	user, err := dbkit.Use[*models.UsersModel](ctx, fixture.Connector()).Fields("Id").Get(1)
+	user, err := dbkit.Use[*models.UsersModel](ctx, fixture.Connector()).SetFields("Id").Get(1)
 
 	fixture.Assert().NoError(err)
 	fixture.Assert().EqualValues(1, user.Id)
@@ -18,7 +18,7 @@ func (fixture *Fixture) BuilderGet(ctx context.Context) (err error) {
 
 func (fixture *Fixture) BuilderGetWithJoin(ctx context.Context) (err error) {
 
-	comment, err := dbkit.Use[*models.CommentsModel](ctx, fixture.Connector()).Fields("Id", "Post.Id", "Post.Comments.Id", "Post.Comments.Content").Get(1)
+	comment, err := dbkit.Use[*models.CommentsModel](ctx, fixture.Connector()).SetFields("Id", "Post.Id", "Post.Comments.Id", "Post.Comments.Content").Get(1)
 
 	fixture.Assert().NoError(err)
 	fixture.Assert().EqualValues(1, comment.Id)
