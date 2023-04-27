@@ -2,23 +2,31 @@ package dbkit
 
 import (
 	"context"
-	"github.com/lab210-dev/dbkit/connector/drivers"
-	"github.com/lab210-dev/dbkit/connector/drivers/operators"
-	"github.com/lab210-dev/dbkit/modeldefinition"
-	"github.com/lab210-dev/dbkit/specs"
+	"github.com/kitstack/dbkit/connector/drivers"
+	"github.com/kitstack/dbkit/connector/drivers/operators"
+	"github.com/kitstack/dbkit/specs"
+	"github.com/kitstack/depkit"
+	"reflect"
+	"sync"
 )
 
 var (
-	QueryTypeGet = "Get"
+	QueryTypeGet     = "Get"
+	QueryTypeFindAll = "FindAll"
+	QueryTypeFind    = "Find"
 )
 
 type builder[T specs.Model] struct {
-	context.Context
-	specs.Connector
+	sync.Mutex
+
+	context   context.Context
+	connector specs.Connector
+
+	subBuilder specs.SubBuilder[T]
 
 	queryType string
 
-	model           *T
+	model           T
 	modelDefinition specs.ModelDefinition
 
 	fields []string
@@ -33,7 +41,22 @@ type builder[T specs.Model] struct {
 	payload specs.PayloadAugmented[T]
 }
 
+func (o *builder[T]) Context() context.Context {
+	return o.context
+}
+
+func (o *builder[T]) Connector() specs.Connector {
+	return o.connector
+}
+
+func (o *builder[T]) SubBuilder() specs.SubBuilder[T] {
+	return o.subBuilder
+}
+
 func (o *builder[T]) setQueryType(queryType string) specs.Builder[T] {
+	if o.queryType != "" {
+		return o
+	}
 	o.queryType = queryType
 	return o
 }
@@ -68,6 +91,11 @@ func (o *builder[T]) buildFields() (err error) {
 			return err
 		}
 
+		if field.FromSlice() {
+			o.subBuilder.AddJob(o, field.Model().FromField().RecursiveFullName(), field.Model())
+			continue
+		}
+
 		o.selectedFieldsDefinition = append(o.selectedFieldsDefinition, field)
 	}
 
@@ -97,13 +125,26 @@ func (o *builder[T]) getDriverFields() []specs.DriverField {
 	return o.driverFields
 }
 
-func (o *builder[T]) getDriverJoins() []specs.DriverJoin {
+func (o *builder[T]) getDriverJoins() ([]specs.DriverJoin, error) {
 
+	uniqueJoins := map[string]specs.DriverJoin{}
 	for _, field := range o.selectedFieldsDefinition {
-		o.driverJoins = append(o.driverJoins, field.Join()...)
+
+		for _, join := range field.Join() {
+			formatted, err := join.Formatted()
+			if err != nil {
+				return nil, err
+			}
+			uniqueJoins[formatted] = join
+		}
+
 	}
 
-	return o.driverJoins
+	for _, join := range uniqueJoins {
+		o.driverJoins = append(o.driverJoins, join)
+	}
+
+	return o.driverJoins, nil
 }
 
 func (o *builder[T]) getDriverWheres() []specs.DriverWhere {
@@ -111,10 +152,16 @@ func (o *builder[T]) getDriverWheres() []specs.DriverWhere {
 }
 
 func (o *builder[T]) buildPayload() error {
-	o.payload = NewPayload[T]()
+	o.payload = depkit.Get[specs.NewPayload[T]]()(o.model)
 	o.payload.SetFields(o.getDriverFields())
-	o.payload.SetJoins(o.getDriverJoins())
 	o.payload.SetWheres(o.getDriverWheres())
+
+	joins, err := o.getDriverJoins()
+	if err != nil {
+		return err
+	}
+
+	o.payload.SetJoins(joins)
 
 	return nil
 }
@@ -131,7 +178,7 @@ func (o *builder[T]) Get(primaryKeyValue any) (result T, err error) {
 		return
 	}
 
-	o.Where(NewCondition().SetFrom(primaryField.RecursiveFullName()).
+	o.SetWhere(NewCondition().SetFrom(primaryField.RecursiveFullName()).
 		SetOperator(operators.Equal).
 		SetTo(primaryKeyValue))
 
@@ -139,8 +186,23 @@ func (o *builder[T]) Get(primaryKeyValue any) (result T, err error) {
 }
 
 func (o *builder[T]) Find() (result T, err error) {
+	data, err := o.setQueryType(QueryTypeFind).FindAll()
+	if err != nil {
+		return
+	}
 
-	err = o.execute(
+	if len(data) == 0 {
+		err = NewNotFoundError(o.modelDefinition.TypeName())
+		return
+	}
+
+	return data[0], nil
+}
+
+func (o *builder[T]) FindAll() ([]T, error) {
+	o.setQueryType(QueryTypeFindAll)
+
+	err := o.execute(
 		o.buildFields,
 		o.valideRequiredField,
 		o.buildWheres,
@@ -148,23 +210,20 @@ func (o *builder[T]) Find() (result T, err error) {
 	)
 
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	err = o.Connector.Select(o.Context, o.payload)
+	err = o.Connector().Select(o.Context(), o.Payload())
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	if len(o.Payload().Result()) == 0 {
-		err = NewNotFoundError(o.modelDefinition.ModelValue().Type().Name())
-		return
+	err = o.SubBuilder().Execute()
+	if err != nil {
+		return nil, err
 	}
 
-	// NOTE : Result is always a slice, so we need to get the first element.
-	result = o.Payload().Result()[0]
-
-	return
+	return o.Payload().Result(), nil
 }
 
 func (o *builder[T]) Delete(_ any) error {
@@ -182,32 +241,35 @@ func (o *builder[T]) Update() error {
 	panic("implement me")
 }
 
-func (o *builder[T]) FindAll() error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (o *builder[T]) Fields(field ...string) specs.Builder[T] {
+func (o *builder[T]) SetFields(field ...string) specs.Builder[T] {
 	o.fields = field
 	return o
 }
 
-func (o *builder[T]) Where(where specs.Condition) specs.Builder[T] {
+func (o *builder[T]) SetWhere(where specs.Condition) specs.Builder[T] {
 	o.wheres = append(o.wheres, where)
 	return o
 }
 
-func (o *builder[T]) Limit(_ int) specs.Builder[T] {
+func (o *builder[T]) Wheres() []specs.Condition {
+	return o.wheres
+}
+
+func (o *builder[T]) Fields() []string {
+	return o.fields
+}
+
+func (o *builder[T]) SetLimit(_ int) specs.Builder[T] {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (o *builder[T]) Offset(_ int) specs.Builder[T] {
+func (o *builder[T]) SetOffset(_ int) specs.Builder[T] {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (o *builder[T]) OrderBy(_ ...string) specs.Builder[T] {
+func (o *builder[T]) SetOrderBy(_ ...string) specs.Builder[T] {
 	//TODO implement me
 	panic("implement me")
 }
@@ -217,15 +279,29 @@ func (o *builder[T]) Count() (total int64, err error) {
 	panic("implement me")
 }
 
+func (o *builder[T]) SetModel(model T) specs.Builder[T] {
+	o.model = model
+	o.modelDefinition = depkit.Get[specs.UseModelDefinition]()(model).Parse()
+
+	depkit.Register[specs.NewPayload[T]](NewPayload[T])
+
+	return o
+}
+
 func Use[T specs.Model](ctx context.Context, connector specs.Connector) specs.Builder[T] {
 	var model T
 
-	var builder specs.Builder[T] = &builder[T]{
-		Context:   ctx,
-		Connector: connector,
+	injectGenericDependencies[T]()
 
-		model:           &model,
-		modelDefinition: modeldefinition.Use(model).Parse(),
+	var builder specs.Builder[T] = &builder[T]{
+		context:    ctx,
+		connector:  connector,
+		subBuilder: depkit.Get[specs.NewSubBuilder[T]]()(),
+	}
+
+	t := reflect.ValueOf(model)
+	if t.IsValid() {
+		builder.SetModel(model)
 	}
 
 	return builder

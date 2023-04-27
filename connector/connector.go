@@ -1,8 +1,8 @@
 package connector
 
 import (
-	"github.com/lab210-dev/dbkit/connector/drivers"
-	"github.com/lab210-dev/dbkit/specs"
+	"github.com/kitstack/dbkit/connector/drivers"
+	"github.com/kitstack/dbkit/specs"
 )
 
 type connector struct {

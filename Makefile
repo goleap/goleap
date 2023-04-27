@@ -3,7 +3,7 @@ include .env
 .DEFAULT_GOAL := help
 COMPOSE_COMMAND = docker compose --env-file .env -f build/docker-compose-dev.yml -p dbkit
 
-.PHONY: help config build db acceptance up stop dev
+.PHONY: help config build db acceptance up stop dev githooks
 help: ## Show this help
 	@echo "\033[36mUsage:\033[0m"
 	@echo "make TASK"
@@ -14,15 +14,11 @@ help: ## Show this help
 # DOCKER TASKS
 config: ## Validate and view the Compose file.
 	$(COMPOSE_COMMAND) config
-build: ## Builds services [s=services]
-	$(COMPOSE_COMMAND) build --force-rm --parallel acceptance
-acceptance: ## Builds, (re)creates, starts, and attaches to containers
+acceptance: ## Build and start acceptance environment
 	$(COMPOSE_COMMAND) up --exit-code-from acceptance --build acceptance
-dev:
+dev: ## Build and start dev environment
 	$(COMPOSE_COMMAND) up -d --build adminer db
-up: ## Builds, (re)creates, starts, and attaches to containers
-	$(COMPOSE_COMMAND) up --force-recreate --remove-orphans --build db
-db: ## Builds, (re)creates, starts, and attaches to containers
+db: ## Build And Start Database
 	$(COMPOSE_COMMAND) up -d --force-recreate --remove-orphans --build db --wait
 stop: ## Stops running containers without removing them [s=services]
 	$(COMPOSE_COMMAND) stop db
@@ -30,3 +26,5 @@ down: ## Stops containers and removes containers, networks, volumes, and images 
 	$(COMPOSE_COMMAND) down --rmi all --remove-orphans
 backup: ## Backup database
 	docker exec dbkit-db mysqldump -u root --password=${MYSQL_ROOT_PASSWORD} ${MYSQL_DATABASE} > ./tests/acceptance/data/acceptance.sql
+githooks: ## Install git hooks
+	chmod +x githooks/* && cp -rf githooks/* .git/hooks/

@@ -23,7 +23,7 @@ services:
     image: adminer
     container_name: dbkit-adminer
     ports:
-      - 9000:8080
+      - "9000:8080"
     environment:
       - ADMINER_DESIGN=pepa-linha
     links:
@@ -35,6 +35,7 @@ services:
       context: ./..
       dockerfile: build/images/go/Dockerfile
     environment:
+      DEBUG: ${DEBUG}
       MYSQL_HOST: ${MYSQL_HOST}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}

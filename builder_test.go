@@ -3,11 +3,11 @@ package dbkit
 import (
 	"context"
 	"errors"
-	"github.com/lab210-dev/dbkit/connector/drivers"
-	"github.com/lab210-dev/dbkit/modeldefinition"
-	"github.com/lab210-dev/dbkit/specs"
-	"github.com/lab210-dev/dbkit/tests/mocks"
-	"github.com/lab210-dev/dbkit/tests/models"
+	"github.com/kitstack/dbkit/definitions"
+	"github.com/kitstack/dbkit/specs"
+	"github.com/kitstack/dbkit/tests/mocks"
+	"github.com/kitstack/dbkit/tests/models"
+	"github.com/kitstack/depkit"
 	"github.com/stretchr/testify/mock"
 	"testing"
 
@@ -17,9 +17,25 @@ import (
 type BuilderTestSuite struct {
 	suite.Suite
 	context.Context
+
 	fakeConnector       *mocks.FakeConnector
 	fakeModelDefinition *mocks.FakeModelDefinition
 	fakeFieldDefinition *mocks.FakeFieldDefinition
+	fakeDriverField     *mocks.FakeDriverField
+	fakeDriverJoin      *mocks.FakeDriverJoin
+
+	fakeUseModelDefinition      *mocks.FakeUseModelDefinition
+	fakeCommentPayloadConstruct *mocks.FakePayloadConstruct[*models.CommentsModel]
+	fakeCommentPayloadAugmented *mocks.FakePayloadAugmented[*models.CommentsModel]
+
+	fakePostPayloadConstruct *mocks.FakePayloadConstruct[*models.PostsModel]
+	fakePostPayloadAugmented *mocks.FakePayloadAugmented[*models.PostsModel]
+
+	fakeModelPayloadConstruct *mocks.FakePayloadConstruct[specs.Model]
+	fakeModelPayloadAugmented *mocks.FakePayloadAugmented[specs.Model]
+
+	fakeNewSubBuilder *mocks.FakeNewSubBuilder[*models.PostsModel]
+	fakeSubBuilder    *mocks.FakeSubBuilder[*models.PostsModel]
 }
 
 func (test *BuilderTestSuite) SetupTest() {
@@ -27,150 +43,362 @@ func (test *BuilderTestSuite) SetupTest() {
 	test.fakeConnector = mocks.NewFakeConnector(test.T())
 	test.fakeModelDefinition = mocks.NewFakeModelDefinition(test.T())
 	test.fakeFieldDefinition = mocks.NewFakeFieldDefinition(test.T())
+	test.fakeUseModelDefinition = mocks.NewFakeUseModelDefinition(test.T())
+	test.fakeDriverField = mocks.NewFakeDriverField(test.T())
+	test.fakeDriverJoin = mocks.NewFakeDriverJoin(test.T())
+
+	test.fakeCommentPayloadConstruct = mocks.NewFakePayloadConstruct[*models.CommentsModel](test.T())
+	test.fakeCommentPayloadAugmented = mocks.NewFakePayloadAugmented[*models.CommentsModel](test.T())
+
+	test.fakePostPayloadConstruct = mocks.NewFakePayloadConstruct[*models.PostsModel](test.T())
+	test.fakePostPayloadAugmented = mocks.NewFakePayloadAugmented[*models.PostsModel](test.T())
+
+	test.fakeModelPayloadConstruct = mocks.NewFakePayloadConstruct[specs.Model](test.T())
+	test.fakeModelPayloadAugmented = mocks.NewFakePayloadAugmented[specs.Model](test.T())
+
+	test.fakeNewSubBuilder = mocks.NewFakeNewSubBuilder[*models.PostsModel](test.T())
+	test.fakeSubBuilder = mocks.NewFakeSubBuilder[*models.PostsModel](test.T())
+
+	depkit.Reset()
+	depkit.Register[specs.UseModelDefinition](test.fakeUseModelDefinition.Use)
+	depkit.Register[specs.NewPayload[*models.CommentsModel]](test.fakeCommentPayloadConstruct.NewPayload)
+	depkit.Register[specs.NewPayload[*models.PostsModel]](test.fakePostPayloadConstruct.NewPayload)
+	depkit.Register[specs.NewPayload[specs.Model]](test.fakeModelPayloadConstruct.NewPayload)
+	depkit.Register[specs.NewSubBuilder[*models.PostsModel]](test.fakeNewSubBuilder.NewSubBuilder)
 }
 
 func (test *BuilderTestSuite) TestGetWithNoPrimaryKeyErr() {
+	test.fakeUseModelDefinition.On("Use", (*models.CommentsModel)(nil)).Return(test.fakeModelDefinition)
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition)
+
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return
 	}
 
-	// Mock the model definition to return an error
-	b := builderInstance.(*builder[*models.CommentsModel])
-	b.modelDefinition = test.fakeModelDefinition
-
-	test.fakeModelDefinition.On("GetPrimaryField").Return(nil, modeldefinition.NewErrNoPrimaryField(nil)).Once()
+	test.fakeModelDefinition.On("GetPrimaryField").Return(nil, definitions.NewErrNoPrimaryField(nil)).Once()
 
 	_, err := builderInstance.Get("Primary")
 
-	primaryErr := &modeldefinition.ErrNoPrimaryField{}
+	primaryErr := &definitions.ErrPrimaryFieldNotFound{}
 	test.True(errors.As(err, &primaryErr))
 }
 
 func (test *BuilderTestSuite) TestBuildFieldsErr() {
-	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
-	if !test.NotEmpty(builderInstance) {
-		return
-	}
-
-	// Mock the model definition to return an error
-	b := builderInstance.(*builder[*models.CommentsModel])
-	b.modelDefinition = test.fakeModelDefinition
-
+	test.fakeUseModelDefinition.On("Use", (*models.CommentsModel)(nil)).Return(test.fakeModelDefinition)
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition)
 	test.fakeModelDefinition.On("GetPrimaryField").Return(test.fakeFieldDefinition, nil)
 	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id")
 	test.fakeModelDefinition.On("GetFieldByName", "unknown").Return(nil, errors.New("test")).Once()
 
-	_, err := builderInstance.Fields("unknown").Get("Primary")
-	test.Error(err)
-}
-
-func (test *BuilderTestSuite) TestValideRequiredFieldErr() {
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return
 	}
 
-	// Mock the model definition to return an error
-	b := builderInstance.(*builder[*models.CommentsModel])
-	b.modelDefinition = test.fakeModelDefinition
+	_, err := builderInstance.SetFields("unknown").Get("Primary")
+	test.Error(err)
+}
+
+func (test *BuilderTestSuite) TestValideRequiredFieldErr() {
+	test.fakeUseModelDefinition.On("Use", (*models.CommentsModel)(nil)).Return(test.fakeModelDefinition)
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition)
+
+	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
+	if !test.NotEmpty(builderInstance) {
+		return
+	}
 
 	test.fakeModelDefinition.On("GetPrimaryField").Return(test.fakeFieldDefinition, nil)
 	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id")
 
 	_, err := builderInstance.Get("Primary")
 	test.Error(err)
-	test.ErrorContains(err, "field required for ")
+	test.ErrorContains(err, "the method `Get` requires the selection of one or more fields")
 }
 
 func (test *BuilderTestSuite) TestBuildWhereErr() {
+	test.fakeUseModelDefinition.On("Use", (*models.CommentsModel)(nil)).Return(test.fakeModelDefinition)
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition)
+
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return
 	}
 
-	// Mock the model definition to return an error
-	b := builderInstance.(*builder[*models.CommentsModel])
-	b.modelDefinition = test.fakeModelDefinition
-
 	test.fakeModelDefinition.On("GetPrimaryField").Return(test.fakeFieldDefinition, nil)
-	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id")
-	test.fakeModelDefinition.On("GetFieldByName", "unknown").Return(nil, nil).Once()
+	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id").Once()
+
+	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
+	test.fakeModelDefinition.On("GetFieldByName", "unknown").Return(test.fakeFieldDefinition, nil).Once()
 
 	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(nil, errors.New("test")).Once()
 
-	_, err := builderInstance.Fields("unknown").Get("Primary")
+	_, err := builderInstance.SetFields("unknown").Get("Primary")
 	test.Error(err)
 }
 
 func (test *BuilderTestSuite) TestGetWithNotFoundErr() {
+	test.fakeUseModelDefinition.On("Use", (*models.CommentsModel)(nil)).Return(test.fakeModelDefinition)
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition)
+
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return
 	}
+
+	test.fakeModelDefinition.On("GetPrimaryField").Return(test.fakeFieldDefinition, nil)
+	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build fields
+	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build where
+
+	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
+	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
+
+	test.fakeFieldDefinition.On("Join").Return([]specs.DriverJoin{}).Once()
+
+	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id").Once()
+	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
+
+	test.fakeModelDefinition.On("TypeName").Return("mock")
+
+	test.fakeCommentPayloadConstruct.On("NewPayload", (*models.CommentsModel)(nil)).Return(test.fakeCommentPayloadAugmented)
+	test.fakeCommentPayloadAugmented.On("SetFields", mock.Anything).Return(test.fakeCommentPayloadAugmented)
+	test.fakeCommentPayloadAugmented.On("SetWheres", mock.Anything).Return(test.fakeCommentPayloadAugmented)
+	test.fakeCommentPayloadAugmented.On("SetJoins", mock.Anything).Return(test.fakeCommentPayloadAugmented)
+	test.fakeCommentPayloadAugmented.On("Result").Return([]*models.CommentsModel{})
 
 	test.fakeConnector.On("Select", test.Context, mock.Anything).Return(nil)
 
-	_, err := builderInstance.Fields("Id", "Post.Id").Get("Primary")
+	_, err := builderInstance.SetFields("Id").Get("Primary")
 	test.Error(err)
 
-	test.ErrorContains(err, "empty result for CommentsModel")
+	test.ErrorContains(err, "empty result for mock")
 }
 
 func (test *BuilderTestSuite) TestGetSelectErr() {
+	test.fakeUseModelDefinition.On("Use", (*models.CommentsModel)(nil)).Return(test.fakeModelDefinition)
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition)
+
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return
 	}
+
+	test.fakeModelDefinition.On("GetPrimaryField").Return(test.fakeFieldDefinition, nil)
+	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id").Once()
+	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build fields
+	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build where
+	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
+
+	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
+	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
+
+	test.fakeFieldDefinition.On("Join").Return([]specs.DriverJoin{}).Once()
+
+	test.fakeCommentPayloadConstruct.On("NewPayload", (*models.CommentsModel)(nil)).Return(test.fakeCommentPayloadAugmented)
+	test.fakeCommentPayloadAugmented.On("SetFields", mock.Anything).Return(test.fakeCommentPayloadAugmented)
+	test.fakeCommentPayloadAugmented.On("SetWheres", mock.Anything).Return(test.fakeCommentPayloadAugmented)
+	test.fakeCommentPayloadAugmented.On("SetJoins", mock.Anything).Return(test.fakeCommentPayloadAugmented)
 
 	test.fakeConnector.On("Select", test.Context, mock.Anything).Return(errors.New("select_return_err"))
 
-	_, err := builderInstance.Fields("Id", "Post.Id").Get("Primary")
+	_, err := builderInstance.SetFields("Id").Get("Primary")
 	test.Error(err)
-
 	test.ErrorContains(err, "select_return_err")
 }
 
-func (test *BuilderTestSuite) TestGet() {
+func (test *BuilderTestSuite) TestBuildPayloadJoinErr() {
+	test.fakeUseModelDefinition.On("Use", (*models.CommentsModel)(nil)).Return(test.fakeModelDefinition)
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition)
+
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return
 	}
 
-	Id := uint(1)
-	ExtraId := uint(2)
-	test.fakeConnector.On("Select", test.Context, mock.Anything).Run(func(args mock.Arguments) {
-		err := builderInstance.Payload().OnScan([]any{&Id, &ExtraId})
-		if !test.Empty(err) {
-			return
-		}
-	}).Return(nil)
+	test.fakeModelDefinition.On("GetPrimaryField").Return(test.fakeFieldDefinition, nil)
+	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id").Once()
+	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build fields
+	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build where
+	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
 
-	comment, err := builderInstance.Fields("Id", "Post.Id").Get("Primary")
+	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
+	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
+
+	test.fakeFieldDefinition.On("Join").Return([]specs.DriverJoin{test.fakeDriverJoin}).Once()
+
+	test.fakeCommentPayloadConstruct.On("NewPayload", (*models.CommentsModel)(nil)).Return(test.fakeCommentPayloadAugmented)
+	test.fakeCommentPayloadAugmented.On("SetFields", mock.Anything).Return(test.fakeCommentPayloadAugmented)
+	test.fakeCommentPayloadAugmented.On("SetWheres", mock.Anything).Return(test.fakeCommentPayloadAugmented)
+
+	test.fakeDriverJoin.On("Formatted").Return("", errors.New("join_err")).Once()
+
+	_, err := builderInstance.SetFields("Id").Get("Primary")
+	test.Error(err)
+	test.EqualValues("join_err", err.Error())
+}
+
+func (test *BuilderTestSuite) TestGet() {
+	test.fakeUseModelDefinition.On("Use", (*models.CommentsModel)(nil)).Return(test.fakeModelDefinition)
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition)
+
+	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
+	if !test.NotEmpty(builderInstance) {
+		return
+	}
+
+	test.fakeModelDefinition.On("GetPrimaryField").Return(test.fakeFieldDefinition, nil)
+	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id").Once()
+	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build fields
+	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build where
+	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
+	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
+	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
+
+	test.fakeFieldDefinition.On("Join").Return([]specs.DriverJoin{test.fakeDriverJoin}).Once()
+	test.fakeDriverJoin.On("Formatted").Return("JOIN `comments` ON `comments`.`id` = `posts`.`id`", nil).Once()
+
+	test.fakeCommentPayloadConstruct.On("NewPayload", (*models.CommentsModel)(nil)).Return(test.fakeCommentPayloadAugmented)
+	test.fakeCommentPayloadAugmented.On("SetFields", mock.Anything).Return(test.fakeCommentPayloadAugmented)
+	test.fakeCommentPayloadAugmented.On("SetWheres", mock.Anything).Return(test.fakeCommentPayloadAugmented)
+	test.fakeCommentPayloadAugmented.On("SetJoins", mock.Anything).Return(test.fakeCommentPayloadAugmented)
+	test.fakeCommentPayloadAugmented.On("Result").Return([]*models.CommentsModel{{Id: 1}})
+
+	test.fakeConnector.On("Select", test.Context, mock.Anything).Return(nil)
+
+	comment, err := builderInstance.SetFields("Id").Get("Primary")
+	test.NoError(err)
+
+	test.Equal(comment.Id, uint(1))
+}
+
+func (test *BuilderTestSuite) TestWheres() {
+	test.fakeNewSubBuilder.On("NewSubBuilder").Return(test.fakeSubBuilder).Once()
+	test.fakeUseModelDefinition.On("Use", (*models.PostsModel)(nil)).Return(test.fakeModelDefinition).Once()
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition).Once()
+
+	builderInstance := Use[*models.PostsModel](test.Context, test.fakeConnector)
+	if !test.NotEmpty(builderInstance) {
+		return
+	}
+	condition := NewCondition()
+	builderInstance.SetWhere(condition)
+	test.Equal(builderInstance.Wheres(), []specs.Condition{condition})
+}
+
+func (test *BuilderTestSuite) TestFields() {
+	test.fakeNewSubBuilder.On("NewSubBuilder").Return(test.fakeSubBuilder).Once()
+	test.fakeUseModelDefinition.On("Use", (*models.PostsModel)(nil)).Return(test.fakeModelDefinition).Once()
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition).Once()
+
+	builderInstance := Use[*models.PostsModel](test.Context, test.fakeConnector)
+	if !test.NotEmpty(builderInstance) {
+		return
+	}
+
+	builderInstance.SetFields("Hello", "World")
+	test.Equal(builderInstance.Fields(), []string{"Hello", "World"})
+}
+
+func (test *BuilderTestSuite) TestSubBuilder() {
+	test.fakeUseModelDefinition.On("Use", (*models.PostsModel)(nil)).Return(test.fakeModelDefinition).Once()
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition).Once()
+
+	test.fakeNewSubBuilder.On("NewSubBuilder").Return(test.fakeSubBuilder).Once()
+
+	builderInstance := Use[*models.PostsModel](test.Context, test.fakeConnector)
+	if !test.NotEmpty(builderInstance) {
+		return
+	}
+
+	test.fakeFieldDefinition.On("Model").Return(test.fakeModelDefinition).Twice()
+	test.fakeModelDefinition.On("FromField").Return(test.fakeFieldDefinition).Once()
+	test.fakeFieldDefinition.On("RecursiveFullName").Return("Comments.Id").Once()
+
+	test.fakeModelDefinition.On("GetPrimaryField").Return(test.fakeFieldDefinition, nil)
+	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id").Once()
+	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build fields
+
+	test.fakeModelDefinition.On("GetFieldByName", "Comments.Id").Return(test.fakeFieldDefinition, nil).Once() // for build fields
+	test.fakeModelDefinition.On("GetFieldByName", "Comments.Id").Return(test.fakeFieldDefinition, nil).Once() // for build where
+
+	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
+	test.fakeFieldDefinition.On("FromSlice").Return(true).Once()
+
+	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
+	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
+
+	test.fakeFieldDefinition.On("Join").Return([]specs.DriverJoin{}).Once()
+
+	test.fakePostPayloadConstruct.On("NewPayload", (*models.PostsModel)(nil)).Return(test.fakePostPayloadAugmented).Once()
+	test.fakePostPayloadAugmented.On("SetFields", mock.Anything).Return(test.fakePostPayloadAugmented).Once()
+	test.fakePostPayloadAugmented.On("SetWheres", mock.Anything).Return(test.fakePostPayloadAugmented).Once()
+	test.fakePostPayloadAugmented.On("SetJoins", mock.Anything).Return(test.fakePostPayloadAugmented).Once()
+
+	test.fakeConnector.On("Select", test.Context, mock.Anything).Return(nil).Once()
+	posts := []*models.PostsModel{{Id: 1}}
+	test.fakePostPayloadAugmented.On("Result").Return(posts).Once()
+
+	test.fakeSubBuilder.On("AddJob", builderInstance, "Id", test.fakeModelDefinition).Return(test.fakeSubBuilder).Once()
+	test.fakeSubBuilder.On("Execute").Return(nil).Once()
+
+	commentResult, err := builderInstance.SetFields("Id", "Comments.Id").Get("Primary")
 	if !test.Empty(err) {
 		return
 	}
 
-	test.Equal(0, builderInstance.Payload().Index())
-	test.Equal("acceptance", builderInstance.Payload().Database())
-	test.Equal("comments", builderInstance.Payload().Table())
+	test.Equal(commentResult.Id, uint(1))
+}
 
-	test.NotEmpty(builderInstance.Payload().Where())
-	for _, condition := range builderInstance.Payload().Where() {
-		test.Equal(drivers.NewField().SetName("id").SetIndex(0).SetNameInSchema("Id"), condition.From())
-		test.Equal("=", condition.Operator())
-		test.Equal("Primary", condition.To())
+func (test *BuilderTestSuite) TestSubBuilderErr() {
+	test.fakeUseModelDefinition.On("Use", (*models.PostsModel)(nil)).Return(test.fakeModelDefinition).Once()
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition).Once()
+
+	test.fakeNewSubBuilder.On("NewSubBuilder").Return(test.fakeSubBuilder).Once()
+
+	builderInstance := Use[*models.PostsModel](test.Context, test.fakeConnector)
+	if !test.NotEmpty(builderInstance) {
+		return
 	}
 
-	test.Equal([]specs.DriverField{
-		drivers.NewField().SetName("id").SetIndex(0).SetNameInSchema("Id"),
-		drivers.NewField().SetName("id").SetIndex(2).SetNameInSchema("Post.Id"),
-	}, builderInstance.Payload().Fields())
+	test.fakeFieldDefinition.On("Model").Return(test.fakeModelDefinition).Twice()
+	test.fakeModelDefinition.On("FromField").Return(test.fakeFieldDefinition).Once()
+	test.fakeFieldDefinition.On("RecursiveFullName").Return("Comments.Id").Once()
 
-	test.Equal(uint(1), comment.Id)
+	test.fakeModelDefinition.On("GetPrimaryField").Return(test.fakeFieldDefinition, nil)
+	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id").Once()
+	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build fields
+
+	test.fakeModelDefinition.On("GetFieldByName", "Comments.Id").Return(test.fakeFieldDefinition, nil).Once() // for build fields
+	test.fakeModelDefinition.On("GetFieldByName", "Comments.Id").Return(test.fakeFieldDefinition, nil).Once() // for build where
+
+	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
+	test.fakeFieldDefinition.On("FromSlice").Return(true).Once()
+
+	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
+	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
+
+	test.fakeFieldDefinition.On("Join").Return([]specs.DriverJoin{}).Once()
+
+	test.fakePostPayloadConstruct.On("NewPayload", (*models.PostsModel)(nil)).Return(test.fakePostPayloadAugmented).Once()
+	test.fakePostPayloadAugmented.On("SetFields", mock.Anything).Return(test.fakePostPayloadAugmented).Once()
+	test.fakePostPayloadAugmented.On("SetWheres", mock.Anything).Return(test.fakePostPayloadAugmented).Once()
+	test.fakePostPayloadAugmented.On("SetJoins", mock.Anything).Return(test.fakePostPayloadAugmented).Once()
+
+	test.fakeConnector.On("Select", test.Context, mock.Anything).Return(nil).Once()
+
+	test.fakeSubBuilder.On("AddJob", builderInstance, "Id", test.fakeModelDefinition).Return(test.fakeSubBuilder).Once()
+	test.fakeSubBuilder.On("Execute").Return(errors.New("sub_builder_err")).Once()
+
+	_, err := builderInstance.SetFields("Id", "Comments.Id").Get("Primary")
+	test.Error(err)
+	test.EqualValues("sub_builder_err", err.Error())
 }
 
 func (test *BuilderTestSuite) TestDelete() {
+	test.fakeUseModelDefinition.On("Use", (*models.CommentsModel)(nil)).Return(test.fakeModelDefinition)
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition)
+
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return
@@ -182,6 +410,8 @@ func (test *BuilderTestSuite) TestDelete() {
 }
 
 func (test *BuilderTestSuite) TestCreate() {
+	test.fakeUseModelDefinition.On("Use", (*models.CommentsModel)(nil)).Return(test.fakeModelDefinition)
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition)
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return
@@ -193,6 +423,8 @@ func (test *BuilderTestSuite) TestCreate() {
 }
 
 func (test *BuilderTestSuite) TestUpdate() {
+	test.fakeUseModelDefinition.On("Use", (*models.CommentsModel)(nil)).Return(test.fakeModelDefinition)
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition)
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return
@@ -203,62 +435,51 @@ func (test *BuilderTestSuite) TestUpdate() {
 	})
 }
 
-/*func (test *BuilderTestSuite) TestFind() {
-	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
-	if !test.NotEmpty(builderInstance) {
-		return
-	}
-
-	test.Panics(func() {
-		_ = builderInstance.Find()
-	})
-}*/
-
-func (test *BuilderTestSuite) TestFindAll() {
-	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
-	if !test.NotEmpty(builderInstance) {
-		return
-	}
-
-	test.Panics(func() {
-		_ = builderInstance.FindAll()
-	})
-}
-
 func (test *BuilderTestSuite) TestLimit() {
+	test.fakeUseModelDefinition.On("Use", (*models.CommentsModel)(nil)).Return(test.fakeModelDefinition)
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition)
+
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return
 	}
 
 	test.Panics(func() {
-		_ = builderInstance.Limit(0)
+		_ = builderInstance.SetLimit(0)
 	})
 }
 
 func (test *BuilderTestSuite) TestOffset() {
+	test.fakeUseModelDefinition.On("Use", (*models.CommentsModel)(nil)).Return(test.fakeModelDefinition)
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition)
+
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return
 	}
 
 	test.Panics(func() {
-		_ = builderInstance.Offset(0)
+		_ = builderInstance.SetOffset(0)
 	})
 }
 
 func (test *BuilderTestSuite) TestOrderBy() {
+	test.fakeUseModelDefinition.On("Use", (*models.CommentsModel)(nil)).Return(test.fakeModelDefinition)
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition)
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return
 	}
 
 	test.Panics(func() {
-		_ = builderInstance.OrderBy("Id", "ASC")
+		// @TODO Maybe pass SetOrderBy struct instead of string
+		_ = builderInstance.SetOrderBy("Id", "ASC")
 	})
 }
 
 func (test *BuilderTestSuite) TestCount() {
+	test.fakeUseModelDefinition.On("Use", (*models.CommentsModel)(nil)).Return(test.fakeModelDefinition)
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition)
 	builderInstance := Use[*models.CommentsModel](test.Context, test.fakeConnector)
 	if !test.NotEmpty(builderInstance) {
 		return

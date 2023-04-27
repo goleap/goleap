@@ -9,33 +9,33 @@ type FakeIn struct {
 	mock.Mock
 }
 
-func (_m *FakeIn) GenerateInArgument(query string, args ...interface{}) (string, []interface{}, error) {
-	var _ca []interface{}
+func (_m *FakeIn) GenerateInArgument(query string, args ...any) (string, []any, error) {
+	var _ca []any
 	_ca = append(_ca, query)
 	_ca = append(_ca, args...)
 	ret := _m.Called(_ca...)
 
 	var r0 string
-	var r1 []interface{}
+	var r1 []any
 	var r2 error
-	if rf, ok := ret.Get(0).(func(string, ...interface{}) (string, []interface{}, error)); ok {
+	if rf, ok := ret.Get(0).(func(string, ...any) (string, []any, error)); ok {
 		return rf(query, args...)
 	}
-	if rf, ok := ret.Get(0).(func(string, ...interface{}) string); ok {
+	if rf, ok := ret.Get(0).(func(string, ...any) string); ok {
 		r0 = rf(query, args...)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, ...interface{}) []interface{}); ok {
+	if rf, ok := ret.Get(1).(func(string, ...any) []any); ok {
 		r1 = rf(query, args...)
 	} else {
 		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]interface{})
+			r1 = ret.Get(1).([]any)
 		}
 	}
 
-	if rf, ok := ret.Get(2).(func(string, ...interface{}) error); ok {
+	if rf, ok := ret.Get(2).(func(string, ...any) error); ok {
 		r2 = rf(query, args...)
 	} else {
 		r2 = ret.Error(2)

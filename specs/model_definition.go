@@ -2,14 +2,17 @@ package specs
 
 import "reflect"
 
+type UseModelDefinition func(model Model) ModelDefinition
+
 type ModelDefinition interface {
 	Model
 
 	Fields() []FieldDefinition
 	FieldByName() map[string]FieldDefinition
 
-	GetFieldByName(name string) (FieldDefinition, FieldNotFoundError)
-	GetPrimaryField() (FieldDefinition, PrimaryFieldNotFoundError)
+	GetFieldByName(name string) (FieldDefinition, ErrNotFoundError)
+	GetPrimaryField() (FieldDefinition, ErrPrimaryFieldNotFound)
+	GetFieldByColumn(column string) (FieldDefinition, ErrFieldNoFoundByColumn)
 
 	SetFromField(fromField FieldDefinition) ModelDefinition
 	FromField() FieldDefinition
@@ -19,6 +22,8 @@ type ModelDefinition interface {
 	Counter() int
 
 	Parse() ModelDefinition
+
+	TypeName() string
 
 	ModelValue() reflect.Value
 	ModelOrigin() reflect.Value

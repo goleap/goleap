@@ -2,56 +2,27 @@ package drivers
 
 import (
 	"fmt"
-	"github.com/lab210-dev/dbkit/connector/drivers/joins"
-	"github.com/lab210-dev/dbkit/specs"
-	"strings"
+	"github.com/kitstack/dbkit/connector/drivers/joins"
+	"github.com/kitstack/dbkit/specs"
 )
 
 type join struct {
-	fromKey        string
-	fromTableIndex int
-
-	toTable      string
-	toKey        string
-	toSchema     string
-	toTableIndex int
+	from specs.DriverField
+	to   specs.DriverField
 
 	method specs.JoinMethod
 }
 
-func (j *join) Validate() error {
-	var check = map[string]func() string{
-		"FromKey":    j.FromKey,
-		"ToTable":    j.ToTable,
-		"ToKey":      j.ToKey,
-		"ToDatabase": j.ToDatabase,
-	}
-
-	errList := make([]string, 0)
-	for key, c := range check {
-		if c() == "" {
-			errList = append(errList, key)
-		}
-	}
-
-	if len(errList) > 0 {
-		return fmt.Errorf(`the following fields "%s" are mandatory to perform the join`, strings.Join(errList, ", "))
-	}
-
-	return nil
-}
-
-func (j *join) ToDatabase() string {
-	return j.toSchema
-}
-
-func (j *join) SetToDatabase(fromSchema string) specs.DriverJoin {
-	j.toSchema = fromSchema
-	return j
-}
-
 func (j *join) Method() string {
 	return joins.Method[j.method]
+}
+
+func (j *join) From() specs.DriverField {
+	return j.from
+}
+
+func (j *join) To() specs.DriverField {
+	return j.to
 }
 
 func (j *join) SetMethod(method specs.JoinMethod) specs.DriverJoin {
@@ -59,49 +30,65 @@ func (j *join) SetMethod(method specs.JoinMethod) specs.DriverJoin {
 	return j
 }
 
-func (j *join) FromTableIndex() int {
-	return j.fromTableIndex
-}
-
-func (j *join) ToTable() string {
-	return j.toTable
-}
-
-func (j *join) ToTableIndex() int {
-	return j.toTableIndex
-}
-
-func (j *join) FromKey() string {
-	return j.fromKey
-}
-
-func (j *join) ToKey() string {
-	return j.toKey
-}
-
-func (j *join) SetFromTableIndex(fromTableIndex int) specs.DriverJoin {
-	j.fromTableIndex = fromTableIndex
+func (j *join) SetFrom(field specs.DriverField) specs.DriverJoin {
+	j.from = field
 	return j
 }
 
-func (j *join) SetToTable(toTable string) specs.DriverJoin {
-	j.toTable = toTable
+func (j *join) SetTo(field specs.DriverField) specs.DriverJoin {
+	j.to = field
 	return j
 }
 
-func (j *join) SetToTableIndex(toTableIndex int) specs.DriverJoin {
-	j.toTableIndex = toTableIndex
-	return j
+func (j *join) toFormatted() (string, error) {
+	formatted, err := j.To().Formatted()
+	if err != nil {
+		return "", err
+	}
+
+	if j.From().IsCustom() {
+		return formatted, nil
+	}
+
+	return fmt.Sprintf("`%s`.`%s` AS `t%d` ON %s", j.To().Database(), j.To().Table(), j.To().Index(), formatted), nil
 }
 
-func (j *join) SetFromKey(fromKey string) specs.DriverJoin {
-	j.fromKey = fromKey
-	return j
+func (j *join) fromFormatted() (string, error) {
+	return j.From().Formatted()
 }
 
-func (j *join) SetToKey(toKey string) specs.DriverJoin {
-	j.toKey = toKey
-	return j
+func (j *join) Formatted() (string, error) {
+	fromFormatted, err := j.fromFormatted()
+	if err != nil {
+		return "", err
+	}
+
+	toFormatted, err := j.toFormatted()
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s %s = %s", j.Method(), toFormatted, fromFormatted), nil
+}
+
+func (j *join) Validate() error {
+	var check = map[string]func() specs.DriverField{
+		"From": j.From,
+		"To":   j.To,
+	}
+
+	errList := make([]string, 0)
+	for key, c := range check {
+		if c() == nil {
+			errList = append(errList, key)
+		}
+	}
+
+	if len(errList) > 0 {
+		return NewRequiredFieldJoinErr(errList)
+	}
+
+	return nil
 }
 
 func NewJoin() specs.DriverJoin {

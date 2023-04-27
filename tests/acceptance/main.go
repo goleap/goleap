@@ -1,20 +1,30 @@
 package main
 
 import (
+	"bytes"
 	"context"
-	"github.com/lab210-dev/dbkit/tests/acceptance/fixtures"
+	"fmt"
+	"github.com/kitstack/dbkit/tests/acceptance/fixtures"
 	"github.com/sirupsen/logrus"
 	"log"
+	"os"
 	"reflect"
+	"runtime/debug"
 	"strings"
 	"time"
 )
 
+var isDebug = os.Getenv("DEBUG") == "true"
 var ctx context.Context
+var debugLog *bytes.Buffer
 
 func init() {
 	log.SetFlags(0)
 	logrus.SetLevel(logrus.DebugLevel)
+
+	debugLog = bytes.NewBuffer([]byte{})
+	logrus.SetOutput(debugLog)
+
 	ctx = context.Background()
 }
 
@@ -22,6 +32,12 @@ func main() {
 	fx := fixtures.Fixture{}
 	rf := reflect.ValueOf(&fx)
 	typeOf := reflect.TypeOf(&fx)
+
+	testsCount := 0
+	failedTestCount := 0
+	passedTestCount := 0
+
+	globalTimer := time.Now()
 
 	for i := 0; i < rf.NumMethod(); i++ {
 
@@ -43,25 +59,69 @@ func main() {
 			continue
 		}
 
-		log.Print(strings.Repeat("-", 100))
-		log.Printf("Running fixture : %s", typeOf.Method(i).Name)
-		log.Print("Debug :")
-		log.Println()
+		testsCount++
 
-		timer := time.Now()
+		state := "\x1b[32mPASS\x1b[0m"
+		timerTest := time.Now()
+
+		logrus.WithFields(logrus.Fields{
+			"name": typeOf.Method(i).Name,
+		}).Debug("Start test")
+
+		fx.Reset()
 		args := []reflect.Value{reflect.ValueOf(ctx)}
-		result := method.Call(args)
 
-		log.Println()
-		log.Printf("Ending fixture `%s` in %s", typeOf.Method(i).Name, time.Since(timer))
-		log.Print(strings.Repeat("-", 100))
-
-		if errVal := result[0].Interface(); errVal != nil {
-			err := errVal.(error)
-			log.Printf("Returned an error: %s", err)
-			continue
+		// recover
+		try := func() (result []reflect.Value) {
+			defer func() {
+				if r := recover(); r != nil {
+					result = make([]reflect.Value, 1)
+					result[0] = reflect.ValueOf(fmt.Errorf("%v", r))
+					debug.PrintStack()
+				}
+			}()
+			result = method.Call(args)
+			return
 		}
 
-		log.Println()
+		result := try()
+
+		logrus.WithFields(logrus.Fields{
+			"name": typeOf.Method(i).Name,
+		}).Debug("End test")
+
+		if testErr := result[0].Interface(); testErr != nil || fx.AssertErrorCount() > 0 {
+
+			if testErr != nil {
+				logrus.WithFields(logrus.Fields{
+					"name": typeOf.Method(i).Name,
+				}).Error(testErr)
+			}
+
+			state = "\x1b[31mFAILED\x1b[0m"
+			failedTestCount++
+		} else {
+			passedTestCount++
+		}
+		fmt.Printf("%s %s (%s)\n", state, typeOf.Method(i).Name, time.Since(timerTest))
+	}
+
+	var color string
+	if failedTestCount > 0 {
+		color = "\x1b[31m" // Rouge
+	} else {
+		color = "\x1b[32m" // Vert
+	}
+
+	fmt.Printf("\n%sDONE %d tests with %d assertions in %s | Passed: %d Failed: %d\x1b[0m\n", color, testsCount, fx.AssertCount(), time.Since(globalTimer), passedTestCount, failedTestCount)
+
+	if isDebug || failedTestCount > 0 {
+		fmt.Println("\nDebug log:")
+		fmt.Println(strings.Repeat("-", 50))
+		fmt.Println(debugLog.String())
+	}
+
+	if failedTestCount > 0 {
+		os.Exit(1)
 	}
 }

@@ -8,4 +8,6 @@ type DriverWhere interface {
 	SetFrom(from DriverField) DriverWhere
 	SetOperator(operator string) DriverWhere
 	SetTo(to any) DriverWhere
+
+	Formatted() (value string, args []any, err error)
 }

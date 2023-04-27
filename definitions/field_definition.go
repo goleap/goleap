@@ -1,9 +1,9 @@
-package modeldefinition
+package definitions
 
 import (
 	"fmt"
-	"github.com/lab210-dev/dbkit/connector/drivers"
-	"github.com/lab210-dev/dbkit/specs"
+	"github.com/kitstack/dbkit/connector/drivers"
+	"github.com/kitstack/dbkit/specs"
 	"reflect"
 	"strings"
 	"sync"
@@ -34,11 +34,8 @@ func (field *fieldDefinition) Join() (joins []specs.DriverJoin) {
 	if field.Model().FromField() != nil {
 		if !field.IsSlice() {
 			join := drivers.NewJoin().
-				SetFromTableIndex(field.Model().Index()).
-				SetToTable(field.Model().FromField().Model().TableName()).
-				SetToTableIndex(field.Model().FromField().Model().Index()).
-				SetFromKey(field.Model().FromField().Tags()["column"]).
-				SetToKey(field.Model().FromField().Tags()["foreignKey"])
+				SetFrom(drivers.NewField().SetIndex(field.Model().FromField().Model().Index()).SetTable(field.Model().FromField().Model().TableName()).SetColumn(field.Model().FromField().Tags()["column"]).SetDatabase(field.Model().FromField().Model().DatabaseName())).
+				SetTo(drivers.NewField().SetIndex(field.Model().Index()).SetTable(field.Model().TableName()).SetColumn(field.Model().FromField().Tags()["foreignKey"]).SetDatabase(field.Model().DatabaseName()))
 
 			joins = append(joins, join)
 		}
@@ -94,7 +91,10 @@ func (field *fieldDefinition) Init() {
 	field.Model().FromField().Init()
 
 	if field.Model().FromField().Value().Kind() == reflect.Ptr {
-		field.Model().FromField().Value().Set(field.Model().ModelValue().Addr())
+		cpy := reflect.New(field.Model().ModelValue().Type())
+		cpy.Elem().Set(field.Model().ModelValue())
+
+		field.Model().FromField().Value().Set(cpy)
 		return
 	}
 
@@ -128,8 +128,17 @@ func (field *fieldDefinition) SetIsSlice(isSlice bool) {
 	field.isSlice = isSlice
 }
 
+func (field *fieldDefinition) FromSlice() bool {
+	if field.Model().FromField() != nil {
+		if field.Model().FromField().FromSlice() {
+			return true
+		}
+	}
+	return field.IsSlice()
+}
+
 func (md *modelDefinition) parseField(index int) specs.FieldDefinition {
-	fieldStruct := md.modelType.Field(index)
+	fieldStruct := md.ModelValue().Type().Field(index)
 
 	field := new(fieldDefinition)
 	field.name = fieldStruct.Name
@@ -159,7 +168,7 @@ func (md *modelDefinition) parseField(index int) specs.FieldDefinition {
 
 func (field *fieldDefinition) ParseTags() {
 	field.tags = make(map[string]string)
-	// TODO (Lab210-dev) : add support to client choice of tag name
+	// TODO (kitstack) : add support to client choice of tag name
 	tags := field.tag.Get("dbKit")
 
 	for _, tag := range strings.Split(tags, ",") {
@@ -203,16 +212,28 @@ func (field *fieldDefinition) Column() string {
 	return field.tags["column"]
 }
 
+func (field *fieldDefinition) ForeignKey() string {
+	return field.tags["foreignKey"]
+}
+
 func (field *fieldDefinition) IsPrimaryKey() bool {
 	return field.tags["primaryKey"] == "true"
 }
 
 func (field *fieldDefinition) Field() specs.DriverField {
-	return drivers.NewField().SetName(field.Column()).SetIndex(field.Index()).SetNameInSchema(field.RecursiveFullName())
+	return drivers.NewField().SetColumn(field.Column()).SetIndex(field.Index()).SetName(field.RecursiveFullName())
+}
+
+func (field *fieldDefinition) GetByColumn() (specs.FieldDefinition, error) {
+	return field.Model().GetFieldByColumn(field.Column())
+}
+
+func (field *fieldDefinition) GetToColumn() (specs.FieldDefinition, error) {
+	return field.EmbeddedSchema().GetFieldByColumn(field.ForeignKey())
 }
 
 func (field *fieldDefinition) RecursiveFullName() string {
-	// TODO (Lab210-dev) : maybe try to simplify this
+	// TODO (kitstack) : maybe try to simplify this
 	if field.recursiveFullName != "" {
 		return field.recursiveFullName
 	}
@@ -224,6 +245,10 @@ func (field *fieldDefinition) RecursiveFullName() string {
 
 	field.recursiveFullName = fmt.Sprintf("%s.%s", field.schema.FromField().RecursiveFullName(), field.Name())
 	return field.recursiveFullName
+}
+
+func (field *fieldDefinition) FundamentalName() string {
+	return strings.Split(field.RecursiveFullName(), ".")[0]
 }
 
 func (field *fieldDefinition) IsSameSchemaFromField() bool {

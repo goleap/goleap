@@ -1,23 +1,83 @@
 package drivers
 
 import (
-	"github.com/stretchr/testify/assert"
+	"errors"
+	"github.com/kitstack/dbkit/specs"
+	"github.com/kitstack/dbkit/tests/mocks"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestField(t *testing.T) {
-	suite := assert.New(t)
-	f := NewField()
+type FieldTestSuite struct {
+	suite.Suite
+	field     *field
+	fakeField *mocks.FakeDriverField
+}
 
-	suite.Equal("", f.NameInSchema())
-	f.SetNameInSchema("field_name")
-	suite.Equal("field_name", f.NameInSchema())
+func (suite *FieldTestSuite) SetupTest() {
+	suite.field = NewField().(*field)
+	suite.field.SetIndex(1)
+	suite.field.SetColumn("name")
+	suite.field.SetName("name_in_model")
 
-	suite.Equal(0, f.Index())
-	f.SetIndex(5)
-	suite.Equal(5, f.Index())
+	suite.fakeField = mocks.NewFakeDriverField(suite.T())
+}
 
-	suite.Equal("", f.Name())
-	f.SetName(" field name ")
-	suite.Equal("field name", f.Name())
+func (suite *FieldTestSuite) TestTable() {
+	suite.field.SetTable("t1")
+	suite.Equal("t1", suite.field.Table())
+}
+
+func (suite *FieldTestSuite) TestDatabase() {
+	suite.field.SetDatabase("db1")
+	suite.Equal("db1", suite.field.Database())
+}
+
+func (suite *FieldTestSuite) TestColumn() {
+	column, err := suite.field.Formatted()
+
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), "`t1`.`name`", column)
+}
+
+func (suite *FieldTestSuite) TestColumnWithFn() {
+	suite.field.SetCustom("CONCAT('%', ${Name}, '%')", []specs.DriverField{NewField().SetName("Name").SetColumn("name")})
+
+	column, err := suite.field.Formatted()
+
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), "(CONCAT('%', `t0`.`name`, '%'))", column)
+	assert.True(suite.T(), suite.field.IsCustom())
+}
+
+func (suite *FieldTestSuite) TestColumnWithFnErrNoMatch() {
+	suite.field.SetCustom("CONCAT('%', ${Name}, '%')", []specs.DriverField{NewField().SetName("unknown").SetColumn("name")})
+
+	column, err := suite.field.Formatted()
+
+	assert.Equal(suite.T(), "", column)
+	assert.Error(suite.T(), err)
+
+	assert.IsType(suite.T(), &unknownFieldsErr{}, err)
+	assert.EqualValues(suite.T(), "unknown fields: Name", err.Error())
+	assert.Equal(suite.T(), []string{"Name"}, err.(specs.ErrUnknownFields).Fields())
+}
+
+func (suite *FieldTestSuite) TestColumnWithFnColumnErr() {
+	suite.fakeField.On("Name").Return("Name")
+	suite.fakeField.On("Formatted").Return("", errors.New("column_error"))
+
+	suite.field.SetCustom("CONCAT('%', ${Name}, '%')", []specs.DriverField{suite.fakeField})
+
+	column, err := suite.field.Formatted()
+
+	assert.Equal(suite.T(), "", column)
+	assert.Error(suite.T(), err)
+	assert.EqualValues(suite.T(), "column_error", err.Error())
+}
+
+func TestFieldTestSuite(t *testing.T) {
+	suite.Run(t, new(FieldTestSuite))
 }

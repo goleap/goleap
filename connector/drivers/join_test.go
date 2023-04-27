@@ -1,54 +1,154 @@
 package drivers
 
 import (
-	"fmt"
-	"github.com/lab210-dev/dbkit/connector/drivers/joins"
-	"github.com/stretchr/testify/assert"
+	"errors"
+	"github.com/kitstack/dbkit/connector/drivers/joins"
+	"github.com/kitstack/dbkit/tests/mocks"
+	"github.com/stretchr/testify/suite"
 	"testing"
 )
 
-func TestJoin(t *testing.T) {
-	suite := assert.New(t)
-	j := NewJoin()
+type JoinTestSuite struct {
+	suite.Suite
+	fakeField *mocks.FakeDriverField
+}
 
-	suite.Equal("", j.FromKey())
-	j.SetFromKey("from_key")
-	suite.Equal("from_key", j.FromKey())
+func (suite *JoinTestSuite) SetupTest() {
+	suite.fakeField = mocks.NewFakeDriverField(suite.T())
+}
 
-	suite.Equal("", j.ToTable())
-	j.SetToTable("to_table")
-	suite.Equal("to_table", j.ToTable())
+func (suite *JoinTestSuite) TestJoinMethodDefault() {
+	join := NewJoin()
 
-	suite.Equal("", j.ToKey())
-	j.SetToKey("to_key")
-	suite.Equal("to_key", j.ToKey())
+	suite.Equal(joins.Method[joins.Default], join.Method())
+}
 
-	suite.Equal("", j.ToDatabase())
-	j.SetToDatabase("to_database")
-	suite.Equal("to_database", j.ToDatabase())
+func (suite *JoinTestSuite) TestJoinSetMethod() {
+	join := NewJoin()
 
-	suite.Equal(0, j.FromTableIndex())
-	j.SetFromTableIndex(1)
-	suite.Equal(1, j.FromTableIndex())
+	join.SetMethod(joins.Inner)
 
-	suite.Equal(0, j.ToTableIndex())
-	j.SetToTableIndex(2)
-	suite.Equal(2, j.ToTableIndex())
+	suite.Equal(joins.Method[joins.Inner], join.Method())
+}
 
-	suite.Equal(joins.Method[joins.Default], j.Method())
-	j.SetMethod(joins.Inner)
-	suite.Equal(joins.Method[joins.Inner], j.Method())
+func (suite *JoinTestSuite) TestFromFormattedErr() {
+	join := NewJoin().(*join)
 
-	j.SetToKey("")
+	suite.fakeField.On("Formatted").Return("", errors.New("from_formatted_err")).Once()
 
-	err := j.Validate()
-	suite.NotNil(err)
-	suite.Equal(fmt.Errorf(`the following fields "ToKey" are mandatory to perform the join`), err)
+	join.SetFrom(suite.fakeField)
+	_, err := join.fromFormatted()
+	suite.Error(err)
 
-	j.SetFromKey("from_key")
-	j.SetToTable("to_table")
-	j.SetToKey("to_key")
+	suite.EqualValues("from_formatted_err", err.Error())
+}
 
-	err = j.Validate()
-	suite.Nil(err)
+func (suite *JoinTestSuite) TestToFormattedErr() {
+	join := NewJoin().(*join)
+
+	suite.fakeField.On("Formatted").Return("", errors.New("to_formatted_err")).Once()
+
+	join.SetTo(suite.fakeField)
+	_, err := join.toFormatted()
+	suite.Error(err)
+
+	suite.EqualValues("to_formatted_err", err.Error())
+}
+
+func (suite *JoinTestSuite) TestJoinWithCustomField() {
+	join := NewJoin()
+
+	suite.fakeField.On("Formatted").Return("(CONCAT('%', `t0`.`name`, '%'))", nil).Once()
+
+	join.SetFrom(suite.fakeField)
+
+	suite.fakeField.On("IsCustom").Return(false).Once()
+	suite.fakeField.On("Formatted").Return("`t1`.`id`", nil).Once()
+	suite.fakeField.On("Database").Return("acceptance").Once()
+	suite.fakeField.On("Table").Return("users").Once()
+	suite.fakeField.On("Index").Return(1).Once()
+
+	join.SetTo(suite.fakeField)
+
+	formattedJoin, err := join.Formatted()
+	suite.NoError(err)
+
+	suite.Equal("JOIN `acceptance`.`users` AS `t1` ON `t1`.`id` = (CONCAT('%', `t0`.`name`, '%'))", formattedJoin)
+}
+
+func (suite *JoinTestSuite) TestJoinWithCustomFieldToErr() {
+	join := NewJoin()
+
+	suite.fakeField.On("Formatted").Return("(CONCAT('%', `t0`.`name`, '%'))", nil).Once()
+
+	join.SetFrom(suite.fakeField)
+
+	suite.fakeField.On("Formatted").Return("`t1`.`id`", errors.New("formatted_to_err")).Once()
+
+	join.SetTo(suite.fakeField)
+
+	_, err := join.Formatted()
+	suite.Error(err)
+
+	suite.EqualValues("formatted_to_err", err.Error())
+}
+
+func (suite *JoinTestSuite) TestJoinWithCustomFieldFromErr() {
+	join := NewJoin()
+
+	suite.fakeField.On("Formatted").Return("", errors.New("formatted_from_err")).Once()
+
+	join.SetFrom(suite.fakeField)
+	join.SetTo(suite.fakeField)
+
+	_, err := join.Formatted()
+	suite.Error(err)
+
+	suite.EqualValues("formatted_from_err", err.Error())
+}
+
+func (suite *JoinTestSuite) TestJoinWithInvertedCustomField() {
+	join := NewJoin()
+
+	suite.fakeField.On("Formatted").Return("`t0`.`id`", nil).Once()
+
+	join.SetFrom(suite.fakeField)
+
+	suite.fakeField.On("IsCustom").Return(true).Once()
+	suite.fakeField.On("Formatted").Return("(CONCAT('%', `t0`.`name`, '%'))", nil).Once()
+
+	join.SetTo(suite.fakeField)
+
+	formattedJoin, err := join.Formatted()
+	suite.NoError(err)
+
+	suite.Equal("JOIN (CONCAT('%', `t0`.`name`, '%')) = `t0`.`id`", formattedJoin)
+}
+
+func (suite *JoinTestSuite) TestValidateErr() {
+	join := NewJoin()
+
+	err := join.Validate()
+
+	suite.Error(err)
+	suite.IsType(&requiredFieldJoinErr{}, err)
+	suite.Contains(err.Error(), "are mandatory to perform the join")
+
+	for _, field := range []string{"From", "To"} {
+		suite.Contains(err.(*requiredFieldJoinErr).Fields(), field)
+	}
+}
+
+func (suite *JoinTestSuite) TestValidate() {
+	join := NewJoin()
+
+	join.SetFrom(suite.fakeField)
+	join.SetTo(suite.fakeField)
+	err := join.Validate()
+
+	suite.NoError(err)
+}
+
+func TestJoinTestSuite(t *testing.T) {
+	suite.Run(t, new(JoinTestSuite))
 }

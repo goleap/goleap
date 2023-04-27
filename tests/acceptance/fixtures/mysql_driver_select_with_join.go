@@ -2,51 +2,65 @@ package fixtures
 
 import (
 	"context"
-	"errors"
-	"github.com/lab210-dev/dbkit"
-	"github.com/lab210-dev/dbkit/connector/drivers"
-	"github.com/lab210-dev/dbkit/specs"
-	"github.com/lab210-dev/dbkit/tests/models"
+	"github.com/kitstack/dbkit"
+	"github.com/kitstack/dbkit/connector/drivers"
+	"github.com/kitstack/dbkit/connector/drivers/joins"
+	"github.com/kitstack/dbkit/specs"
+	"github.com/kitstack/dbkit/tests/models"
 )
 
-func (f *Fixture) MysqlDriverSelectWithJoin(ctx context.Context) (err error) {
-	joins := []specs.DriverJoin{
-		drivers.NewJoin().
-			SetToTable("posts").
-			SetToTableIndex(1).
-			SetToKey("id").
-			SetFromKey("post_id").
-			SetToDatabase("acceptance"),
+func (fixture *Fixture) MysqlDriverSelectWithJoin(ctx context.Context) (err error) {
+	requiredJoins := []specs.DriverJoin{
+		drivers.NewJoin().SetMethod(joins.Default).
+			SetFrom(
+				drivers.NewField().SetTable("comments").SetColumn("parent_id"),
+			).
+			SetTo(
+				drivers.NewField().SetDatabase("acceptance").SetIndex(1).SetTable("comments").SetColumn("id"),
+			),
 	}
 	fields := []specs.DriverField{
-		drivers.NewField().SetName("id").SetNameInSchema("Id"),
+		drivers.NewField().SetIndex(1).SetColumn("id").SetName("Parent.Id"),
 	}
 
 	selectPayload := dbkit.NewPayload[*models.CommentsModel]()
 	selectPayload.SetFields(fields)
-	selectPayload.SetJoins(joins)
+	selectPayload.SetJoins(requiredJoins)
 
-	err = f.Connector().Select(ctx, selectPayload)
-	if err != nil {
-		return err
+	err = fixture.Connector().Select(ctx, selectPayload)
+	fixture.Assert().NoError(err)
+
+	fixture.Assert().Len(selectPayload.Result(), 2)
+
+	fixture.Assert().EqualValues(6, selectPayload.Result()[0].Parent.Id)
+	fixture.Assert().EqualValues(7, selectPayload.Result()[1].Parent.Id)
+	return
+}
+
+func (fixture *Fixture) MysqlDriverSelectWithJoinCustom(ctx context.Context) (err error) {
+	// TODO: Change to real scenario because this is not a real scenario...
+	requiredJoins := []specs.DriverJoin{
+		drivers.NewJoin().SetMethod(joins.Default).
+			SetFrom(
+				drivers.NewField().SetTable("users").SetColumn("id"),
+			).
+			SetTo(
+				drivers.NewField().SetDatabase("acceptance").SetIndex(1).SetTable("posts").SetCustom("SELECT MIN(id) FROM posts WHERE posts.c_user_id = ${Id} LIMIT 1", []specs.DriverField{
+					drivers.NewField().SetColumn("id").SetIndex(0).SetName("Id"),
+				}),
+			),
+	}
+	fields := []specs.DriverField{
+		drivers.NewField().SetIndex(1).SetColumn("id").SetName("Id"),
 	}
 
-	if len(selectPayload.Result()) == 0 {
-		return errors.New("result is empty")
-	}
+	selectPayload := dbkit.NewPayload[*models.UsersModel]()
+	selectPayload.SetFields(fields)
+	selectPayload.SetJoins(requiredJoins)
 
-	if total := len(selectPayload.Result()); total != 8 {
-		return errors.New("result is not equal to 7")
-	}
+	err = fixture.Connector().Select(ctx, selectPayload)
+	fixture.Assert().NoError(err)
 
-	sum := 0
-	for _, result := range selectPayload.Result() {
-		sum += int(result.Id)
-	}
-
-	// Validate join return 7 rows with id 1, 2, 3, 4, 5, 6, 7, 8
-	if sum != 36 {
-		return errors.New("result is not equal to 36")
-	}
+	fixture.Assert().Len(selectPayload.Result(), 12)
 	return
 }

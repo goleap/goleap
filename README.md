@@ -1,8 +1,8 @@
-[![Go](https://github.com/lab210-dev/dbkit/actions/workflows/coverage.yml/badge.svg)](https://github.com/lab210-dev/dbkit/actions/workflows/coverage.yml)
-![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/lab210-dev/dbkit)
-[![Go Report Card](https://goreportcard.com/badge/github.com/lab210-dev/dbkit)](https://goreportcard.com/report/github.com/lab210-dev/dbkit)
-[![codecov](https://codecov.io/gh/lab210-dev/dbkit/branch/main/graph/badge.svg?token=RIKFTRY6Q9)](https://codecov.io/gh/lab210-dev/dbkit)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/lab210-dev/dbkit/blob/main/LICENSE)
+[![Go](https://github.com/kitstack/dbkit/actions/workflows/coverage.yml/badge.svg)](https://github.com/kitstack/dbkit/actions/workflows/coverage.yml)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/kitstack/dbkit)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kitstack/dbkit)](https://goreportcard.com/report/github.com/kitstack/dbkit)
+[![codecov](https://codecov.io/gh/kitstack/dbkit/branch/main/graph/badge.svg?token=RIKFTRY6Q9)](https://codecov.io/gh/kitstack/dbkit)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/kitstack/dbkit/blob/main/LICENSE)
 
 # DbKit
 

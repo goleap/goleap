@@ -9,10 +9,6 @@ type DriverTestSuite struct {
 	suite.Suite
 }
 
-func (test *DriverTestSuite) SetupSuite() {
-
-}
-
 func (test *DriverTestSuite) TestGetDriver() {
 	drv, err := Get("mysql")
 	if !test.Empty(err) {

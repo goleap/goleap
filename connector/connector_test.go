@@ -3,10 +3,10 @@ package connector
 import (
 	"context"
 	"database/sql"
-	"github.com/lab210-dev/dbkit/connector/config"
-	"github.com/lab210-dev/dbkit/connector/drivers"
-	"github.com/lab210-dev/dbkit/specs"
-	"github.com/lab210-dev/dbkit/tests/mocks/fakesql"
+	"github.com/kitstack/dbkit/connector/config"
+	"github.com/kitstack/dbkit/connector/drivers"
+	"github.com/kitstack/dbkit/specs"
+	"github.com/kitstack/dbkit/tests/mocks/fakesql"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )

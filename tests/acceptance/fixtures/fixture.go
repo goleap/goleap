@@ -1,20 +1,54 @@
 package fixtures
 
 import (
-	"github.com/lab210-dev/dbkit/connector"
-	"github.com/lab210-dev/dbkit/connector/config"
-	"github.com/lab210-dev/dbkit/specs"
+	"fmt"
+	"github.com/kitstack/dbkit/connector"
+	"github.com/kitstack/dbkit/connector/config"
+	"github.com/kitstack/dbkit/specs"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Fixture struct {
-	connector specs.Connector
+	connector        specs.Connector
+	assert           *assert.Assertions
+	assertErrorCount int
+	assertCount      int
 }
 
-func (f *Fixture) Connector() specs.Connector {
-	if f.connector != nil {
-		return f.connector
+func (fixture *Fixture) AssertErrorCount() int {
+	return fixture.assertErrorCount
+}
+
+func (fixture *Fixture) AssertCount() int {
+	return fixture.assertCount
+}
+
+func (fixture *Fixture) Reset() {
+	fixture.assertErrorCount = 0
+}
+
+func (fixture *Fixture) Assert() *assert.Assertions {
+	fixture.assertCount++
+	if fixture.assert != nil {
+		return fixture.assert
+	}
+	fixture.assert = assert.New(fixture)
+	return fixture.assert
+}
+
+func (fixture *Fixture) Errorf(format string, args ...any) {
+	fixture.assertErrorCount++
+
+	format = strings.ReplaceAll(format, "\n", "\n│")
+	fmt.Printf(format, args...)
+}
+
+func (fixture *Fixture) Connector() specs.Connector {
+	if fixture.connector != nil {
+		return fixture.connector
 	}
 	var err error
 	port, err := strconv.Atoi(os.Getenv("MYSQL_PORT"))
@@ -22,7 +56,7 @@ func (f *Fixture) Connector() specs.Connector {
 		port = 3306
 	}
 
-	f.connector, err = connector.New("acceptance",
+	fixture.connector, err = connector.New("acceptance",
 		config.New().
 			SetDriver("mysql").
 			SetHost(os.Getenv("MYSQL_HOST")).
@@ -36,5 +70,5 @@ func (f *Fixture) Connector() specs.Connector {
 		panic(err)
 	}
 
-	return f.connector
+	return fixture.connector
 }

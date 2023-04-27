@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Run tests and get global coverage
+coverage=$(go test ./... --cover  | awk '/coverage:/ ' | awk '{if ($1 != "?") print $5; else print "0.0";}' | sed 's/\%//g' | awk '{s+=$1} END {printf "%.2f\n", s/NR}')
+
+# Check if coverage is 100%
+if [[ $coverage != "100.00" ]]; then
+  echo "Error: global coverage is $coverage%, it should be 100.00%."
+  exit 1
+fi

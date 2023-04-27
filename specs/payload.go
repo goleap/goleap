@@ -1,5 +1,7 @@
 package specs
 
+type NewPayload[T Model] func(model ...Model) PayloadAugmented[T]
+
 type Payload interface {
 	Table() string
 	Database() string
@@ -8,10 +10,12 @@ type Payload interface {
 	Fields() []DriverField
 	Join() []DriverJoin
 	Where() []DriverWhere
+	Limit() DriverLimit
 
 	SetFields([]DriverField) Payload
 	SetJoins([]DriverJoin) Payload
 	SetWheres([]DriverWhere) Payload
+	SetLimit(DriverLimit) Payload
 
 	Mapping() ([]any, error)
 	OnScan([]any) error

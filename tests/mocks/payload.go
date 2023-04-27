@@ -1,7 +1,7 @@
 package mocks
 
 import (
-	"github.com/lab210-dev/dbkit/specs"
+	"github.com/kitstack/dbkit/specs"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -49,6 +49,21 @@ func (_m *FakePayload) Index() int {
 		r0 = rf()
 	} else {
 		r0 = ret.Get(0).(int)
+	}
+
+	return r0
+}
+
+func (_m *FakePayload) Limit() specs.DriverLimit {
+	ret := _m.Called()
+
+	var r0 specs.DriverLimit
+	if rf, ok := ret.Get(0).(func() specs.DriverLimit); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(specs.DriverLimit)
+		}
 	}
 
 	return r0
@@ -148,6 +163,22 @@ func (_m *FakePayload) SetWheres(_a0 []specs.DriverWhere) specs.Payload {
 
 	var r0 specs.Payload
 	if rf, ok := ret.Get(0).(func([]specs.DriverWhere) specs.Payload); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(specs.Payload)
+		}
+	}
+
+	return r0
+}
+
+// SetLimit provides a mock function with given fields: _a0
+func (_m *FakePayload) SetLimit(_a0 specs.DriverLimit) specs.Payload {
+	ret := _m.Called(_a0)
+
+	var r0 specs.Payload
+	if rf, ok := ret.Get(0).(func(specs.DriverLimit) specs.Payload); ok {
 		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {

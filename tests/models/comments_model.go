@@ -5,6 +5,7 @@ import "time"
 type CommentsModel struct {
 	User    UsersModel     `dbKit:"column:user_id, foreignKey:id"`
 	Id      uint           `dbKit:"column:id, primaryKey"`
+	PostId  uint           `dbKit:"column:post_id"`
 	Post    PostsModel     `dbKit:"column:post_id, foreignKey:id"`
 	Parent  *CommentsModel `dbKit:"column:parent_id, foreignKey:id"`
 	Content string         `dbKit:"column:content"`

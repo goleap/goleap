@@ -6,18 +6,21 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	"github.com/lab210-dev/dbkit/connector/drivers/operators"
-	"github.com/lab210-dev/dbkit/specs"
+	"github.com/kitstack/dbkit/specs"
+	"github.com/kitstack/depkit"
 	log "github.com/sirupsen/logrus"
 )
 
-var generateInArgument = sqlx.In
+func init() {
+	depkit.Register[specs.SqlIn](sqlx.In)
+}
 
 type Mysql struct {
 	specs.Config
 	db *sql.DB
 }
 
+// New is a function to create a new mysql driver.
 func (m *Mysql) New(config specs.Config) (err error) {
 	m.Config = config
 
@@ -39,16 +42,21 @@ func (m *Mysql) New(config specs.Config) (err error) {
 	return
 }
 
-func (m *Mysql) buildFields(fields []specs.DriverField) (result string) {
+func (m *Mysql) buildFields(fields []specs.DriverField) (result string, err error) {
 	for i, field := range fields {
 		if i > 0 {
 			result += ", "
 		}
 
-		result += fmt.Sprintf("`t%d`.`%s`", field.Index(), field.Name())
+		column, err := field.Formatted()
+		if err != nil {
+			return "", err
+		}
+
+		result += column
 	}
 
-	return result
+	return result, nil
 }
 
 func (m *Mysql) buildJoin(joins []specs.DriverJoin) (result string, err error) {
@@ -62,30 +70,33 @@ func (m *Mysql) buildJoin(joins []specs.DriverJoin) (result string, err error) {
 			return "", err
 		}
 
-		// TODO Maybe add specific operator for join
-		result += fmt.Sprintf("%s `%s`.`%s` AS `t%d` ON `t%d`.`%s` = `t%d`.`%s`", field.Method(), field.ToDatabase(), field.ToTable(), field.ToTableIndex(), field.ToTableIndex(), field.ToKey(), field.FromTableIndex(), field.FromKey())
+		formatted, err := field.Formatted()
+		if err != nil {
+			return "", err
+		}
+
+		result += formatted
 	}
 
 	return
 }
 
-func (m *Mysql) buildWhere(fields []specs.DriverWhere) (result string, args []any, err error) {
-	for i, field := range fields {
-
-		operator := m.buildOperator(field)
-		// This case is very strange because it does not generate an error.
-		if operator == "" {
-			return "", nil, fmt.Errorf("unknown operator: %s", field.Operator())
-		}
+func (m *Mysql) buildWhere(wheres []specs.DriverWhere) (result string, args []any, err error) {
+	for i, where := range wheres {
 
 		if i > 0 {
 			result += " AND "
 		}
 
-		result += fmt.Sprintf("`t%d`.`%s` %s", field.From().Index(), field.From().Name(), operator)
+		formatted, whereArgs, err := where.Formatted()
+		if err != nil {
+			return "", nil, err
+		}
 
-		if field.To() != nil {
-			args = append(args, field.To())
+		result += formatted
+
+		if whereArgs != nil {
+			args = append(args, whereArgs...)
 		}
 	}
 
@@ -96,19 +107,27 @@ func (m *Mysql) buildWhere(fields []specs.DriverWhere) (result string, args []an
 	return
 }
 
-func (m *Mysql) buildOperator(field specs.DriverWhere) string {
-	switch field.Operator() {
-	case operators.Equal, operators.NotEqual:
-		return fmt.Sprintf("%s ?", field.Operator())
-	case operators.In, operators.NotIn:
-		return fmt.Sprintf("%s (?)", field.Operator())
-	case operators.IsNull, operators.IsNotNull:
-		return field.Operator()
+func (m *Mysql) buildLimit(limit specs.DriverLimit) (result string, err error) {
+	if limit == nil {
+		return
 	}
-	return ""
+
+	return limit.Formatted()
 }
 
+// Db is a helper function to get the database connection.
+func (m *Mysql) Db() *sql.DB {
+	return m.db
+}
+
+// Select TODO: add options for passing tx
+// Select is a helper function to select data from database.
 func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
+	buildFields, err := m.buildFields(payload.Fields())
+	if err != nil {
+		return
+	}
+
 	builtWhere, args, err := m.buildWhere(payload.Where())
 	if err != nil {
 		return
@@ -119,9 +138,12 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 		return
 	}
 
-	builtFields := m.buildFields(payload.Fields())
+	buildLimit, err := m.buildLimit(payload.Limit())
+	if err != nil {
+		return
+	}
 
-	query := fmt.Sprintf("SELECT %s FROM `%s`.`%s` AS `t%d`", builtFields, m.Database(), payload.Table(), payload.Index())
+	query := fmt.Sprintf("SELECT %s FROM `%s`.`%s` AS `t%d`", buildFields, m.Database(), payload.Table(), payload.Index())
 
 	if builtJoin != "" {
 		query += fmt.Sprintf(" %s", builtJoin)
@@ -131,7 +153,11 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 		query += fmt.Sprintf(" %s", builtWhere)
 	}
 
-	queryWithArgs, args, err := generateInArgument(query, args...)
+	if buildLimit != "" {
+		query += fmt.Sprintf(" %s", buildLimit)
+	}
+
+	queryWithArgs, args, err := depkit.Get[specs.SqlIn]()(query, args...)
 	if err != nil {
 		return
 	}
@@ -147,7 +173,7 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 		"args":  args,
 	}).Debug("Execute: Select()")
 
-	rows, err := m.db.QueryContext(ctx, queryWithArgs, args...)
+	rows, err := m.Db().QueryContext(ctx, queryWithArgs, args...)
 	if err != nil {
 		return
 	}
