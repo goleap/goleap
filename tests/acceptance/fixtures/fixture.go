@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/kitstack/dbkit/connector"
 	"github.com/kitstack/dbkit/connector/config"
+	"github.com/kitstack/dbkit/connectors"
 	"github.com/kitstack/dbkit/specs"
 	"github.com/stretchr/testify/assert"
 	"os"
@@ -50,6 +51,7 @@ func (fixture *Fixture) Connector() specs.Connector {
 	if fixture.connector != nil {
 		return fixture.connector
 	}
+
 	var err error
 	port, err := strconv.Atoi(os.Getenv("MYSQL_PORT"))
 	if err != nil {
@@ -58,6 +60,7 @@ func (fixture *Fixture) Connector() specs.Connector {
 
 	fixture.connector, err = connector.New("acceptance",
 		config.New().
+			SetName("acceptance").
 			SetDriver("mysql").
 			SetHost(os.Getenv("MYSQL_HOST")).
 			SetUser(os.Getenv("MYSQL_USER")).
@@ -70,5 +73,18 @@ func (fixture *Fixture) Connector() specs.Connector {
 		panic(err)
 	}
 
+	err = connectors.Instance().Add(fixture.connector)
+
+	if err != nil {
+		panic(err)
+	}
+
 	return fixture.connector
+}
+
+func NewFixture() *Fixture {
+	fixture := new(Fixture)
+	fixture.Connector()
+
+	return fixture
 }

@@ -28,8 +28,6 @@ func build(ctx context.Context) error {
 	}
 	defer client.Close()
 
-	// vendor := client.CacheVolume("vendor")
-
 	dir := client.Host().Directory(".", dagger.HostDirectoryOpts{
 		Exclude: []string{"/vendor"},
 	})
@@ -55,15 +53,8 @@ func build(ctx context.Context) error {
 		WithEnvVariable("MYSQL_ROOT_PASSWORD", os.Getenv("MYSQL_ROOT_PASSWORD")).
 		WithEnvVariable("DEBUG", os.Getenv("DEBUG")).
 		WithMountedDirectory("/src", dir).
-		//WithMountedCache("/src/vendor", vendor).
 		WithWorkdir("/src").
-		WithExec([]string{"go", "run", "./tests/acceptance"}).Stdout(ctx)
-
-	/*	_, err = golang.WithExec([]string{"go", "run", "./tests/acceptance"}).Stdout(ctx)
-
-		if err != nil {
-			return err
-		}*/
+		WithExec(append([]string{"go", "run", "./tests/acceptance"}, os.Args[1:]...)).Stdout(ctx)
 
 	return nil
 }

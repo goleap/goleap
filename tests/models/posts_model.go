@@ -20,3 +20,7 @@ func (s *PostsModel) DatabaseName() string {
 func (s *PostsModel) TableName() string {
 	return "posts"
 }
+
+func (s *PostsModel) ConnectorName() string {
+	return "acceptance"
+}

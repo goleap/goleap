@@ -25,3 +25,7 @@ func (s *UsersModel) DatabaseName() string {
 func (s *UsersModel) TableName() string {
 	return "users"
 }
+
+func (s *UsersModel) ConnectorName() string {
+	return "acceptance"
+}

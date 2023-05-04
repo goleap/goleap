@@ -85,7 +85,7 @@ func (j *join) Validate() error {
 	}
 
 	if len(errList) > 0 {
-		return NewRequiredFieldJoinErr(errList)
+		return NewErrRequiredFieldJoin(errList)
 	}
 
 	return nil

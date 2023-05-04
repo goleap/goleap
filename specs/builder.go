@@ -2,11 +2,11 @@ package specs
 
 import "context"
 
-type BuilderUse[T Model] func(ctx context.Context, connector Connector) Builder[T]
+type BuilderUse[T Model] func(ctx context.Context) Builder[T]
 
 type Builder[T Model] interface {
 	Context() context.Context
-	Connector() Connector
+	Connector() (Connector, error)
 
 	Get(primaryKey any) (T, error)
 	Delete(primaryKey any) error

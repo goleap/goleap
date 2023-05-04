@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"flag"
 	"fmt"
 	"github.com/kitstack/dbkit/tests/acceptance/fixtures"
 	"github.com/sirupsen/logrus"
@@ -14,7 +15,9 @@ import (
 	"time"
 )
 
-var isDebug = os.Getenv("DEBUG") == "true"
+var isDebug bool
+var test string
+
 var ctx context.Context
 var debugLog *bytes.Buffer
 
@@ -26,12 +29,16 @@ func init() {
 	logrus.SetOutput(debugLog)
 
 	ctx = context.Background()
+
+	flag.BoolVar(&isDebug, "debug", os.Getenv("DEBUG") == "true", "Debug mode")
+	flag.StringVar(&test, "test", "", "Run test by name")
+	flag.Parse()
 }
 
 func main() {
-	fx := fixtures.Fixture{}
-	rf := reflect.ValueOf(&fx)
-	typeOf := reflect.TypeOf(&fx)
+	fx := fixtures.NewFixture()
+	rf := reflect.ValueOf(&fx).Elem()
+	typeOf := reflect.TypeOf(&fx).Elem()
 
 	testsCount := 0
 	failedTestCount := 0
@@ -56,6 +63,10 @@ func main() {
 		}
 
 		if method.Type().Out(0) != reflect.TypeOf((*error)(nil)).Elem() {
+			continue
+		}
+
+		if test != "" && test != typeOf.Method(i).Name {
 			continue
 		}
 

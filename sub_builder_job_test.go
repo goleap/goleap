@@ -21,7 +21,6 @@ type SubBuilderJobTestSuite struct {
 	fakeFieldDefinition    *mocks.FakeFieldDefinition
 	fakePayloadAugmented   *mocks.FakePayloadAugmented[specs.Model]
 	fakeBuilder            *mocks.FakeBuilder[specs.Model]
-	fakeConnector          *mocks.FakeConnector
 	fakeUseModelDefinition *mocks.FakeUseModelDefinition
 	fakeBuilderUse         *mocks.FakeBuilderUse[specs.Model]
 
@@ -35,7 +34,6 @@ func (test *SubBuilderJobTestSuite) SetupTest() {
 	test.fakeFieldDefinition = mocks.NewFakeFieldDefinition(test.T())
 	test.fakePayloadAugmented = mocks.NewFakePayloadAugmented[specs.Model](test.T())
 	test.fakeBuilder = mocks.NewFakeBuilder[specs.Model](test.T())
-	test.fakeConnector = mocks.NewFakeConnector(test.T())
 	test.fakeUseModelDefinition = mocks.NewFakeUseModelDefinition(test.T())
 	test.fakeBuilderUse = mocks.NewFakeBuilderUse[specs.Model](test.T())
 	test.fakeGet = structKitMocks.NewFakeGet(test.T())
@@ -88,12 +86,11 @@ func (test *SubBuilderJobTestSuite) TestNewSubBuilderJob() {
 	test.fakeFieldDefinition.On("RecursiveFullName").Return("PostId").Once()
 
 	test.fakeBuilder.On("Context").Return(context.Background()).Once()
-	test.fakeBuilder.On("Connector").Return(test.fakeConnector).Once()
 
 	test.fakeFieldDefinition.On("Model").Return(test.fakeModelDefinition, nil).Once()
 	test.fakeModelDefinition.On("Copy").Return(comments).Once()
 
-	test.fakeBuilderUse.On("Use", test.Context, test.fakeConnector).Return(test.fakeBuilder).Once()
+	test.fakeBuilderUse.On("Use", test.Context).Return(test.fakeBuilder).Once()
 	test.fakeBuilder.On("SetModel", comments).Return(test.fakeBuilder)
 	test.fakeBuilder.On("Fields").Return([]string{"Fundamental.Label", "Other"})
 	test.fakeBuilder.On("SetFields", "Label", "PostId").Return(test.fakeBuilder)
@@ -130,12 +127,11 @@ func (test *SubBuilderJobTestSuite) TestNewSubBuilderJobSetError() {
 	test.fakeFieldDefinition.On("RecursiveFullName").Return("PostId").Once()
 
 	test.fakeBuilder.On("Context").Return(context.Background()).Once()
-	test.fakeBuilder.On("Connector").Return(test.fakeConnector).Once()
 
 	test.fakeFieldDefinition.On("Model").Return(test.fakeModelDefinition, nil).Once()
 	test.fakeModelDefinition.On("Copy").Return(comments).Once()
 
-	test.fakeBuilderUse.On("Use", test.Context, test.fakeConnector).Return(test.fakeBuilder).Once()
+	test.fakeBuilderUse.On("Use", test.Context).Return(test.fakeBuilder).Once()
 	test.fakeBuilder.On("SetModel", comments).Return(test.fakeBuilder)
 	test.fakeBuilder.On("Fields").Return([]string{"Fundamental.Label", "Other"})
 	test.fakeBuilder.On("SetFields", "Label", "PostId").Return(test.fakeBuilder)
@@ -173,12 +169,11 @@ func (test *SubBuilderJobTestSuite) TestNewSubBuilderJobErr() {
 	test.fakeFieldDefinition.On("RecursiveFullName").Return("To").Once()
 
 	test.fakeBuilder.On("Context").Return(context.Background()).Once()
-	test.fakeBuilder.On("Connector").Return(test.fakeConnector).Once()
 
 	test.fakeFieldDefinition.On("Model").Return(test.fakeModelDefinition, nil).Once()
 	test.fakeModelDefinition.On("Copy").Return(comments).Once()
 
-	test.fakeBuilderUse.On("Use", test.Context, test.fakeConnector).Return(test.fakeBuilder).Once()
+	test.fakeBuilderUse.On("Use", test.Context).Return(test.fakeBuilder).Once()
 	test.fakeBuilder.On("SetModel", comments).Return(test.fakeBuilder)
 	test.fakeBuilder.On("Fields").Return([]string{"Fundamental.Label"})
 	test.fakeBuilder.On("SetFields", "Label", "To").Return(test.fakeBuilder)

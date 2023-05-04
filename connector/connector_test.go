@@ -48,6 +48,6 @@ func (test *ConnectorTestSuite) TestFailNewConnector() {
 	test.Empty(conn)
 }
 
-func TestSchemaTestSuite(t *testing.T) {
+func TestConnectorTestSuite(t *testing.T) {
 	suite.Run(t, new(ConnectorTestSuite))
 }

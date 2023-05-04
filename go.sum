@@ -34,8 +34,8 @@ github.com/jmoiron/sqlx v1.3.5/go.mod h1:nRVWtLre0KfCLJvgxzCsLVMogSvQ1zNJtpYr2Cc
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
 github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
 github.com/kevinmbeaulieu/eq-go v1.0.0/go.mod h1:G3S8ajA56gKBZm4UB9AOyoOS37JO3roToPzKNM8dtdM=
-github.com/kitstack/depkit v1.1.0 h1:6klETFe27iy1xmHU7ZgoUz0Q44KTU7AjLM2DjeE9YDk=
-github.com/kitstack/depkit v1.1.0/go.mod h1:ix9Hx3ibONxslRiAzt2WRcAzrF4rraCIkPEk106Qev0=
+github.com/kitstack/depkit v1.1.1 h1:gm1M8e8ZHvMAvQ/uLBEdQmXei9t/+CXK7le32jt+7JQ=
+github.com/kitstack/depkit v1.1.1/go.mod h1:ix9Hx3ibONxslRiAzt2WRcAzrF4rraCIkPEk106Qev0=
 github.com/kitstack/structkit v1.1.0 h1:1uWunXh24QA+1nfZjWGrEnz0VUN5EEIcJMHbg1MmFLg=
 github.com/kitstack/structkit v1.1.0/go.mod h1:mjijFVaAF6HnVXNZ0AroI9LttAskL3bZ6UVhVhDhE04=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=

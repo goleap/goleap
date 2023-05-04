@@ -257,7 +257,7 @@ func (test *SchemaTestSuite) TestGetToColumn() {
 	test.Equal("Post.Comments.PostId", to.RecursiveFullName())
 
 	// FundamentalName
-	test.Equal("Post", idFieldDefinition.FundamentalName())
+	test.Equal("Post.Comments", idFieldDefinition.FundamentalName())
 
 	_, err = idFieldDefinition.Model().GetFieldByColumn("unknown")
 	test.Error(err)

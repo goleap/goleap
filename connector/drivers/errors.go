@@ -6,50 +6,50 @@ import (
 	"strings"
 )
 
-type unknownOperatorErr struct {
+type ErrUnknownOperator struct {
 	operator string
 }
 
-func (e *unknownOperatorErr) Operator() string {
+func (e *ErrUnknownOperator) Operator() string {
 	return e.operator
 }
 
-func (e *unknownOperatorErr) Error() string {
+func (e *ErrUnknownOperator) Error() string {
 	return fmt.Sprintf("unknown operator: %s", e.Operator())
 }
 
-func NewUnknownOperatorErr(operator string) specs.ErrUnknownOperator {
-	return &unknownOperatorErr{operator: operator}
+func NewErrUnknownOperator(operator string) specs.ErrUnknownOperator {
+	return &ErrUnknownOperator{operator: operator}
 }
 
-type unknownFieldsErr struct {
+type ErrUnknownFields struct {
 	fields []string
 }
 
-func (e *unknownFieldsErr) Fields() []string {
+func (e *ErrUnknownFields) Fields() []string {
 	return e.fields
 }
 
-func (e *unknownFieldsErr) Error() string {
+func (e *ErrUnknownFields) Error() string {
 	return fmt.Sprintf("unknown fields: %s", strings.Join(e.Fields(), ", "))
 }
 
-func NewUnknownFieldsErr(fields []string) specs.ErrUnknownFields {
-	return &unknownFieldsErr{fields: fields}
+func NewErrUnknownFields(fields []string) specs.ErrUnknownFields {
+	return &ErrUnknownFields{fields: fields}
 }
 
-type requiredFieldJoinErr struct {
+type ErrRequiredFieldJoin struct {
 	fields []string
 }
 
-func (e *requiredFieldJoinErr) Fields() []string {
+func (e *ErrRequiredFieldJoin) Fields() []string {
 	return e.fields
 }
 
-func (e *requiredFieldJoinErr) Error() string {
+func (e *ErrRequiredFieldJoin) Error() string {
 	return fmt.Sprintf("the following fields \"%s\" are mandatory to perform the join", strings.Join(e.fields, ", "))
 }
 
-func NewRequiredFieldJoinErr(fields []string) specs.ErrRequiredFieldJoin {
-	return &requiredFieldJoinErr{fields: fields}
+func NewErrRequiredFieldJoin(fields []string) specs.ErrRequiredFieldJoin {
+	return &ErrRequiredFieldJoin{fields: fields}
 }

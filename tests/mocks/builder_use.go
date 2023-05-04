@@ -13,12 +13,12 @@ type FakeBuilderUse[T specs.Model] struct {
 }
 
 // Use provides a mock function with given fields: ctx, connector
-func (_m *FakeBuilderUse[T]) Use(ctx context.Context, connector specs.Connector) specs.Builder[T] {
-	ret := _m.Called(ctx, connector)
+func (_m *FakeBuilderUse[T]) Use(ctx context.Context) specs.Builder[T] {
+	ret := _m.Called(ctx)
 
 	var r0 specs.Builder[T]
-	if rf, ok := ret.Get(0).(func(context.Context, specs.Connector) specs.Builder[T]); ok {
-		r0 = rf(ctx, connector)
+	if rf, ok := ret.Get(0).(func(context.Context) specs.Builder[T]); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(specs.Builder[T])

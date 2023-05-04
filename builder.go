@@ -7,6 +7,7 @@ import (
 	"github.com/kitstack/dbkit/specs"
 	"github.com/kitstack/depkit"
 	"reflect"
+	"sort"
 	"sync"
 )
 
@@ -33,6 +34,7 @@ type builder[T specs.Model] struct {
 	wheres []specs.Condition
 
 	selectedFieldsDefinition []specs.FieldDefinition
+	filterFieldsDefinition   []specs.FieldDefinition
 
 	driverFields []specs.DriverField
 	driverJoins  []specs.DriverJoin
@@ -43,10 +45,6 @@ type builder[T specs.Model] struct {
 
 func (o *builder[T]) Context() context.Context {
 	return o.context
-}
-
-func (o *builder[T]) Connector() specs.Connector {
-	return o.connector
 }
 
 func (o *builder[T]) SubBuilder() specs.SubBuilder[T] {
@@ -80,7 +78,7 @@ func (o *builder[T]) valideRequiredField() error {
 		return nil
 	}
 
-	return NewFieldRequiredError(o.QueryType())
+	return NewErrFieldRequired(o.QueryType())
 }
 
 func (o *builder[T]) buildFields() (err error) {
@@ -92,7 +90,7 @@ func (o *builder[T]) buildFields() (err error) {
 		}
 
 		if field.FromSlice() {
-			o.subBuilder.AddJob(o, field.Model().FromField().RecursiveFullName(), field.Model())
+			o.subBuilder.AddJob(o, field.Model().FromField().FundamentalName(), field.Model())
 			continue
 		}
 
@@ -110,6 +108,7 @@ func (o *builder[T]) buildWheres() (err error) {
 			return err
 		}
 
+		o.filterFieldsDefinition = append(o.filterFieldsDefinition, fieldDefinition)
 		o.driverWheres = append(o.driverWheres, drivers.NewWhere().SetFrom(fieldDefinition.Field()).SetOperator(where.Operator()).SetTo(where.To()))
 	}
 
@@ -126,9 +125,15 @@ func (o *builder[T]) getDriverFields() []specs.DriverField {
 }
 
 func (o *builder[T]) getDriverJoins() ([]specs.DriverJoin, error) {
-
 	uniqueJoins := map[string]specs.DriverJoin{}
-	for _, field := range o.selectedFieldsDefinition {
+	uniqueFields := map[string]bool{}
+	mergedField := append(o.selectedFieldsDefinition, o.filterFieldsDefinition...)
+
+	for _, field := range mergedField {
+		recursiveFullName := field.RecursiveFullName()
+		if _, ok := uniqueFields[recursiveFullName]; ok {
+			continue
+		}
 
 		for _, join := range field.Join() {
 			formatted, err := join.Formatted()
@@ -136,19 +141,35 @@ func (o *builder[T]) getDriverJoins() ([]specs.DriverJoin, error) {
 				return nil, err
 			}
 			uniqueJoins[formatted] = join
+			uniqueFields[recursiveFullName] = true
 		}
-
 	}
 
 	for _, join := range uniqueJoins {
 		o.driverJoins = append(o.driverJoins, join)
 	}
 
+	sort.SliceStable(o.driverJoins, func(i, j int) bool {
+		return o.driverJoins[i].To().Index() < o.driverJoins[j].To().Index()
+	})
+
 	return o.driverJoins, nil
 }
 
 func (o *builder[T]) getDriverWheres() []specs.DriverWhere {
 	return o.driverWheres
+}
+
+func (o *builder[T]) Connector() (specs.Connector, error) {
+	if o.connector == nil {
+		connector, err := depkit.Get[specs.ConnectorsInstance]()().Get(o.model.ConnectorName())
+		if err != nil {
+			return nil, err
+		}
+		o.connector = connector
+	}
+
+	return o.connector, nil
 }
 
 func (o *builder[T]) buildPayload() error {
@@ -178,9 +199,7 @@ func (o *builder[T]) Get(primaryKeyValue any) (result T, err error) {
 		return
 	}
 
-	o.SetWhere(NewCondition().SetFrom(primaryField.RecursiveFullName()).
-		SetOperator(operators.Equal).
-		SetTo(primaryKeyValue))
+	o.wheres = append([]specs.Condition{NewCondition().SetFrom(primaryField.RecursiveFullName()).SetOperator(operators.Equal).SetTo(primaryKeyValue)}, o.wheres...)
 
 	return o.Find()
 }
@@ -192,7 +211,7 @@ func (o *builder[T]) Find() (result T, err error) {
 	}
 
 	if len(data) == 0 {
-		err = NewNotFoundError(o.modelDefinition.TypeName())
+		err = NewErrNotFound(o.modelDefinition.TypeName())
 		return
 	}
 
@@ -213,7 +232,12 @@ func (o *builder[T]) FindAll() ([]T, error) {
 		return nil, err
 	}
 
-	err = o.Connector().Select(o.Context(), o.Payload())
+	connector, err := o.Connector()
+	if err != nil {
+		return nil, err
+	}
+
+	err = connector.Select(o.Context(), o.Payload())
 	if err != nil {
 		return nil, err
 	}
@@ -288,14 +312,13 @@ func (o *builder[T]) SetModel(model T) specs.Builder[T] {
 	return o
 }
 
-func Use[T specs.Model](ctx context.Context, connector specs.Connector) specs.Builder[T] {
+func Use[T specs.Model](ctx context.Context) specs.Builder[T] {
 	var model T
 
 	injectGenericDependencies[T]()
 
 	var builder specs.Builder[T] = &builder[T]{
 		context:    ctx,
-		connector:  connector,
 		subBuilder: depkit.Get[specs.NewSubBuilder[T]]()(),
 	}
 

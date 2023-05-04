@@ -1,6 +1,6 @@
 package specs
 
-type ErrNotFoundError error
+type ErrNotFound error
 type ErrPrimaryFieldNotFound error
 type ErrFieldRequired error
 
