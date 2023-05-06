@@ -8,11 +8,14 @@ import (
 	"os"
 )
 
-func main() {
+func init() {
 	err := godotenv.Load()
 	if err != nil {
 		panic(err)
 	}
+}
+
+func main() {
 
 	if err := build(context.Background()); err != nil {
 		fmt.Println(err)

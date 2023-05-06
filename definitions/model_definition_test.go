@@ -236,6 +236,21 @@ func (test *SchemaTestSuite) TestGetPrimaryField() {
 	test.ErrorContains(err, "no primary field found in model `DebugModel`")
 }
 
+func (test *SchemaTestSuite) TestFundamentalName() {
+	schemaTest := Use(&models.CommentsModel{}).Parse()
+	idFieldDefinition, err := schemaTest.GetFieldByName("Id")
+	if !test.NoError(err) {
+		return
+	}
+	test.Equal("Id", idFieldDefinition.FundamentalName())
+
+	idFieldDefinition, err = schemaTest.GetFieldByName("Post.Comments.Id")
+	if !test.NoError(err) {
+		return
+	}
+	test.Equal("Post.Comments", idFieldDefinition.FundamentalName())
+}
+
 func (test *SchemaTestSuite) TestGetToColumn() {
 	schemaTest := Use(&models.CommentsModel{}).Parse()
 
@@ -255,9 +270,6 @@ func (test *SchemaTestSuite) TestGetToColumn() {
 		return
 	}
 	test.Equal("Post.Comments.PostId", to.RecursiveFullName())
-
-	// FundamentalName
-	test.Equal("Post.Comments", idFieldDefinition.FundamentalName())
 
 	_, err = idFieldDefinition.Model().GetFieldByColumn("unknown")
 	test.Error(err)

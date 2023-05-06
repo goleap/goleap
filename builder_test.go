@@ -3,6 +3,7 @@ package dbkit
 import (
 	"context"
 	"errors"
+	"github.com/kitstack/dbkit/connectors"
 	"github.com/kitstack/dbkit/definitions"
 	"github.com/kitstack/dbkit/specs"
 	"github.com/kitstack/dbkit/tests/mocks"
@@ -267,8 +268,13 @@ func (test *BuilderTestSuite) TestGet() {
 	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
 	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
 
-	test.fakeFieldDefinition.On("Join").Return([]specs.DriverJoin{test.fakeDriverJoin}).Once()
-	test.fakeDriverJoin.On("Formatted").Return("JOIN `comments` ON `comments`.`id` = `posts`.`id`", nil).Once()
+	test.fakeFieldDefinition.On("Join").Return([]specs.DriverJoin{test.fakeDriverJoin, test.fakeDriverJoin}).Once()
+	test.fakeDriverJoin.On("Formatted").Return("FIRST_JOIN", nil).Once()
+	test.fakeDriverJoin.On("Formatted").Return("SECOND_JOIN", nil).Once()
+
+	test.fakeDriverJoin.On("To").Return(test.fakeDriverField).Twice()
+	test.fakeDriverField.On("Index").Return(0).Once()
+	test.fakeDriverField.On("Index").Return(1).Once()
 
 	test.fakeCommentPayloadConstruct.On("NewPayload", (*models.CommentsModel)(nil)).Return(test.fakeCommentPayloadAugmented)
 	test.fakeCommentPayloadAugmented.On("SetFields", mock.Anything).Return(test.fakeCommentPayloadAugmented)
@@ -285,6 +291,39 @@ func (test *BuilderTestSuite) TestGet() {
 	test.NoError(err)
 
 	test.Equal(comment.Id, uint(1))
+}
+
+func (test *BuilderTestSuite) TestGetConnectorErr() {
+	test.fakeUseModelDefinition.On("Use", (*models.CommentsModel)(nil)).Return(test.fakeModelDefinition)
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition)
+
+	builderInstance := Use[*models.CommentsModel](test.Context)
+	if !test.NotEmpty(builderInstance) {
+		return
+	}
+
+	test.fakeModelDefinition.On("GetPrimaryField").Return(test.fakeFieldDefinition, nil)
+	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id").Times(3)
+	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build fields
+	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build where
+	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
+	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
+	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
+
+	test.fakeFieldDefinition.On("Join").Return([]specs.DriverJoin{test.fakeDriverJoin}).Once()
+	test.fakeDriverJoin.On("Formatted").Return("JOIN `comments` ON `comments`.`id` = `posts`.`id`", nil).Once()
+
+	test.fakeCommentPayloadConstruct.On("NewPayload", (*models.CommentsModel)(nil)).Return(test.fakeCommentPayloadAugmented)
+	test.fakeCommentPayloadAugmented.On("SetFields", mock.Anything).Return(test.fakeCommentPayloadAugmented)
+	test.fakeCommentPayloadAugmented.On("SetWheres", mock.Anything).Return(test.fakeCommentPayloadAugmented)
+	test.fakeCommentPayloadAugmented.On("SetJoins", mock.Anything).Return(test.fakeCommentPayloadAugmented)
+
+	test.fakeConnectorsInstance.On("Instance").Return(test.fakeConnectors, nil)
+	test.fakeConnectors.On("Get", "acceptance").Return(test.fakeConnector, connectors.NewConnectorNotFoundError("UNKNOWN"))
+
+	_, err := builderInstance.SetFields("Id").Get("Primary")
+	test.Error(err)
+	test.Equal("unknown connector: UNKNOWN", err.Error())
 }
 
 func (test *BuilderTestSuite) TestWheres() {

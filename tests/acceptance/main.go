@@ -5,6 +5,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/joho/godotenv"
 	"github.com/kitstack/dbkit/tests/acceptance/fixtures"
 	"github.com/sirupsen/logrus"
 	"log"
@@ -22,6 +23,11 @@ var ctx context.Context
 var debugLog *bytes.Buffer
 
 func init() {
+	err := godotenv.Load()
+	if err != nil {
+		panic(err)
+	}
+
 	log.SetFlags(0)
 	logrus.SetLevel(logrus.DebugLevel)
 
