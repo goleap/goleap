@@ -22,14 +22,17 @@ func main() {
 	}
 }
 
-func build(ctx context.Context) error {
+func build(ctx context.Context) (err error) {
 	fmt.Println("Acceptance tests")
 
 	client, err := dagger.Connect(ctx, dagger.WithLogOutput(os.Stdout))
 	if err != nil {
 		return err
 	}
-	defer client.Close()
+
+	defer func(client *dagger.Client) {
+		err = client.Close()
+	}(client)
 
 	dir := client.Host().Directory(".", dagger.HostDirectoryOpts{
 		Exclude: []string{"/vendor"},
@@ -45,7 +48,7 @@ func build(ctx context.Context) error {
 		WithExposedPort(3306).
 		WithExec(nil)
 
-	client.
+	_, err = client.
 		Container().
 		From("golang:latest").
 		WithServiceBinding("db", db).
@@ -59,5 +62,5 @@ func build(ctx context.Context) error {
 		WithWorkdir("/src").
 		WithExec(append([]string{"go", "run", "./tests/acceptance"}, os.Args[1:]...)).Stdout(ctx)
 
-	return nil
+	return
 }
