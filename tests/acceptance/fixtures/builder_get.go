@@ -10,13 +10,19 @@ import (
 )
 
 func (fixture *Fixture) BuilderUnknownConnector(ctx context.Context) (err error) {
+	tmp, err := connectors.Instance().Get("acceptance")
+	fixture.Require().NoError(err)
+
 	connectors.Instance().Remove("acceptance")
 
 	_, err = dbkit.Use[*models.UsersModel](ctx).SetFields("Id").Get(1)
 
-	fixture.Assert().Error(err)
+	fixture.Require().Error(err)
 	fixture.Assert().Equal("unknown connector: acceptance", err.Error())
 	fixture.Assert().Implements((*specs.ErrConnectorNotFound)(nil), err)
+
+	err = connectors.Instance().Add(tmp)
+	fixture.Require().NoError(err)
 
 	return nil
 }
@@ -24,6 +30,26 @@ func (fixture *Fixture) BuilderUnknownConnector(ctx context.Context) (err error)
 func (fixture *Fixture) BuilderGet(ctx context.Context) (err error) {
 
 	user, err := dbkit.Use[*models.UsersModel](ctx).SetFields("Id").Get(1)
+
+	fixture.Assert().NoError(err)
+	fixture.Assert().EqualValues(1, user.Id)
+
+	return
+}
+
+func (fixture *Fixture) BuilderGetWithDifferentModelConnector(ctx context.Context) (err error) {
+
+	user, err := dbkit.Use[*models.LikeModel](ctx).SetFields("Id", "User.Id").Get(1)
+
+	fixture.Assert().NoError(err)
+	fixture.Assert().EqualValues(1, user.Id)
+
+	return
+}
+
+func (fixture *Fixture) BuilderWhereWithDifferentModelConnector(ctx context.Context) (err error) {
+
+	user, err := dbkit.Use[*models.LikeModel](ctx).SetFields("Id").SetWhere(dbkit.NewCondition().SetFrom("User.Id").SetOperator(operators.Equal).SetTo(1)).Find()
 
 	fixture.Assert().NoError(err)
 	fixture.Assert().EqualValues(1, user.Id)

@@ -7,6 +7,7 @@ import (
 	"github.com/kitstack/dbkit/connectors"
 	"github.com/kitstack/dbkit/specs"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"os"
 	"strconv"
 	"strings"
@@ -15,8 +16,12 @@ import (
 type Fixture struct {
 	connector        specs.Connector
 	assert           *assert.Assertions
+	require          *require.Assertions
 	assertErrorCount int
 	assertCount      int
+}
+
+func (fixture *Fixture) FailNow() {
 }
 
 func (fixture *Fixture) AssertErrorCount() int {
@@ -40,6 +45,15 @@ func (fixture *Fixture) Assert() *assert.Assertions {
 	return fixture.assert
 }
 
+func (fixture *Fixture) Require() *require.Assertions {
+	fixture.assertCount++
+	if fixture.require != nil {
+		return fixture.require
+	}
+	fixture.require = require.New(fixture)
+	return fixture.require
+}
+
 func (fixture *Fixture) Errorf(format string, args ...any) {
 	fixture.assertErrorCount++
 
@@ -52,28 +66,46 @@ func (fixture *Fixture) Connector() specs.Connector {
 		return fixture.connector
 	}
 
-	var err error
 	port, err := strconv.Atoi(os.Getenv("MYSQL_PORT"))
 	if err != nil {
 		port = 3306
 	}
 
-	fixture.connector, err = connector.New("acceptance",
-		config.New().
-			SetName("acceptance").
-			SetDriver("mysql").
-			SetHost(os.Getenv("MYSQL_HOST")).
-			SetUser(os.Getenv("MYSQL_USER")).
-			SetPassword(os.Getenv("MYSQL_PASSWORD")).
-			SetDatabase(os.Getenv("MYSQL_DATABASE")).
-			SetPort(port),
-	)
+	acceptance := config.New().
+		SetName("acceptance").
+		SetDriver("mysql").
+		SetHost(os.Getenv("MYSQL_HOST")).
+		SetUser(os.Getenv("MYSQL_USER")).
+		SetPassword(os.Getenv("MYSQL_PASSWORD")).
+		SetDatabase(os.Getenv("MYSQL_DATABASE")).
+		SetPort(port)
 
+	fixture.connector, err = connector.New("acceptance", acceptance)
 	if err != nil {
 		panic(err)
 	}
 
 	err = connectors.Instance().Add(fixture.connector)
+
+	if err != nil {
+		panic(err)
+	}
+
+	acceptanceExtent := config.New().
+		SetName("acceptance_extend").
+		SetDriver("mysql").
+		SetHost(os.Getenv("MYSQL_HOST")).
+		SetUser(os.Getenv("MYSQL_USER")).
+		SetPassword(os.Getenv("MYSQL_PASSWORD")).
+		SetDatabase(os.Getenv("MYSQL_DATABASE")).
+		SetPort(port)
+
+	connectorExtend, err := connector.New("acceptance_extend", acceptanceExtent)
+	if err != nil {
+		panic(err)
+	}
+
+	err = connectors.Instance().Add(connectorExtend)
 
 	if err != nil {
 		panic(err)

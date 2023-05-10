@@ -11,7 +11,6 @@ import (
 	"log"
 	"os"
 	"reflect"
-	"runtime/debug"
 	"strings"
 	"time"
 )
@@ -90,13 +89,13 @@ func main() {
 
 		// recover
 		try := func() (result []reflect.Value) {
-			defer func() {
-				if r := recover(); r != nil {
-					result = make([]reflect.Value, 1)
-					result[0] = reflect.ValueOf(fmt.Errorf("%v", r))
-					debug.PrintStack()
-				}
-			}()
+			/*		defer func() {
+					if r := recover(); r != nil {
+						result = make([]reflect.Value, 1)
+						result[0] = reflect.ValueOf(fmt.Errorf("%v", r))
+						debug.PrintStack()
+					}
+				}()*/
 			result = method.Call(args)
 			return
 		}

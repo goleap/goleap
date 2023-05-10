@@ -57,6 +57,17 @@ func (field *fieldDefinition) IsSlice() bool {
 	return field.isSlice
 }
 
+func (field *fieldDefinition) Origin() specs.FieldDefinition {
+	if field.Model().FromField() != nil {
+		return field.Model().FromField().Origin()
+	}
+	return field
+}
+
+func (field *fieldDefinition) HasSameOriginalConnector() bool {
+	return field.Model().ConnectorName() == field.Origin().Model().ConnectorName()
+}
+
 func (field *fieldDefinition) FromSchemaTypeList() (new []string) {
 	if field.Model().FromField() != nil {
 		new = append(new, field.Model().FromField().FromSchemaTypeList()...)

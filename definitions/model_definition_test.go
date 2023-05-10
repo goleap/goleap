@@ -200,6 +200,38 @@ func (test *SchemaTestSuite) TestJoin() {
 	})
 }
 
+func (test *SchemaTestSuite) TestGetOrigin() {
+	schemaTest := Use(&models.LikeModel{}).Parse()
+	userIdFieldDefinition, err := schemaTest.GetFieldByName("User.Id")
+	if !test.NoError(err) {
+		return
+	}
+
+	test.Equal(userIdFieldDefinition.Origin().RecursiveFullName(), "User")
+	test.Equal(userIdFieldDefinition.Origin().Model().ConnectorName(), "acceptance_extend")
+
+	test.Equal(userIdFieldDefinition.RecursiveFullName(), "User.Id")
+	test.Equal(userIdFieldDefinition.Model().ConnectorName(), "acceptance")
+
+	test.False(userIdFieldDefinition.HasSameOriginalConnector())
+}
+
+func (test *SchemaTestSuite) TestHasSameOriginalConnector() {
+	schemaTest := Use(&models.UsersModel{}).Parse()
+	field, err := schemaTest.GetFieldByName("Id")
+	if !test.NoError(err) {
+		return
+	}
+	test.True(field.HasSameOriginalConnector())
+
+	schemaTest = Use(&models.LikeModel{}).Parse()
+	field, err = schemaTest.GetFieldByName("User.Id")
+	if !test.NoError(err) {
+		return
+	}
+	test.False(field.HasSameOriginalConnector())
+}
+
 func (test *SchemaTestSuite) TestGetFieldByName() {
 	schemaTest := Use(&models.UsersModel{}).Parse()
 

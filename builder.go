@@ -89,7 +89,7 @@ func (o *builder[T]) buildFields() (err error) {
 			return err
 		}
 
-		if field.FromSlice() {
+		if field.FromSlice() || !field.HasSameOriginalConnector() {
 			o.subBuilder.AddJob(o, field.Model().FromField().FundamentalName(), field.Model())
 			continue
 		}
@@ -106,6 +106,11 @@ func (o *builder[T]) buildWheres() (err error) {
 		fieldDefinition, err := o.modelDefinition.GetFieldByName(where.From())
 		if err != nil {
 			return err
+		}
+
+		if !fieldDefinition.HasSameOriginalConnector() {
+			o.subBuilder.AddJob(o, fieldDefinition.Model().FromField().FundamentalName(), fieldDefinition.Model())
+			continue
 		}
 
 		o.filterFieldsDefinition = append(o.filterFieldsDefinition, fieldDefinition)
@@ -135,7 +140,13 @@ func (o *builder[T]) getDriverJoins() ([]specs.DriverJoin, error) {
 			continue
 		}
 
+		if !field.HasSameOriginalConnector() {
+			o.subBuilder.AddJob(o, field.Model().FromField().FundamentalName(), field.Model())
+			continue
+		}
+
 		for _, join := range field.Join() {
+
 			formatted, err := join.Formatted()
 			if err != nil {
 				return nil, err

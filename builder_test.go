@@ -40,6 +40,7 @@ type BuilderTestSuite struct {
 
 	fakeNewSubBuilder *mocks.FakeNewSubBuilder[*models.PostsModel]
 	fakeSubBuilder    *mocks.FakeSubBuilder[*models.PostsModel]
+	fakeCondition     *mocks.FakeCondition
 }
 
 func (test *BuilderTestSuite) SetupTest() {
@@ -64,6 +65,7 @@ func (test *BuilderTestSuite) SetupTest() {
 
 	test.fakeNewSubBuilder = mocks.NewFakeNewSubBuilder[*models.PostsModel](test.T())
 	test.fakeSubBuilder = mocks.NewFakeSubBuilder[*models.PostsModel](test.T())
+	test.fakeCondition = mocks.NewFakeCondition(test.T())
 
 	depkit.Reset()
 	depkit.Register[specs.UseModelDefinition](test.fakeUseModelDefinition.Use)
@@ -137,6 +139,7 @@ func (test *BuilderTestSuite) TestBuildWhereErr() {
 	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id").Once()
 
 	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
+	test.fakeFieldDefinition.On("HasSameOriginalConnector").Return(true).Times(1)
 	test.fakeModelDefinition.On("GetFieldByName", "unknown").Return(test.fakeFieldDefinition, nil).Once()
 
 	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(nil, errors.New("test")).Once()
@@ -165,6 +168,7 @@ func (test *BuilderTestSuite) TestGetWithNotFoundErr() {
 
 	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id").Times(3)
 	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
+	test.fakeFieldDefinition.On("HasSameOriginalConnector").Return(true).Times(4)
 
 	test.fakeModelDefinition.On("TypeName").Return("mock")
 
@@ -199,6 +203,7 @@ func (test *BuilderTestSuite) TestGetSelectErr() {
 	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build fields
 	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build where
 	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
+	test.fakeFieldDefinition.On("HasSameOriginalConnector").Return(true).Times(4)
 
 	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
 	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
@@ -233,7 +238,9 @@ func (test *BuilderTestSuite) TestBuildPayloadJoinErr() {
 	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id").Times(2)
 	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build fields
 	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build where
+
 	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
+	test.fakeFieldDefinition.On("HasSameOriginalConnector").Return(true).Times(3)
 
 	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
 	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
@@ -265,6 +272,7 @@ func (test *BuilderTestSuite) TestGet() {
 	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build fields
 	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build where
 	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
+	test.fakeFieldDefinition.On("HasSameOriginalConnector").Return(true).Times(3)
 	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
 	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
 
@@ -307,6 +315,7 @@ func (test *BuilderTestSuite) TestGetConnectorErr() {
 	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build fields
 	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once() // for build where
 	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
+	test.fakeFieldDefinition.On("HasSameOriginalConnector").Return(true).Times(3)
 	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
 	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
 
@@ -354,6 +363,74 @@ func (test *BuilderTestSuite) TestFields() {
 	test.Equal(builderInstance.Fields(), []string{"Hello", "World"})
 }
 
+func (test *BuilderTestSuite) TestWhereSubBuilderNotSameOriginalConnector() {
+	test.fakeUseModelDefinition.On("Use", (*models.PostsModel)(nil)).Return(test.fakeModelDefinition).Once()
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition).Once()
+
+	test.fakeNewSubBuilder.On("NewSubBuilder").Return(test.fakeSubBuilder).Once()
+
+	builderInstance := Use[*models.PostsModel](test.Context)
+	if !test.NotEmpty(builderInstance) {
+		return
+	}
+
+	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Times(2)
+	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
+	test.fakeFieldDefinition.On("HasSameOriginalConnector").Return(true).Once()
+
+	test.fakeFieldDefinition.On("Model").Return(test.fakeModelDefinition).Twice()
+	test.fakeModelDefinition.On("FromField").Return(test.fakeFieldDefinition).Once()
+
+	test.fakeCondition.On("From").Return("Id").Twice()
+	test.fakeFieldDefinition.On("HasSameOriginalConnector").Return(false).Once()
+	test.fakeFieldDefinition.On("FundamentalName").Return("Fundamental").Once()
+	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, errors.New("build_where_sub_with_not_same_original_connector")).Once()
+
+	test.fakeSubBuilder.On("AddJob", builderInstance, "Fundamental", test.fakeModelDefinition).Return(test.fakeSubBuilder).Once()
+
+	_, err := builderInstance.SetFields("Id").SetWhere(test.fakeCondition).SetWhere(test.fakeCondition).Find()
+	test.Error(err)
+	test.Equal("build_where_sub_with_not_same_original_connector", err.Error())
+}
+
+func (test *BuilderTestSuite) TestJoinSubBuilderNotSameOriginalConnector() {
+	test.fakeUseModelDefinition.On("Use", (*models.PostsModel)(nil)).Return(test.fakeModelDefinition).Once()
+	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition).Once()
+
+	test.fakeNewSubBuilder.On("NewSubBuilder").Return(test.fakeSubBuilder).Once()
+
+	builderInstance := Use[*models.PostsModel](test.Context)
+	if !test.NotEmpty(builderInstance) {
+		return
+	}
+
+	test.fakeModelDefinition.On("GetFieldByName", "Id").Return(test.fakeFieldDefinition, nil).Once()
+	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
+	test.fakeFieldDefinition.On("HasSameOriginalConnector").Return(true).Once()
+
+	test.fakePostPayloadConstruct.On("NewPayload", (*models.PostsModel)(nil)).Return(test.fakePostPayloadAugmented).Once()
+	test.fakePostPayloadAugmented.On("SetFields", mock.Anything).Return(test.fakePostPayloadAugmented).Once()
+	test.fakePostPayloadAugmented.On("SetWheres", mock.Anything).Return(test.fakePostPayloadAugmented).Once()
+	test.fakePostPayloadAugmented.On("SetJoins", mock.Anything).Return(test.fakePostPayloadAugmented).Once()
+
+	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
+	test.fakeFieldDefinition.On("RecursiveFullName").Return("Id").Once()
+	test.fakeFieldDefinition.On("HasSameOriginalConnector").Return(false).Once()
+
+	test.fakeFieldDefinition.On("Model").Return(test.fakeModelDefinition).Twice()
+	test.fakeModelDefinition.On("FromField").Return(test.fakeFieldDefinition).Once()
+	test.fakeFieldDefinition.On("FundamentalName").Return("Fundamental").Once()
+
+	test.fakeConnectors.On("Get", "acceptance").Return(test.fakeConnector, connectors.NewConnectorNotFoundError("build_join_sub_with_not_same_original_connector")).Once()
+	test.fakeConnectorsInstance.On("Instance").Return(test.fakeConnectors).Once()
+
+	test.fakeSubBuilder.On("AddJob", builderInstance, "Fundamental", test.fakeModelDefinition).Return(test.fakeSubBuilder).Once()
+
+	_, err := builderInstance.SetFields("Id").Find()
+	test.Error(err)
+	test.Equal("unknown connector: build_join_sub_with_not_same_original_connector", err.Error())
+}
+
 func (test *BuilderTestSuite) TestSubBuilder() {
 	test.fakeUseModelDefinition.On("Use", (*models.PostsModel)(nil)).Return(test.fakeModelDefinition).Once()
 	test.fakeModelDefinition.On("Parse").Return(test.fakeModelDefinition).Once()
@@ -377,6 +454,7 @@ func (test *BuilderTestSuite) TestSubBuilder() {
 
 	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
 	test.fakeFieldDefinition.On("FromSlice").Return(true).Once()
+	test.fakeFieldDefinition.On("HasSameOriginalConnector").Return(true).Times(4)
 
 	test.fakeFieldDefinition.On("FundamentalName").Return("Comments").Once()
 
@@ -431,6 +509,7 @@ func (test *BuilderTestSuite) TestSubBuilderErr() {
 
 	test.fakeFieldDefinition.On("FromSlice").Return(false).Once()
 	test.fakeFieldDefinition.On("FromSlice").Return(true).Once()
+	test.fakeFieldDefinition.On("HasSameOriginalConnector").Return(true).Times(4)
 
 	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()
 	test.fakeFieldDefinition.On("Field").Return(test.fakeDriverField).Once()

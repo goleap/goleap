@@ -209,6 +209,7 @@ func (test *MysqlTestSuite) TestSelectErr() {
 	})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
+	test.fakePayload.On("Database").Return("acceptance")
 	test.fakePayload.On("Table").Return("users")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(test.fakeDriverLimit)
@@ -247,6 +248,7 @@ func (test *MysqlTestSuite) TestSelectMappingErr() {
 
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
+	test.fakePayload.On("Database").Return("acceptance")
 	test.fakePayload.On("Table").Return("users")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
@@ -283,6 +285,7 @@ func (test *MysqlTestSuite) TestSimpleWhere() {
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Table").Return("users")
+	test.fakePayload.On("Database").Return("acceptance")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
 
@@ -344,6 +347,7 @@ func (test *MysqlTestSuite) TestSimpleWhereIsNullOperator() {
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Table").Return("test")
+	test.fakePayload.On("Database").Return("acceptance")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
 
@@ -382,6 +386,7 @@ func (test *MysqlTestSuite) TestSimpleWhereInOperator() {
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Table").Return("test")
+	test.fakePayload.On("Database").Return("acceptance")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
 
@@ -420,6 +425,7 @@ func (test *MysqlTestSuite) TestSimpleWhereInOperatorErr() {
 
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Table").Return("test")
+	test.fakePayload.On("Database").Return("acceptance")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
 
@@ -458,6 +464,7 @@ func (test *MysqlTestSuite) TestWhereMultiEqual() {
 
 	test.fakePayload.On("Mapping").Return([]any{}, nil)
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
+	test.fakePayload.On("Database").Return("acceptance")
 	test.fakePayload.On("Table").Return("users")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
@@ -490,6 +497,7 @@ func (test *MysqlTestSuite) TestSelect() {
 	})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
+	test.fakePayload.On("Database").Return("acceptance")
 	test.fakePayload.On("Table").Return("test")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
@@ -545,6 +553,7 @@ func (test *MysqlTestSuite) TestSelectWithNativeScanErr() {
 
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
+	test.fakePayload.On("Database").Return("acceptance")
 	test.fakePayload.On("Table").Return("users")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
@@ -599,6 +608,7 @@ func (test *MysqlTestSuite) TestSelectWithNativeWrapScanErr() {
 
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
+	test.fakePayload.On("Database").Return("acceptance")
 	test.fakePayload.On("Table").Return("users")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
@@ -655,6 +665,7 @@ func (test *MysqlTestSuite) TestSelectWithWhere() {
 
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{})
 	test.fakePayload.On("Where").Return([]specs.DriverWhere{})
+	test.fakePayload.On("Database").Return("acceptance")
 	test.fakePayload.On("Table").Return("users")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
@@ -715,6 +726,8 @@ func (test *MysqlTestSuite) TestJoin() {
 	test.fakePayload.On("Join").Return([]specs.DriverJoin{
 		test.fakeDriverJoin,
 	})
+
+	test.fakePayload.On("Database").Return("acceptance")
 	test.fakePayload.On("Limit").Return(nil)
 	test.fakePayload.On("Table").Return("comments")
 	test.fakePayload.On("Index").Return(0)
@@ -760,6 +773,8 @@ func (test *MysqlTestSuite) TestMultiJoin() {
 		test.fakeDriverJoin,
 		test.fakeDriverJoin,
 	})
+
+	test.fakePayload.On("Database").Return("acceptance")
 	test.fakePayload.On("Limit").Return(nil)
 	test.fakePayload.On("Table").Return("comments")
 	test.fakePayload.On("Index").Return(0)

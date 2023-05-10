@@ -143,7 +143,7 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 		return
 	}
 
-	query := fmt.Sprintf("SELECT %s FROM `%s`.`%s` AS `t%d`", buildFields, m.Database(), payload.Table(), payload.Index())
+	query := fmt.Sprintf("SELECT %s FROM `%s`.`%s` AS `t%d`", buildFields, payload.Database(), payload.Table(), payload.Index())
 
 	if builtJoin != "" {
 		query += fmt.Sprintf(" %s", builtJoin)

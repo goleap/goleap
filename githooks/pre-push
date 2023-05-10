@@ -8,3 +8,5 @@ if [[ $coverage != "100.00" ]]; then
   echo "Error: global coverage is $coverage%, it should be 100.00%."
   exit 1
 fi
+
+go run ./build/ci
