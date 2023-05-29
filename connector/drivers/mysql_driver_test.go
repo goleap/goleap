@@ -85,7 +85,7 @@ func (test *MysqlTestSuite) TestCreate() {
 		return
 	}
 
-	test.NotEmpty(drv.Get())
+	test.NotEmpty(drv.Manager())
 }
 
 func (test *MysqlTestSuite) TestBuildFieldsErr() {

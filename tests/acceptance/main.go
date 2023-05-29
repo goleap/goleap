@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"runtime/debug"
 	"strings"
 	"time"
 )
@@ -81,7 +82,7 @@ func main() {
 		timerTest := time.Now()
 
 		logrus.WithFields(logrus.Fields{
-			"name": typeOf.Method(i).Name,
+			"testName": typeOf.Method(i).Name,
 		}).Debug("Start test")
 
 		fx.Reset()
@@ -89,13 +90,13 @@ func main() {
 
 		// recover
 		try := func() (result []reflect.Value) {
-			/*		defer func() {
-					if r := recover(); r != nil {
-						result = make([]reflect.Value, 1)
-						result[0] = reflect.ValueOf(fmt.Errorf("%v", r))
-						debug.PrintStack()
-					}
-				}()*/
+			defer func() {
+				if r := recover(); r != nil {
+					result = make([]reflect.Value, 1)
+					result[0] = reflect.ValueOf(fmt.Errorf("%v", r))
+					debug.PrintStack()
+				}
+			}()
 			result = method.Call(args)
 			return
 		}
@@ -103,7 +104,7 @@ func main() {
 		result := try()
 
 		logrus.WithFields(logrus.Fields{
-			"name": typeOf.Method(i).Name,
+			"testName": typeOf.Method(i).Name,
 		}).Debug("End test")
 
 		if testErr := result[0].Interface(); testErr != nil || fx.AssertErrorCount() > 0 {

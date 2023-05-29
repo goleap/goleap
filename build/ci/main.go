@@ -1,3 +1,8 @@
+//
+// Use dagger to run acceptance tests
+// https://docs.dagger.io/
+//
+
 package main
 
 import (
@@ -5,25 +10,55 @@ import (
 	"dagger.io/dagger"
 	"fmt"
 	"github.com/joho/godotenv"
+	"log"
 	"os"
+	"os/signal"
+	"strings"
 )
+
+var goVersion string
 
 func init() {
 	err := godotenv.Load()
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Println("Environment variables loaded")
+
+	data, err := os.ReadFile(".gvmrc")
+	if err != nil {
+		panic(err)
+	}
+	goVersion = strings.TrimSpace(string(data))
 }
 
 func main() {
-
-	if err := build(context.Background()); err != nil {
-		fmt.Println(err)
+	if err := execute(context.Background()); err != nil {
+		panic(err)
 	}
 }
 
-func build(ctx context.Context) (err error) {
+func execute(ctx context.Context) (err error) {
 	fmt.Println("Acceptance tests")
+
+	ctx, cancel := context.WithCancel(ctx)
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	defer func() {
+		signal.Stop(c)
+		cancel()
+	}()
+
+	go func() {
+		select {
+		case <-c:
+			log.Print("Received SIGINT")
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
 
 	client, err := dagger.Connect(ctx, dagger.WithLogOutput(os.Stdout))
 	if err != nil {
@@ -50,7 +85,7 @@ func build(ctx context.Context) (err error) {
 
 	_, err = client.
 		Container().
-		From("golang:latest").
+		From(fmt.Sprintf("golang:%s", goVersion)).
 		WithServiceBinding("db", db).
 		WithEnvVariable("MYSQL_HOST", os.Getenv("MYSQL_HOST")).
 		WithEnvVariable("MYSQL_USER", os.Getenv("MYSQL_USER")).

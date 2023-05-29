@@ -38,8 +38,8 @@ func (i *connectors) Add(connector specs.Connector) specs.ErrConnectorAlreadyAdd
 	i.connector[connector.Name()] = connector
 
 	log.WithFields(log.Fields{
-		"name": connector.Name(),
-	}).Debug("connector added")
+		"connectorName": connector.Name(),
+	}).Debug("Connector added")
 
 	return nil
 }
