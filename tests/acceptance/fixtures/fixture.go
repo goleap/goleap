@@ -15,6 +15,7 @@ import (
 
 type Fixture struct {
 	connector        specs.Connector
+	connectorExtend  specs.Connector
 	assert           *assert.Assertions
 	require          *require.Assertions
 	assertErrorCount int
@@ -61,9 +62,9 @@ func (fixture *Fixture) Errorf(format string, args ...any) {
 	fmt.Printf(format, args...)
 }
 
-func (fixture *Fixture) Connector() specs.Connector {
+func (fixture *Fixture) buildConnector() {
 	if fixture.connector != nil {
-		return fixture.connector
+		return
 	}
 
 	port, err := strconv.Atoi(os.Getenv("MYSQL_PORT"))
@@ -90,6 +91,17 @@ func (fixture *Fixture) Connector() specs.Connector {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (fixture *Fixture) buildConnectorExtend() {
+	if fixture.connectorExtend != nil {
+		return
+	}
+
+	port, err := strconv.Atoi(os.Getenv("MYSQL_PORT"))
+	if err != nil {
+		port = 3306
+	}
 
 	acceptanceExtent := config.New().
 		SetName("acceptance_extend").
@@ -100,23 +112,33 @@ func (fixture *Fixture) Connector() specs.Connector {
 		SetDatabase(os.Getenv("MYSQL_DATABASE")).
 		SetPort(port)
 
-	connectorExtend, err := connector.New("acceptance_extend", acceptanceExtent)
+	fixture.connectorExtend, err = connector.New("acceptance_extend", acceptanceExtent)
 	if err != nil {
 		panic(err)
 	}
 
-	err = connectors.Instance().Add(connectorExtend)
+	err = connectors.Instance().Add(fixture.connectorExtend)
 
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (fixture *Fixture) ConnectorExtend() specs.Connector {
+	return fixture.connectorExtend
+}
+
+func (fixture *Fixture) Connector() specs.Connector {
+	fixture.buildConnector()
 
 	return fixture.connector
 }
 
 func NewFixture() *Fixture {
 	fixture := new(Fixture)
-	fixture.Connector()
+
+	fixture.buildConnector()
+	fixture.buildConnectorExtend()
 
 	return fixture
 }

@@ -39,7 +39,7 @@ func (i *connectors) Add(connector specs.Connector) specs.ErrConnectorAlreadyAdd
 
 	log.WithFields(log.Fields{
 		"connectorName": connector.Name(),
-	}).Debug("Connector added")
+	}).Debug("Added connector")
 
 	return nil
 }

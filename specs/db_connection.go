@@ -12,5 +12,6 @@ type Connection interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 	BeginTx(ctx context.Context, opts *sql.TxOptions) (Transaction, error)
 	PingContext(ctx context.Context) error
+	Kill() error
 	Close() error
 }

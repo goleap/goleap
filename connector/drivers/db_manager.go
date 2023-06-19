@@ -5,40 +5,53 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/kitstack/dbkit/specs"
-	"github.com/sirupsen/logrus"
+	"sync"
 )
 
-type transactionContext struct {
+type TransactionContext struct {
 	identifier string
-	success    chan bool
+	trx        *[]specs.Transaction
 }
 
-func newTransactionContext() *transactionContext {
-	return &transactionContext{
-		success: make(chan bool),
+func NewTransactionContext() *TransactionContext {
+	return &TransactionContext{
+		trx: &[]specs.Transaction{},
 	}
 }
 
-func (t *transactionContext) SetIdentifier(identifier string) {
+func (t *TransactionContext) SetIdentifier(identifier string) *TransactionContext {
 	t.identifier = identifier
+	return t
 }
 
-func (t *transactionContext) Identifier() string {
+func (t *TransactionContext) Identifier() string {
 	return t.identifier
 }
 
-func (t *transactionContext) Success() <-chan bool {
-	return t.success
+func (t *TransactionContext) Add(trx specs.Transaction) {
+	*t.trx = append(*t.trx, trx)
+}
+
+func (t *TransactionContext) Done(err error) {
+	for _, trx := range *t.trx {
+		if err != nil {
+			_ = trx.Rollback()
+			return
+		}
+		_ = trx.Commit()
+	}
 }
 
 type connectionManager struct {
+	sync.Mutex
 	*sql.DB
 	transactions map[string]specs.Transaction
 }
 
 func WrapDB(db *sql.DB) specs.ConnectionManager {
 	return &connectionManager{
-		DB: db,
+		DB:           db,
+		transactions: make(map[string]specs.Transaction),
 	}
 }
 
@@ -46,43 +59,37 @@ func (d *connectionManager) GetConnection(ctx context.Context) (connection specs
 	return WrapConnection(ctx, d.DB)
 }
 
-func (d *connectionManager) GetTransaction(ctx context.Context) error {
-	trxContext := ctx.Value(&transactionContext{}).(*transactionContext)
-	if trxContext == nil {
-		return errors.New("transaction context not found")
+func (d *connectionManager) GetTransaction(ctx context.Context) (transaction specs.Transaction, err error) {
+	trxContextAny := ctx.Value(TransactionContext{})
+	if trxContextAny == nil {
+		return nil, errors.New("GetTransaction required a context with instance of transactionContext")
 	}
 
-	identifier := trxContext.identifier
+	trxContext := trxContextAny.(*TransactionContext)
 
+	if trxContext.Identifier() == "" {
+		return nil, errors.New("GetTransaction required a context with instance of transactionContext with identifier")
+	}
+
+	d.Lock()
+	defer d.Unlock()
+
+	identifier := trxContext.identifier
 	if d.transactions[identifier] == nil {
 		connection, err := d.GetConnection(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		tx, err := connection.BeginTx(ctx, nil)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		d.transactions[identifier] = tx
 
-		go func() {
-			select {
-			case <-ctx.Done():
-				logrus.Debug("transaction context done")
-				// just  kill the transaction !! auto commit = false
-			case success := <-trxContext.Success():
-				if success {
-					logrus.Debug("transaction context success")
-					// commit
-				} else {
-					logrus.Debug("transaction context failed")
-					// rollback
-				}
-			}
-		}()
+		trxContext.Add(tx)
 	}
 
-	return nil
+	return d.transactions[identifier], nil
 }

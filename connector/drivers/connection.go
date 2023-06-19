@@ -11,8 +11,9 @@ import (
 type connection struct {
 	db *sql.DB
 	context.Context
-	connectionId int64
-	conn         *sql.Conn
+	connectionId  int64
+	conn          *sql.Conn
+	isTransaction bool
 }
 
 func (connectionInstance *connection) Id() int64 {
@@ -25,6 +26,11 @@ func (connectionInstance *connection) PingContext(ctx context.Context) error {
 
 func (connectionInstance *connection) Conn() *sql.Conn {
 	return connectionInstance.conn
+}
+
+func (connectionInstance *connection) SetIsTransaction(isTransaction bool) *connection {
+	connectionInstance.isTransaction = isTransaction
+	return connectionInstance
 }
 
 func WrapConnection(ctx context.Context, idb *sql.DB) (specs.Connection, error) {
@@ -61,7 +67,8 @@ func (connectionInstance *connection) Close() error {
 }
 
 func (connectionInstance *connection) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
-	defer connectionInstance.debugQuery("QueryRowContext", query, time.Now(), args...)
+	var err error
+	defer connectionInstance.debugQuery("QueryRowContext", query, time.Now(), err, args...)
 	rows, err := connectionInstance.Conn().QueryContext(ctx, query, args...)
 
 	if err != nil {
@@ -71,23 +78,26 @@ func (connectionInstance *connection) QueryContext(ctx context.Context, query st
 	return rows, nil
 }
 
-func (connectionInstance *connection) debugQuery(kind string, query string, start time.Time, args ...any) {
+func (connectionInstance *connection) debugQuery(kind string, query string, start time.Time, err error, args ...any) {
 	logrus.WithFields(logrus.Fields{
-		"kind":         kind,
-		"connectionId": connectionInstance.connectionId,
-		"query":        query,
-		"args":         args,
-		"duration":     time.Since(start),
+		"kind":          kind,
+		"connectionId":  connectionInstance.connectionId,
+		"transactional": connectionInstance.isTransaction,
+		"query":         query,
+		"args":          args,
+		"duration":      time.Since(start),
+		"err":           err,
 	}).Debug("MySQL Connection Query")
 }
 
 func (connectionInstance *connection) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
-	defer connectionInstance.debugQuery("QueryRowContext", query, time.Now(), args...)
+	var err error
+	defer connectionInstance.debugQuery("QueryRowContext", query, time.Now(), err, args...)
 
 	rows := connectionInstance.Conn().QueryRowContext(ctx, query, args...)
-
-	if rows.Err() != nil {
-		_ = connectionInstance.catchError(rows.Err())
+	err = rows.Err()
+	if err != nil {
+		_ = connectionInstance.catchError(err)
 		return nil
 	}
 
@@ -102,11 +112,12 @@ func (connectionInstance *connection) BeginTx(ctx context.Context, opts *sql.TxO
 		return nil, err
 	}
 
-	return tx, nil
+	return wrapTransaction(connectionInstance, tx), nil
 }
 
 func (connectionInstance *connection) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
-	defer connectionInstance.debugQuery("QueryRowContext", query, time.Now(), args...)
+	var err error
+	defer connectionInstance.debugQuery("ExecContext", query, time.Now(), err, args...)
 
 	result, err := connectionInstance.Conn().ExecContext(ctx, query, args...)
 
@@ -117,11 +128,11 @@ func (connectionInstance *connection) ExecContext(ctx context.Context, query str
 	return result, nil
 }
 
-func (connectionInstance *connection) kill() error {
+func (connectionInstance *connection) Kill() error {
 	query := "KILL ?"
 	args := []any{DbCacheConnectionInstance.GetConnectionId(connectionInstance.conn)}
 
-	defer connectionInstance.debugQuery("QueryRowContext", query, time.Now(), args...)
+	defer connectionInstance.debugQuery("Kill", query, time.Now(), nil, args...)
 
 	_, err := connectionInstance.db.Exec(query, args...)
 	return err
@@ -129,7 +140,7 @@ func (connectionInstance *connection) kill() error {
 
 func (connectionInstance *connection) catchError(err error) error {
 	if err == context.Canceled || err == context.DeadlineExceeded {
-		killErr := connectionInstance.kill()
+		killErr := connectionInstance.Kill()
 		if killErr != nil {
 			return killErr
 		}

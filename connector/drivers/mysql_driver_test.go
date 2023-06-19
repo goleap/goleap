@@ -64,6 +64,21 @@ func (test *MysqlTestSuite) SetupTest() {
 	test.fakeDriver.ExpectedCalls = nil
 }
 
+func (test *MysqlTestSuite) AssertConnectionId() {
+	query := "SELECT CONNECTION_ID()"
+	test.fakeConn.On("Prepare", query).Return(test.fakeStmt, nil).Once()
+	test.fakeStmt.On("Query", []driver.Value{}).Return(test.fakeRows, nil).Once()
+	test.fakeStmt.On("NumInput").Return(0).Once()
+	test.fakeStmt.On("Close").Return(nil).Once()
+	test.fakeRows.On("Columns").Return([]string{"id"}).Once()
+	test.fakeRows.On("Close").Return(nil).Once()
+
+	test.fakeRows.On("Next", []driver.Value{driver.Value(nil)}).Return(func(dest []driver.Value) error {
+		dest[0] = 1
+		return nil
+	}).Once()
+}
+
 func (test *MysqlTestSuite) TestNew() {
 	drv, err := Get("test")
 	if !test.Empty(err) {
@@ -216,6 +231,8 @@ func (test *MysqlTestSuite) TestSelectErr() {
 
 	test.fakeDriverLimit.On("Formatted").Return("LIMIT 0, 1", nil)
 
+	test.AssertConnectionId()
+
 	query := "SELECT `t0`.`id`, `t0`.`email` FROM `acceptance`.`users` AS `t0` LIMIT 0, 1"
 	test.fakeSqlIn.On("Execute", query).Return(query, []any{}, nil)
 	test.fakeConn.On("Prepare", query).Return(nil, errors.New("test")).Once()
@@ -289,6 +306,8 @@ func (test *MysqlTestSuite) TestSimpleWhere() {
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
 
+	test.AssertConnectionId()
+
 	query := "SELECT `t0`.`id` FROM `acceptance`.`users` AS `t0` WHERE `t0`.`id` = ?"
 	test.fakeSqlIn.On("Execute", query, 1).Return(query, []any{1}, nil)
 
@@ -351,6 +370,8 @@ func (test *MysqlTestSuite) TestSimpleWhereIsNullOperator() {
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
 
+	test.AssertConnectionId()
+
 	query := "SELECT `t0`.`id` FROM `acceptance`.`test` AS `t0` WHERE `t0`.`id` IS NULL"
 	test.fakeSqlIn.On("Execute", query).Return(query, []any{}, nil)
 
@@ -389,6 +410,8 @@ func (test *MysqlTestSuite) TestSimpleWhereInOperator() {
 	test.fakePayload.On("Database").Return("acceptance")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
+
+	test.AssertConnectionId()
 
 	query := "SELECT `t0`.`id` FROM `acceptance`.`test` AS `t0` WHERE `t0`.`id` IN (?)"
 	test.fakeSqlIn.On("Execute", query).Return(strings.Replace(query, "?", "?, ?", -1), []any{}, nil)
@@ -469,6 +492,8 @@ func (test *MysqlTestSuite) TestWhereMultiEqual() {
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
 
+	test.AssertConnectionId()
+
 	query := "SELECT `t0`.`id` FROM `acceptance`.`users` AS `t0` WHERE `t0`.`id` = ? AND `t0`.`email` = ?"
 	test.fakeSqlIn.On("Execute", query).Return(query, []any{}, nil)
 
@@ -501,6 +526,8 @@ func (test *MysqlTestSuite) TestSelect() {
 	test.fakePayload.On("Table").Return("test")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
+
+	test.AssertConnectionId()
 
 	query := "SELECT `t0`.`id` FROM `acceptance`.`test` AS `t0`"
 	test.fakeSqlIn.On("Execute", query).Return(query, []any{}, nil)
@@ -558,6 +585,8 @@ func (test *MysqlTestSuite) TestSelectWithNativeScanErr() {
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
 
+	test.AssertConnectionId()
+
 	query := "SELECT `t0`.`id` FROM `acceptance`.`users` AS `t0`"
 	test.fakeSqlIn.On("Execute", query).Return(query, []any{}, nil)
 
@@ -612,6 +641,8 @@ func (test *MysqlTestSuite) TestSelectWithNativeWrapScanErr() {
 	test.fakePayload.On("Table").Return("users")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
+
+	test.AssertConnectionId()
 
 	query := "SELECT `t0`.`id` FROM `acceptance`.`users` AS `t0`"
 	test.fakeSqlIn.On("Execute", query).Return(query, []any{}, nil)
@@ -669,6 +700,8 @@ func (test *MysqlTestSuite) TestSelectWithWhere() {
 	test.fakePayload.On("Table").Return("users")
 	test.fakePayload.On("Index").Return(0)
 	test.fakePayload.On("Limit").Return(nil)
+
+	test.AssertConnectionId()
 
 	query := "SELECT `t0`.`id` FROM `acceptance`.`users` AS `t0`"
 	test.fakeSqlIn.On("Execute", query).Return(query, []any{}, nil)
@@ -732,6 +765,8 @@ func (test *MysqlTestSuite) TestJoin() {
 	test.fakePayload.On("Table").Return("comments")
 	test.fakePayload.On("Index").Return(0)
 
+	test.AssertConnectionId()
+
 	query := "SELECT `t0`.`id` FROM `acceptance`.`comments` AS `t0` JOIN `acceptance`.`posts` AS `t1` ON `t1`.`id` = `t0`.`posts_id`"
 	test.fakeSqlIn.On("Execute", query).Return(query, []any{}, nil)
 
@@ -778,6 +813,8 @@ func (test *MysqlTestSuite) TestMultiJoin() {
 	test.fakePayload.On("Limit").Return(nil)
 	test.fakePayload.On("Table").Return("comments")
 	test.fakePayload.On("Index").Return(0)
+
+	test.AssertConnectionId()
 
 	query := "SELECT `t0`.`id` FROM `acceptance`.`comments` AS `t0` JOIN `acceptance`.`posts` AS `t1` ON `t1`.`id` = `t0`.`posts_id` JOIN `acceptance`.`users` AS `t2` ON `t2`.`id` = `t0`.`users_id`"
 	test.fakeSqlIn.On("Execute", query).Return(query, []any{}, nil)
