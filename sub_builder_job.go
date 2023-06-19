@@ -53,7 +53,7 @@ func (subBuilderJob *subBuilderJob[T]) Execute() (err error) {
 
 	toFieldName := strings.Replace(to.RecursiveFullName(), fmt.Sprintf("%s.", subBuilderJob.GetFundamentalName()), "", 1)
 
-	sub := depkit.Get[specs.BuilderUse[specs.Model]]()(subBuilderJob.Builder.Context(), subBuilderJob.Builder.Connector()).
+	sub := depkit.Get[specs.BuilderUse[specs.Model]]()(subBuilderJob.Builder.Context()).
 		SetModel(to.Model().Copy()).
 		SetFields(append(subBuilderJob.extractFieldsFromFundamentalName(), toFieldName)...)
 

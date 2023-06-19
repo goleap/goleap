@@ -11,6 +11,36 @@ type FakeFieldDefinition struct {
 	mock.Mock
 }
 
+// Origin provides a mock function with given fields:
+func (_m *FakeFieldDefinition) Origin() specs.FieldDefinition {
+	ret := _m.Called()
+
+	var r0 specs.FieldDefinition
+	if rf, ok := ret.Get(0).(func() specs.FieldDefinition); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(specs.FieldDefinition)
+		}
+	}
+
+	return r0
+}
+
+// HasSameOriginalConnector provides a mock function with given fields:
+func (_m *FakeFieldDefinition) HasSameOriginalConnector() bool {
+	ret := _m.Called()
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func() bool); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
 // IsSlice provides a mock function with given fields:
 func (_m *FakeFieldDefinition) IsSlice() bool {
 	ret := _m.Called()

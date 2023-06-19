@@ -123,7 +123,7 @@ func (f *field) fnProcess() (fn string, err error) {
 		for _, match := range matches {
 			noFoundFiels = append(noFoundFiels, match[1])
 		}
-		return "", NewUnknownFieldsErr(noFoundFiels)
+		return "", NewErrUnknownFields(noFoundFiels)
 	}
 
 	return

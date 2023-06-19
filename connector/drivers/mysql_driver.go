@@ -8,7 +8,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/kitstack/dbkit/specs"
 	"github.com/kitstack/depkit"
-	log "github.com/sirupsen/logrus"
 )
 
 func init() {
@@ -115,12 +114,11 @@ func (m *Mysql) buildLimit(limit specs.DriverLimit) (result string, err error) {
 	return limit.Formatted()
 }
 
-// Db is a helper function to get the database connection.
-func (m *Mysql) Db() *sql.DB {
-	return m.db
+// Manager is a function to get a connection manager.
+func (m *Mysql) Manager() specs.ConnectionManager {
+	return WrapDB(m.db)
 }
 
-// Select TODO: add options for passing tx
 // Select is a helper function to select data from database.
 func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 	buildFields, err := m.buildFields(payload.Fields())
@@ -143,7 +141,7 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 		return
 	}
 
-	query := fmt.Sprintf("SELECT %s FROM `%s`.`%s` AS `t%d`", buildFields, m.Database(), payload.Table(), payload.Index())
+	query := fmt.Sprintf("SELECT %s FROM `%s`.`%s` AS `t%d`", buildFields, payload.Database(), payload.Table(), payload.Index())
 
 	if builtJoin != "" {
 		query += fmt.Sprintf(" %s", builtJoin)
@@ -167,20 +165,17 @@ func (m *Mysql) Select(ctx context.Context, payload specs.Payload) (err error) {
 		return
 	}
 
-	log.WithFields(log.Fields{
-		"type":  "select",
-		"query": queryWithArgs,
-		"args":  args,
-	}).Debug("Execute: Select()")
+	cnx, err := m.Manager().GetConnection(ctx)
+	if err != nil {
+		return
+	}
 
-	rows, err := m.Db().QueryContext(ctx, queryWithArgs, args...)
+	defer cnx.Close()
+
+	rows, err := cnx.QueryContext(ctx, queryWithArgs, args...)
 	if err != nil {
 		return
 	}
 
 	return wrapScan(rows, mapping, payload.OnScan)
-}
-
-func (m *Mysql) Get() *sql.DB {
-	return m.db
 }

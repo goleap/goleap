@@ -52,7 +52,7 @@ func (w *where) buildOperator() (string, bool, error) {
 	case operators.IsNull, operators.IsNotNull:
 		return w.Operator(), false, nil
 	}
-	return "", false, NewUnknownOperatorErr(w.Operator())
+	return "", false, NewErrUnknownOperator(w.Operator())
 }
 
 func (w *where) Formatted() (string, []any, error) {

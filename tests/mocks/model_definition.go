@@ -130,12 +130,12 @@ func (_m *FakeModelDefinition) GetFieldByColumn(column string) (specs.FieldDefin
 }
 
 // GetFieldByName provides a mock function with given fields: name
-func (_m *FakeModelDefinition) GetFieldByName(name string) (specs.FieldDefinition, specs.ErrNotFoundError) {
+func (_m *FakeModelDefinition) GetFieldByName(name string) (specs.FieldDefinition, specs.ErrNotFound) {
 	ret := _m.Called(name)
 
 	var r0 specs.FieldDefinition
-	var r1 specs.ErrNotFoundError
-	if rf, ok := ret.Get(0).(func(string) (specs.FieldDefinition, specs.ErrNotFoundError)); ok {
+	var r1 specs.ErrNotFound
+	if rf, ok := ret.Get(0).(func(string) (specs.FieldDefinition, specs.ErrNotFound)); ok {
 		return rf(name)
 	}
 	if rf, ok := ret.Get(0).(func(string) specs.FieldDefinition); ok {
@@ -146,11 +146,11 @@ func (_m *FakeModelDefinition) GetFieldByName(name string) (specs.FieldDefinitio
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) specs.ErrNotFoundError); ok {
+	if rf, ok := ret.Get(1).(func(string) specs.ErrNotFound); ok {
 		r1 = rf(name)
 	} else {
 		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(specs.ErrNotFoundError)
+			r1 = ret.Get(1).(specs.ErrNotFound)
 		}
 	}
 
@@ -291,6 +291,19 @@ func (_m *FakeModelDefinition) SetIndex(index int) specs.ModelDefinition {
 
 // TableName provides a mock function with given fields:
 func (_m *FakeModelDefinition) TableName() string {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+func (_m *FakeModelDefinition) ConnectorName() string {
 	ret := _m.Called()
 
 	var r0 string

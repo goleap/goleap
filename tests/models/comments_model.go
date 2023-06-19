@@ -20,3 +20,7 @@ func (s *CommentsModel) DatabaseName() string {
 func (s *CommentsModel) TableName() string {
 	return "comments"
 }
+
+func (s *CommentsModel) ConnectorName() string {
+	return "acceptance"
+}

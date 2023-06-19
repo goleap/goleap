@@ -14,12 +14,8 @@ help: ## Show this help
 # DOCKER TASKS
 config: ## Validate and view the Compose file.
 	$(COMPOSE_COMMAND) config
-acceptance: ## Build and start acceptance environment
-	$(COMPOSE_COMMAND) up --exit-code-from acceptance --build acceptance
 dev: ## Build and start dev environment
-	$(COMPOSE_COMMAND) up -d --build adminer db
-db: ## Build And Start Database
-	$(COMPOSE_COMMAND) up -d --force-recreate --remove-orphans --build db --wait
+	$(COMPOSE_COMMAND) up -d --force-recreate --remove-orphans --build db adminer --wait
 stop: ## Stops running containers without removing them [s=services]
 	$(COMPOSE_COMMAND) stop db
 down: ## Stops containers and removes containers, networks, volumes, and images created by up

@@ -44,9 +44,20 @@ func (_m *FakeConnector) Get() *sql.DB {
 	return r0
 }
 
-// GetCnx provides a mock function with given fields: ctx
-func (_m *FakeConnector) GetCnx(ctx context.Context) {
-	_m.Called(ctx)
+// Manager provides a mock function with given fields:
+func (_m *FakeConnector) Manager() specs.ConnectionManager {
+	ret := _m.Called()
+
+	var r0 specs.ConnectionManager
+	if rf, ok := ret.Get(0).(func() specs.ConnectionManager); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(specs.ConnectionManager)
+		}
+	}
+
+	return r0
 }
 
 // Name provides a mock function with given fields:

@@ -10,3 +10,7 @@ func (s DebugModel) DatabaseName() string {
 func (s DebugModel) TableName() string {
 	return "extra"
 }
+
+func (s DebugModel) ConnectorName() string {
+	return "acceptance"
+}

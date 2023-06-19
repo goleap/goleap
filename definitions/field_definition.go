@@ -39,7 +39,7 @@ func (field *fieldDefinition) Join() (joins []specs.DriverJoin) {
 
 			joins = append(joins, join)
 		}
-		joins = append(joins, field.Model().FromField().Join()...)
+		joins = append(field.Model().FromField().Join(), joins...)
 		return
 	}
 	return
@@ -55,6 +55,17 @@ func (field *fieldDefinition) Value() reflect.Value {
 
 func (field *fieldDefinition) IsSlice() bool {
 	return field.isSlice
+}
+
+func (field *fieldDefinition) Origin() specs.FieldDefinition {
+	if field.Model().FromField() != nil {
+		return field.Model().FromField().Origin()
+	}
+	return field
+}
+
+func (field *fieldDefinition) HasSameOriginalConnector() bool {
+	return field.Model().ConnectorName() == field.Origin().Model().ConnectorName()
 }
 
 func (field *fieldDefinition) FromSchemaTypeList() (new []string) {
@@ -233,7 +244,6 @@ func (field *fieldDefinition) GetToColumn() (specs.FieldDefinition, error) {
 }
 
 func (field *fieldDefinition) RecursiveFullName() string {
-	// TODO (kitstack) : maybe try to simplify this
 	if field.recursiveFullName != "" {
 		return field.recursiveFullName
 	}
@@ -248,7 +258,13 @@ func (field *fieldDefinition) RecursiveFullName() string {
 }
 
 func (field *fieldDefinition) FundamentalName() string {
-	return strings.Split(field.RecursiveFullName(), ".")[0]
+	if field.schema.FromField() == nil {
+		return field.RecursiveFullName()
+	}
+	if !field.schema.FromField().IsSlice() {
+		return field.RecursiveFullName()
+	}
+	return field.schema.FromField().FundamentalName()
 }
 
 func (field *fieldDefinition) IsSameSchemaFromField() bool {

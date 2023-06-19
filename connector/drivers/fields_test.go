@@ -60,7 +60,7 @@ func (suite *FieldTestSuite) TestColumnWithFnErrNoMatch() {
 	assert.Equal(suite.T(), "", column)
 	assert.Error(suite.T(), err)
 
-	assert.IsType(suite.T(), &unknownFieldsErr{}, err)
+	assert.IsType(suite.T(), &ErrUnknownFields{}, err)
 	assert.EqualValues(suite.T(), "unknown fields: Name", err.Error())
 	assert.Equal(suite.T(), []string{"Name"}, err.(specs.ErrUnknownFields).Fields())
 }

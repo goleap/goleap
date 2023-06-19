@@ -10,7 +10,7 @@ type ModelDefinition interface {
 	Fields() []FieldDefinition
 	FieldByName() map[string]FieldDefinition
 
-	GetFieldByName(name string) (FieldDefinition, ErrNotFoundError)
+	GetFieldByName(name string) (FieldDefinition, ErrNotFound)
 	GetPrimaryField() (FieldDefinition, ErrPrimaryFieldNotFound)
 	GetFieldByColumn(column string) (FieldDefinition, ErrFieldNoFoundByColumn)
 

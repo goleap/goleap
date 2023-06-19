@@ -14,7 +14,7 @@ func (e *ErrNotFoundError) Error() string {
 	return fmt.Sprintf("field `%s` not found in model `%s`", e.field, e.modelDefinition.TypeName())
 }
 
-func NewErrFieldNotFound(field string, modelDefinition specs.ModelDefinition) specs.ErrNotFoundError {
+func NewErrFieldNotFound(field string, modelDefinition specs.ModelDefinition) specs.ErrNotFound {
 	return &ErrNotFoundError{
 		field:           field,
 		modelDefinition: modelDefinition,

@@ -114,11 +114,11 @@ func (test *WhereTestSuite) TestWhereBuildOperator() {
 	test.Error(err)
 	test.False(flat)
 
-	test.IsType(&unknownOperatorErr{}, err)
+	test.IsType(&ErrUnknownOperator{}, err)
 	test.Contains(err.Error(), "unknown operator: unknown")
 
 	_, _, err = where.Formatted()
-	test.IsType(&unknownOperatorErr{}, err)
+	test.IsType(&ErrUnknownOperator{}, err)
 	test.Contains(err.Error(), "unknown operator: unknown")
 
 }

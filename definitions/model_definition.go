@@ -149,7 +149,7 @@ func (md *modelDefinition) SetFromField(fromField specs.FieldDefinition) specs.M
 	return md
 }
 
-func (md *modelDefinition) GetFieldByName(name string) (specs.FieldDefinition, specs.ErrNotFoundError) {
+func (md *modelDefinition) GetFieldByName(name string) (specs.FieldDefinition, specs.ErrNotFound) {
 	md.Lock()
 	defer md.Unlock()
 

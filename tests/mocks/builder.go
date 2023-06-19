@@ -13,10 +13,14 @@ type FakeBuilder[T specs.Model] struct {
 }
 
 // Connector provides a mock function with given fields:
-func (_m *FakeBuilder[T]) Connector() specs.Connector {
+func (_m *FakeBuilder[T]) Connector() (specs.Connector, error) {
 	ret := _m.Called()
 
 	var r0 specs.Connector
+	var r1 error
+	if rf, ok := ret.Get(0).(func() (specs.Connector, error)); ok {
+		return rf()
+	}
 	if rf, ok := ret.Get(0).(func() specs.Connector); ok {
 		r0 = rf()
 	} else {
@@ -25,7 +29,13 @@ func (_m *FakeBuilder[T]) Connector() specs.Connector {
 		}
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Context provides a mock function with given fields:

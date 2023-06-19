@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"context"
+	"flag"
 	"fmt"
+	"github.com/joho/godotenv"
 	"github.com/kitstack/dbkit/tests/acceptance/fixtures"
 	"github.com/sirupsen/logrus"
 	"log"
@@ -14,11 +16,18 @@ import (
 	"time"
 )
 
-var isDebug = os.Getenv("DEBUG") == "true"
+var isDebug bool
+var test string
+
 var ctx context.Context
 var debugLog *bytes.Buffer
 
 func init() {
+	err := godotenv.Load()
+	if err != nil {
+		panic(err)
+	}
+
 	log.SetFlags(0)
 	logrus.SetLevel(logrus.DebugLevel)
 
@@ -26,12 +35,16 @@ func init() {
 	logrus.SetOutput(debugLog)
 
 	ctx = context.Background()
+
+	flag.BoolVar(&isDebug, "debug", os.Getenv("DEBUG") == "true", "Debug mode")
+	flag.StringVar(&test, "test", "", "Run test by name")
+	flag.Parse()
 }
 
 func main() {
-	fx := fixtures.Fixture{}
-	rf := reflect.ValueOf(&fx)
-	typeOf := reflect.TypeOf(&fx)
+	fx := fixtures.NewFixture()
+	rf := reflect.ValueOf(&fx).Elem()
+	typeOf := reflect.TypeOf(&fx).Elem()
 
 	testsCount := 0
 	failedTestCount := 0
@@ -59,13 +72,17 @@ func main() {
 			continue
 		}
 
+		if test != "" && test != typeOf.Method(i).Name {
+			continue
+		}
+
 		testsCount++
 
 		state := "\x1b[32mPASS\x1b[0m"
 		timerTest := time.Now()
 
 		logrus.WithFields(logrus.Fields{
-			"name": typeOf.Method(i).Name,
+			"testName": typeOf.Method(i).Name,
 		}).Debug("Start test")
 
 		fx.Reset()
@@ -87,7 +104,7 @@ func main() {
 		result := try()
 
 		logrus.WithFields(logrus.Fields{
-			"name": typeOf.Method(i).Name,
+			"testName": typeOf.Method(i).Name,
 		}).Debug("End test")
 
 		if testErr := result[0].Interface(); testErr != nil || fx.AssertErrorCount() > 0 {

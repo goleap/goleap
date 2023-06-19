@@ -39,4 +39,7 @@ type FieldDefinition interface {
 	FromSlice() bool
 
 	IsPrimaryKey() bool
+
+	Origin() FieldDefinition
+	HasSameOriginalConnector() bool
 }
